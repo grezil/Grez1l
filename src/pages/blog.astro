@@ -1,0 +1,1372 @@
+---
+// blog.astro - Space Engineer Aerospace Technical Journal & Blog
+import Layout from '../layouts/Layout.astro';
+import BlogCard, { type BlogPost } from '../components/BlogCard.astro';
+import portfolioData from '../data/portfolio.json';
+import { DEFAULT_BLOGS } from '../data/defaultBlogs.js';
+
+// Merge portfolio.json blogs (if present) with DEFAULT_BLOGS
+const jsonBlogs = (portfolioData as any).blogs as BlogPost[] | undefined;
+const initialBlogs: BlogPost[] = (jsonBlogs && Array.isArray(jsonBlogs) && jsonBlogs.length > 0)
+  ? jsonBlogs
+  : DEFAULT_BLOGS;
+
+const categories = [
+  { id: 'all', label: 'All Dispatches' },
+  { id: 'flight-software', label: 'Flight Software' },
+  { id: 'orbital-mechanics', label: 'Orbital Mechanics' },
+  { id: 'avionics', label: 'Avionics' },
+  { id: 'deep-space-comms', label: 'Deep Space Comms' }
+];
+
+const totalArticles = initialBlogs.length;
+const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/).length || 500), 0);
+---
+
+<Layout 
+  title="Mission Technical Log & Engineering Blog | Võ Quang Nhật Nguyên"
+  description="Technical aerospace journal, flight software architectures, orbital dynamics, and mission engineering dispatches by Võ Quang Nhật Nguyên."
+>
+  <div class="blog-page-container">
+    <!-- Hero Header -->
+    <header class="blog-hero">
+      <div class="container">
+        <div class="hero-top-nav">
+          <a href="/" class="back-home-link">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <line x1="19" y1="12" x2="5" y2="12"></line>
+              <polyline points="12 19 5 12 12 5"></polyline>
+            </svg>
+            <span>Back to Mission Control</span>
+          </a>
+          <div class="live-telemetry-badge">
+            <span class="beacon-dot"></span>
+            <span>FSW LOG // CCSDS 133.0 STREAM</span>
+          </div>
+        </div>
+
+        <div class="hero-content">
+          <div class="section-tag">MISSION DISPATCHES & TECHNICAL JOURNAL</div>
+          <h1 class="hero-title">
+            Aerospace Flight Software & <span class="glow-warm">Orbital Systems Log</span>
+          </h1>
+          <p class="hero-description">
+            In-depth mission architectures, deterministic flight software in Rust/C, real-time astrodynamics algorithms, fault-tolerant avionics buses, and deep space optical downlinks.
+          </p>
+
+          <!-- Telemetry Specs Bar -->
+          <div class="telemetry-bar">
+            <div class="telemetry-stat">
+              <span class="stat-label">TOTAL DISPATCHES</span>
+              <span class="stat-val" id="stat-total-count">{totalArticles} Articles</span>
+            </div>
+            <div class="telemetry-divider"></div>
+            <div class="telemetry-stat">
+              <span class="stat-label">SITE REVISIONS</span>
+              <span class="stat-val text-amber" id="stat-updates-count">24 Updates</span>
+            </div>
+            <div class="telemetry-divider"></div>
+            <div class="telemetry-stat">
+              <span class="stat-label">PRIMARY ORBIT</span>
+              <span class="stat-val text-cyan">550km SSO // 97.4° INC</span>
+            </div>
+            <div class="telemetry-divider"></div>
+            <div class="telemetry-stat">
+              <span class="stat-label">TELEMETRY LINK</span>
+              <span class="stat-val text-green">SYNCHRONIZED</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Content Section -->
+    <main class="blog-main-section">
+      <div class="container">
+        <!-- Controls & Filter Toolbar -->
+        <div class="filter-toolbar">
+          <!-- Category Segmented Control -->
+          <div class="segmented-control" role="tablist" aria-label="Filter blog posts by category">
+            {categories.map((cat, idx) => (
+              <button 
+                type="button"
+                class={`segment-btn ${idx === 0 ? 'active' : ''}`}
+                data-category={cat.id}
+                role="tab"
+                aria-selected={idx === 0 ? 'true' : 'false'}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          <!-- Search & Actions Bar -->
+          <div class="search-actions-bar">
+            <div class="search-box">
+              <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"></circle>
+                <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+              </svg>
+              <input 
+                type="text" 
+                id="blog-search-input" 
+                placeholder="Search algorithms, protocols, tags..." 
+                aria-label="Search blog dispatches"
+              />
+              <button type="button" id="clear-search-btn" class="clear-btn" aria-label="Clear search" style="display: none;">
+                ×
+              </button>
+              <kbd class="search-shortcut" title="Press / to search">/</kbd>
+            </div>
+
+            <!-- Admin Compose Quick Action (Visible to logged in admins) -->
+            <button type="button" id="admin-compose-btn" class="admin-compose-action" style="display: none;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="12" y1="5" x2="12" y2="19"></line>
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+              </svg>
+              <span>Compose Dispatch</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Filter Results Telemetry Notice -->
+        <div class="filter-status-row" id="filter-status-row" style="display: none;">
+          <span class="status-count-text" id="filter-count-text">Showing all dispatches</span>
+          <button type="button" id="reset-filter-btn" class="reset-link-btn">Reset Filters</button>
+        </div>
+
+        <!-- Blog Posts Grid -->
+        <div class="blog-grid" id="blog-grid">
+          {initialBlogs.map((post, idx) => (
+            <BlogCard post={post} featured={post.featured || idx === 0} />
+          ))}
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state" style="display: none;">
+          <div class="empty-radar-icon">
+            <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <circle cx="12" cy="12" r="10"></circle>
+              <circle cx="12" cy="12" r="6"></circle>
+              <circle cx="12" cy="12" r="2"></circle>
+              <line x1="12" y1="2" x2="12" y2="12"></line>
+            </svg>
+          </div>
+          <h3 class="empty-title">No Orbital Dispatches Found</h3>
+          <p class="empty-text">No technical articles match the specified telemetry filter or search query. Try relaxing your parameters.</p>
+          <button type="button" class="btn btn-secondary btn-sm" id="empty-reset-btn">
+            Clear Telemetry Filter
+          </button>
+        </div>
+      </div>
+    </main>
+
+    <!-- Quick Article Interactive Reader Modal -->
+    <div class="reader-modal-overlay" id="reader-modal" aria-hidden="true">
+      <div class="reader-modal-backdrop" id="reader-backdrop"></div>
+      <div class="reader-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="modal-article-title">
+        <header class="reader-modal-header">
+          <div class="reader-header-left">
+            <span class="reader-category-pill" id="modal-category-pill">Flight Software</span>
+            <span class="reader-header-date" id="modal-date">Oct 18, 2024</span>
+            <span class="meta-dot">•</span>
+            <span class="reader-header-readtime" id="modal-readtime">8 min read</span>
+          </div>
+
+          <div class="reader-header-actions">
+            <a href="#" id="modal-full-link" class="modal-action-btn" title="Open full dedicated page">
+              <span>Full Page</span>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                <polyline points="15 3 21 3 21 9"></polyline>
+                <line x1="10" y1="14" x2="21" y2="3"></line>
+              </svg>
+            </a>
+            <button type="button" class="modal-close-btn" id="modal-close-btn" aria-label="Close reader">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <div class="reader-modal-body" id="reader-content-body">
+          <h1 class="reader-article-title" id="modal-article-title">Loading mission dispatch...</h1>
+          
+          <div class="reader-author-bar">
+            <div class="reader-avatar">NN</div>
+            <div class="reader-author-details">
+              <span class="reader-author-name" id="modal-author-name">Võ Quang Nhật Nguyên</span>
+              <span class="reader-author-title" id="modal-author-title">Lead Flight Software Engineer • NHAT-NGUYEN</span>
+            </div>
+          </div>
+
+          <div class="reader-markdown-content" id="modal-article-markdown">
+            <!-- Article body rendered here dynamically -->
+          </div>
+        </div>
+
+        <footer class="reader-modal-footer">
+          <div class="reader-footer-tags" id="modal-footer-tags"></div>
+          <button type="button" class="btn btn-secondary btn-sm" id="modal-footer-close">Back to Log</button>
+        </footer>
+      </div>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  import { DEFAULT_BLOGS } from '../data/defaultBlogs.js';
+  import { getBlogs, checkAdminAuth, getDashboardStats } from '../scripts/store.js';
+  import { renderMarkdown } from '../scripts/markdown.js';
+
+  // Client-side reactive blog store & filtering controller
+  (function initBlogController() {
+    let currentCategory = 'all';
+    let searchQuery = '';
+    let blogList = [];
+
+    // Elements
+    const grid = document.getElementById('blog-grid');
+    const searchInput = document.getElementById('blog-search-input') as HTMLInputElement | null;
+    const clearSearchBtn = document.getElementById('clear-search-btn');
+    const segmentButtons = document.querySelectorAll('.segment-btn');
+    const emptyState = document.getElementById('empty-state');
+    const filterStatusRow = document.getElementById('filter-status-row');
+    const filterCountText = document.getElementById('filter-count-text');
+    const resetFilterBtn = document.getElementById('reset-filter-btn');
+    const emptyResetBtn = document.getElementById('empty-reset-btn');
+    const statTotalCount = document.getElementById('stat-total-count');
+    const statUpdatesCount = document.getElementById('stat-updates-count');
+    const adminComposeBtn = document.getElementById('admin-compose-btn');
+
+    // Reader Modal Elements
+    const readerModal = document.getElementById('reader-modal');
+    const readerBackdrop = document.getElementById('reader-backdrop');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalFooterClose = document.getElementById('modal-footer-close');
+    const modalFullLink = document.getElementById('modal-full-link') as HTMLAnchorElement | null;
+    const modalCategoryPill = document.getElementById('modal-category-pill');
+    const modalDate = document.getElementById('modal-date');
+    const modalReadtime = document.getElementById('modal-readtime');
+    const modalArticleTitle = document.getElementById('modal-article-title');
+    const modalAuthorName = document.getElementById('modal-author-name');
+    const modalAuthorTitle = document.getElementById('modal-author-title');
+    const modalArticleMarkdown = document.getElementById('modal-article-markdown');
+    const modalFooterTags = document.getElementById('modal-footer-tags');
+
+    // 1. Fetch live blogs from store or localStorage
+    function loadBlogs(): any[] {
+      try {
+        if (typeof getBlogs === 'function') {
+          const storeBlogs = getBlogs();
+          if (Array.isArray(storeBlogs) && storeBlogs.length > 0) {
+            return storeBlogs;
+          }
+        }
+
+        // Direct check window.PortfolioStore
+        const store = (window as any).PortfolioStore;
+        if (store && typeof store.getBlogs === 'function') {
+          const storeBlogs = store.getBlogs();
+          if (Array.isArray(storeBlogs) && storeBlogs.length > 0) {
+            return storeBlogs;
+          }
+        }
+
+        // Fallback check localStorage directly
+        const rawData = localStorage.getItem('space_portfolio_data_v1') || localStorage.getItem('space_portfolio_data');
+        if (rawData) {
+          const parsedData = JSON.parse(rawData);
+          if (parsedData && Array.isArray(parsedData.blogs) && parsedData.blogs.length > 0) {
+            return parsedData.blogs;
+          }
+        }
+      } catch (err) {
+        console.warn('Error reading store blogs, falling back to defaults:', err);
+      }
+
+      return DEFAULT_BLOGS;
+    }
+
+    // 2. Open Quick View Reader Modal
+    function openReader(post: any) {
+      if (!readerModal) return;
+
+      if (modalCategoryPill) {
+        modalCategoryPill.textContent = post.category || 'Flight Software';
+      }
+      if (modalDate) modalDate.textContent = post.date || 'Mission Epoch';
+      if (modalReadtime) modalReadtime.textContent = post.readTime || '5 min read';
+      if (modalArticleTitle) modalArticleTitle.textContent = post.title || 'Untitled Dispatch';
+      
+      const author = typeof post.author === 'object' && post.author !== null ? post.author : { name: post.author || 'Võ Quang Nhật Nguyên', title: 'Flight Software Lead' };
+      if (modalAuthorName) modalAuthorName.textContent = author.name || 'Võ Quang Nhật Nguyên';
+      if (modalAuthorTitle) modalAuthorTitle.textContent = author.role || author.title || 'Lead Flight Software Engineer';
+
+      if (modalFullLink) {
+        modalFullLink.href = `/blog/${post.slug}`;
+      }
+
+      if (modalArticleMarkdown) {
+        modalArticleMarkdown.innerHTML = renderMarkdown(post.content || post.summary || 'No dispatch content available.');
+      }
+
+      if (modalFooterTags) {
+        modalFooterTags.innerHTML = (post.tags || []).map((t: string) => `<span class="reader-footer-tag">#${t}</span>`).join('');
+      }
+
+      readerModal.classList.add('is-open');
+      readerModal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeReader() {
+      if (!readerModal) return;
+      readerModal.classList.remove('is-open');
+      readerModal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    // 3. Render client cards dynamically (for additions/edits)
+    function renderCards() {
+      blogList = loadBlogs();
+      if (statTotalCount) {
+        statTotalCount.textContent = `${blogList.length} Articles`;
+      }
+
+      if (statUpdatesCount) {
+        try {
+          if (typeof getDashboardStats === 'function') {
+            const stats = getDashboardStats();
+            if (stats && stats.updatesCount) {
+              statUpdatesCount.textContent = `${stats.updatesCount} Updates`;
+            }
+          }
+        } catch (e) {
+          // quiet
+        }
+      }
+
+      const normalizedSearch = searchQuery.toLowerCase().trim();
+
+      const filtered = blogList.filter(post => {
+        // Category check
+        if (currentCategory !== 'all') {
+          const cat = (post.category || '').toLowerCase();
+          const postTags = (post.tags || []).map((t: string) => t.toLowerCase());
+          
+          let matches = false;
+          if (currentCategory === 'flight-software') {
+            matches = cat.includes('flight') || cat.includes('software') || cat.includes('rust') || postTags.some(t => t.includes('flight') || t.includes('software') || t.includes('rust'));
+          } else if (currentCategory === 'orbital-mechanics') {
+            matches = cat.includes('orbit') || cat.includes('astrodynamics') || cat.includes('gnc') || cat.includes('dynamics') || postTags.some(t => t.includes('orbit') || t.includes('astrodynamics') || t.includes('propagator') || t.includes('gnc'));
+          } else if (currentCategory === 'avionics') {
+            matches = cat.includes('avionics') || cat.includes('fdir') || cat.includes('hardware') || postTags.some(t => t.includes('avionics') || t.includes('fdir') || t.includes('spacewire') || t.includes('canopen'));
+          } else if (currentCategory === 'deep-space-comms') {
+            matches = cat.includes('comms') || cat.includes('ground') || cat.includes('packet') || cat.includes('optical') || postTags.some(t => t.includes('comms') || t.includes('ground') || t.includes('packet') || t.includes('s-band') || t.includes('ccsds'));
+          } else {
+            matches = cat.includes(currentCategory);
+          }
+          if (!matches) return false;
+        }
+
+        // Search check
+        if (normalizedSearch) {
+          const matchTitle = (post.title || '').toLowerCase().includes(normalizedSearch);
+          const matchSummary = (post.summary || '').toLowerCase().includes(normalizedSearch);
+          const matchTags = (post.tags || []).some((t: string) => t.toLowerCase().includes(normalizedSearch));
+          const matchContent = (post.content || '').toLowerCase().includes(normalizedSearch);
+          if (!matchTitle && !matchSummary && !matchTags && !matchContent) return false;
+        }
+
+        return true;
+      });
+
+      // Update Filter Status Info
+      if (filterStatusRow && filterCountText) {
+        if (currentCategory !== 'all' || normalizedSearch) {
+          filterStatusRow.style.display = 'flex';
+          filterCountText.textContent = `Showing ${filtered.length} of ${blogList.length} dispatches`;
+        } else {
+          filterStatusRow.style.display = 'none';
+        }
+      }
+
+      // Render cards into grid
+      if (grid) {
+        if (filtered.length === 0) {
+          grid.style.display = 'none';
+          if (emptyState) emptyState.style.display = 'flex';
+        } else {
+          grid.style.display = 'grid';
+          if (emptyState) emptyState.style.display = 'none';
+
+          grid.innerHTML = filtered.map((post, idx) => {
+            const primaryCat = post.category || (post.tags && post.tags[0]) || 'Flight Software';
+            let catClass = 'badge-cat-fsw';
+            const lowCat = primaryCat.toLowerCase();
+            if (lowCat.includes('orbit') || lowCat.includes('astrodynamics')) catClass = 'badge-cat-orbit';
+            else if (lowCat.includes('avionics')) catClass = 'badge-cat-avionics';
+            else if (lowCat.includes('comms') || lowCat.includes('ground')) catClass = 'badge-cat-comms';
+
+            const author = typeof post.author === 'object' && post.author !== null ? post.author : { name: post.author || 'Võ Quang Nhật Nguyên', role: 'Flight Software Architect' };
+            const tagsHtml = (post.tags || []).map((t: string) => `<span class="mini-tag">#${t}</span>`).join('');
+            const featuredClass = (post.featured || idx === 0) ? 'featured-card' : '';
+
+            return `
+              <article 
+                class="blog-card card ${featuredClass}" 
+                data-slug="${post.slug}"
+                data-id="${post.id}"
+              >
+                <div class="card-meta-top">
+                  <div class="category-wrapper">
+                    <span class="cat-pill ${catClass}">
+                      <span class="pill-dot"></span>
+                      ${primaryCat}
+                    </span>
+                    ${(post.featured || idx === 0) ? '<span class="featured-badge">Featured Dispatch</span>' : ''}
+                  </div>
+                  <div class="time-meta">
+                    <span class="meta-date">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      ${post.date || 'Mission Epoch'}
+                    </span>
+                    <span class="meta-divider">•</span>
+                    <span class="meta-readtime">${post.readTime || '5 min read'}</span>
+                  </div>
+                </div>
+
+                <h3 class="blog-title">
+                  <a href="/blog/${post.slug}" class="title-link">${post.title}</a>
+                </h3>
+
+                <p class="blog-summary">${post.summary || ''}</p>
+
+                <div class="blog-tags">${tagsHtml}</div>
+
+                <div class="card-footer">
+                  <div class="author-meta">
+                    <div class="author-avatar">
+                      <span class="avatar-beacon"></span>
+                      <span class="avatar-letter">NN</span>
+                    </div>
+                    <div class="author-info">
+                      <span class="author-name">${author.name || 'Võ Quang Nhật Nguyên'}</span>
+                      <span class="author-role">${author.role || author.title || 'Lead Flight Software Engineer'}</span>
+                    </div>
+                  </div>
+
+                  <div class="action-buttons">
+                    <button type="button" class="quick-read-btn btn-sm" data-action="quick-read" data-post-slug="${post.slug}">
+                      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+                        <circle cx="12" cy="12" r="3"></circle>
+                      </svg>
+                      Quick View
+                    </button>
+                    <a href="/blog/${post.slug}" class="read-article-link">
+                      <span>Full Article</span>
+                      <svg class="arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="5" y1="12" x2="19" y2="12"></line>
+                        <polyline points="12 5 19 12 12 19"></polyline>
+                      </svg>
+                    </a>
+                  </div>
+                </div>
+              </article>
+            `;
+          }).join('');
+        }
+      }
+    }
+
+    // 4. Check Admin Auth to show quick compose button
+    function checkAdminState() {
+      try {
+        const isAdmin = (typeof checkAdminAuth === 'function')
+          ? checkAdminAuth()
+          : (sessionStorage.getItem('space_portfolio_admin_auth') === 'true' || localStorage.getItem('space_portfolio_admin_auth') === 'true');
+
+        if (adminComposeBtn) {
+          adminComposeBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+        }
+      } catch (e) {
+        // quiet
+      }
+    }
+
+    // 6. Setup Event Listeners
+    segmentButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        segmentButtons.forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+        currentCategory = btn.getAttribute('data-category') || 'all';
+        renderCards();
+      });
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = (e.target as HTMLInputElement).value;
+        if (clearSearchBtn) {
+          clearSearchBtn.style.display = searchQuery ? 'inline-flex' : 'none';
+        }
+        renderCards();
+      });
+    }
+
+    if (clearSearchBtn && searchInput) {
+      clearSearchBtn.addEventListener('click', () => {
+        searchInput.value = '';
+        searchQuery = '';
+        clearSearchBtn.style.display = 'none';
+        searchInput.focus();
+        renderCards();
+      });
+    }
+
+    function resetAllFilters() {
+      currentCategory = 'all';
+      searchQuery = '';
+      if (searchInput) searchInput.value = '';
+      if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+      segmentButtons.forEach((b, i) => {
+        b.classList.toggle('active', i === 0);
+        b.setAttribute('aria-selected', i === 0 ? 'true' : 'false');
+      });
+      renderCards();
+    }
+
+    if (resetFilterBtn) resetFilterBtn.addEventListener('click', resetAllFilters);
+    if (emptyResetBtn) emptyResetBtn.addEventListener('click', resetAllFilters);
+
+    // Keyboard shortcut / for search
+    window.addEventListener('keydown', (e) => {
+      if (e.key === '/' && document.activeElement !== searchInput && !(document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement)) {
+        e.preventDefault();
+        searchInput?.focus();
+      } else if (e.key === 'Escape') {
+        closeReader();
+      }
+    });
+
+    // Delegated click for Quick Read & Copy Code buttons
+    document.addEventListener('click', async (e) => {
+      const target = (e.target as HTMLElement).closest('[data-action="quick-read"]');
+      if (target) {
+        const slug = target.getAttribute('data-post-slug');
+        if (slug) {
+          const currentList = loadBlogs();
+          const post = currentList.find(p => p.slug === slug);
+          if (post) openReader(post);
+        }
+        return;
+      }
+
+      const copyBtn = (e.target as HTMLElement).closest('.copy-code-btn');
+      if (copyBtn) {
+        const rawCode = decodeURIComponent(copyBtn.getAttribute('data-code') || '');
+        if (rawCode && navigator.clipboard) {
+          try {
+            await navigator.clipboard.writeText(rawCode);
+            const label = copyBtn.querySelector('span');
+            if (label) {
+              const orig = label.textContent;
+              label.textContent = 'Copied!';
+              copyBtn.classList.add('copied');
+              setTimeout(() => {
+                label.textContent = orig;
+                copyBtn.classList.remove('copied');
+              }, 2000);
+            }
+          } catch (err) {
+            console.error('Failed to copy code:', err);
+          }
+        }
+      }
+    });
+
+    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeReader);
+    if (modalFooterClose) modalFooterClose.addEventListener('click', closeReader);
+    if (readerBackdrop) readerBackdrop.addEventListener('click', closeReader);
+
+    // Compose Button Action
+    if (adminComposeBtn) {
+      adminComposeBtn.addEventListener('click', () => {
+        // Trigger admin composer modal or navigate to /admin#compose
+        window.dispatchEvent(new CustomEvent('open-admin-blog-modal'));
+        if (!(window as any).hasAdminModalOpen) {
+          window.location.href = '/admin#compose';
+        }
+      });
+    }
+
+    // Reactive listener for updates from store.js
+    window.addEventListener('portfolio-data-updated', () => {
+      renderCards();
+      checkAdminState();
+    });
+
+    // Check URL parameters for direct article reader view: /blog?post=slug
+    const urlParams = new URLSearchParams(window.location.search);
+    const postParam = urlParams.get('post');
+    if (postParam) {
+      const initialList = loadBlogs();
+      const target = initialList.find(p => p.slug === postParam);
+      if (target) {
+        openReader(target);
+      }
+    }
+
+    // Initial render & admin check
+    renderCards();
+    checkAdminState();
+  })();
+</script>
+
+<style>
+  /* ============================================================
+     BLOG PAGE STYLES - Space Engineering Apple Aesthetic
+     ============================================================ */
+  .blog-page-container {
+    min-height: 100vh;
+    padding-bottom: 6rem;
+  }
+
+  .blog-hero {
+    padding: 3rem 0 3.5rem;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: radial-gradient(ellipse 70% 50% at 50% -20%, rgba(229, 169, 106, 0.12) 0%, transparent 70%);
+  }
+
+  .hero-top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+  }
+
+  .back-home-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.84rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    color: #8e95a5;
+    text-decoration: none;
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease;
+  }
+
+  .back-home-link:hover {
+    color: #e5a96a;
+    border-color: rgba(229, 169, 106, 0.3);
+    background: rgba(229, 169, 106, 0.08);
+    transform: translateX(-2px);
+  }
+
+  .live-telemetry-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.6875rem;
+    color: #10b981;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+  }
+
+  .beacon-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: beacon-pulse 2s infinite;
+  }
+
+  @keyframes beacon-pulse {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.8; }
+  }
+
+  .hero-content {
+    max-width: 860px;
+  }
+
+  .section-tag {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: #e5a96a;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-tag::before {
+    content: '// ';
+    color: #8e95a5;
+  }
+
+  .hero-title {
+    font-size: clamp(2rem, 4.5vw, 3.25rem);
+    font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.025em;
+    color: #f3f4f6;
+    margin-bottom: 1.15rem;
+  }
+
+  .glow-warm {
+    background: linear-gradient(135deg, #e5a96a 0%, #fef3c7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .hero-description {
+    font-size: 1.1rem;
+    line-height: 1.65;
+    color: #9ca3af;
+    margin-bottom: 2.25rem;
+  }
+
+  /* Telemetry Specs Bar */
+  .telemetry-bar {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+    background: rgba(18, 22, 36, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(16px);
+    border-radius: 12px;
+    padding: 1rem 1.5rem;
+  }
+
+  .telemetry-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+
+  .stat-label {
+    font-size: 0.6875rem;
+    color: #6b7280;
+    letter-spacing: 0.06em;
+  }
+
+  .stat-val {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #f3f4f6;
+  }
+
+  .text-amber { color: #f59e0b; }
+  .text-cyan { color: #00f2fe; }
+  .text-green { color: #10b981; }
+
+  .telemetry-divider {
+    width: 1px;
+    height: 28px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  /* Filter Toolbar */
+  .blog-main-section {
+    padding-top: 2.5rem;
+  }
+
+  .filter-toolbar {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .segmented-control {
+    display: inline-flex;
+    background: rgba(18, 22, 36, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 4px;
+    border-radius: 12px;
+    backdrop-filter: blur(16px);
+    overflow-x: auto;
+    max-width: 100%;
+    scrollbar-width: none;
+  }
+
+  .segmented-control::-webkit-scrollbar {
+    display: none;
+  }
+
+  .segment-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 0.84rem;
+    font-weight: 500;
+    padding: 0.5rem 1.15rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    white-space: nowrap;
+    font-family: var(--font-sans, inherit);
+  }
+
+  .segment-btn:hover {
+    color: #f3f4f6;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .segment-btn.active {
+    background: rgba(229, 169, 106, 0.16);
+    color: #e5a96a;
+    font-weight: 600;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+  }
+
+  .search-actions-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    flex: 1;
+    max-width: 460px;
+    background: rgba(18, 22, 36, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 10px;
+    padding: 0.45rem 0.85rem;
+    transition: all 0.2s ease;
+  }
+
+  .search-box:focus-within {
+    border-color: rgba(229, 169, 106, 0.45);
+    box-shadow: 0 0 12px rgba(229, 169, 106, 0.15);
+    background: rgba(24, 29, 48, 0.85);
+  }
+
+  .search-icon {
+    color: #6b7280;
+    margin-right: 0.65rem;
+    flex-shrink: 0;
+  }
+
+  .search-box input {
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #f3f4f6;
+    font-size: 0.875rem;
+    width: 100%;
+    font-family: var(--font-sans, inherit);
+  }
+
+  .search-box input::placeholder {
+    color: #6b7280;
+  }
+
+  .clear-btn {
+    background: transparent;
+    border: none;
+    color: #9ca3af;
+    font-size: 1.25rem;
+    line-height: 1;
+    cursor: pointer;
+    padding: 0 0.35rem;
+  }
+
+  .clear-btn:hover {
+    color: #f3f4f6;
+  }
+
+  .search-shortcut {
+    font-size: 0.6875rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    color: #6b7280;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 4px;
+    padding: 0.1rem 0.4rem;
+    margin-left: 0.5rem;
+  }
+
+  .admin-compose-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: linear-gradient(135deg, #e5a96a 0%, #d4af37 100%);
+    color: #0b0d13;
+    font-weight: 600;
+    font-size: 0.84rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 14px rgba(229, 169, 106, 0.25);
+  }
+
+  .admin-compose-action:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(229, 169, 106, 0.4);
+  }
+
+  .filter-status-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 0.85rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 8px;
+  }
+
+  .status-count-text {
+    font-size: 0.8125rem;
+    color: #8e95a5;
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+
+  .reset-link-btn {
+    background: transparent;
+    border: none;
+    color: #e5a96a;
+    font-size: 0.8125rem;
+    cursor: pointer;
+    text-decoration: underline;
+  }
+
+  /* Grid Layout */
+  .blog-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.75rem;
+  }
+
+  @media (max-width: 860px) {
+    .blog-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Empty State */
+  .empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 5rem 2rem;
+    background: rgba(18, 22, 36, 0.5);
+    border: 1px dashed rgba(255, 255, 255, 0.12);
+    border-radius: 16px;
+    margin-top: 1rem;
+  }
+
+  .empty-radar-icon {
+    color: #6b7280;
+    margin-bottom: 1.25rem;
+  }
+
+  .empty-title {
+    font-size: 1.35rem;
+    color: #f3f4f6;
+    margin-bottom: 0.5rem;
+  }
+
+  .empty-text {
+    font-size: 0.9375rem;
+    color: #8e95a5;
+    max-width: 440px;
+    margin-bottom: 1.75rem;
+    line-height: 1.5;
+  }
+
+  /* Reader Modal */
+  .reader-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+  }
+
+  .reader-modal-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .reader-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(5, 7, 12, 0.8);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .reader-modal-dialog {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 840px;
+    max-height: 90vh;
+    background: rgba(18, 22, 36, 0.95);
+    border: 1px solid rgba(229, 169, 106, 0.25);
+    border-radius: 18px;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.8), 0 0 30px rgba(229, 169, 106, 0.12);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    transform: translateY(16px) scale(0.98);
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .reader-modal-overlay.is-open .reader-modal-dialog {
+    transform: translateY(0) scale(1);
+  }
+
+  .reader-modal-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(13, 16, 28, 0.8);
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .reader-header-left {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.8125rem;
+    color: #8e95a5;
+  }
+
+  .reader-category-pill {
+    padding: 0.2rem 0.65rem;
+    background: rgba(229, 169, 106, 0.15);
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    color: #e5a96a;
+    border-radius: 9999px;
+    font-weight: 600;
+  }
+
+  .meta-dot {
+    color: rgba(255, 255, 255, 0.2);
+  }
+
+  .reader-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .modal-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.8125rem;
+    color: #e5a96a;
+    text-decoration: none;
+    padding: 0.35rem 0.75rem;
+    border-radius: 6px;
+    background: rgba(229, 169, 106, 0.08);
+    border: 1px solid rgba(229, 169, 106, 0.25);
+    transition: all 0.2s ease;
+  }
+
+  .modal-action-btn:hover {
+    background: rgba(229, 169, 106, 0.18);
+  }
+
+  .modal-close-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    border-radius: 8px;
+    color: #9ca3af;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .modal-close-btn:hover {
+    color: #f3f4f6;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  .reader-modal-body {
+    padding: 2rem 2.25rem;
+    overflow-y: auto;
+    flex-grow: 1;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(229, 169, 106, 0.3) rgba(18, 22, 36, 0.5);
+  }
+
+  .reader-article-title {
+    font-size: 1.85rem;
+    font-weight: 700;
+    line-height: 1.25;
+    letter-spacing: -0.02em;
+    color: #f3f4f6;
+    margin-bottom: 1.25rem;
+  }
+
+  .reader-author-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding-bottom: 1.5rem;
+    margin-bottom: 1.75rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .reader-avatar {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #1e2538;
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    color: #e5a96a;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-weight: 700;
+    font-size: 0.85rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .reader-author-details {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .reader-author-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: #f3f4f6;
+  }
+
+  .reader-author-title {
+    font-size: 0.75rem;
+    color: #8e95a5;
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+
+  /* Reader Typography */
+  .reader-markdown-content {
+    color: #d1d5db;
+    font-size: 1.025rem;
+    line-height: 1.75;
+  }
+
+  :global(.reader-h2) {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: #f3f4f6;
+    margin: 2rem 0 1rem;
+    letter-spacing: -0.01em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.4rem;
+  }
+
+  :global(.reader-h3) {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #e5a96a;
+    margin: 1.5rem 0 0.75rem;
+  }
+
+  :global(.reader-p) {
+    margin-bottom: 1.25rem;
+  }
+
+  :global(.reader-ul) {
+    margin: 1rem 0 1.5rem 0.5rem;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  :global(.reader-li) {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.65rem;
+    font-size: 0.975rem;
+    color: #d1d5db;
+  }
+
+  :global(.reader-bullet) {
+    color: #e5a96a;
+    font-weight: 700;
+  }
+
+  :global(.reader-callout) {
+    background: rgba(229, 169, 106, 0.08);
+    border: 1px solid rgba(229, 169, 106, 0.25);
+    border-left: 4px solid #e5a96a;
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin: 1.5rem 0;
+  }
+
+  :global(.callout-header) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #e5a96a;
+    font-size: 0.875rem;
+    margin-bottom: 0.45rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+
+  :global(.callout-beacon) {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #e5a96a;
+  }
+
+  :global(.callout-body) {
+    font-size: 0.9375rem;
+    color: #e5e7eb;
+    line-height: 1.6;
+  }
+
+  :global(.reader-code-wrapper) {
+    background: #0d101d;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    overflow: hidden;
+    margin: 1.5rem 0;
+  }
+
+  :global(.code-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.45rem 1rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.6875rem;
+    color: #8e95a5;
+  }
+
+  :global(.code-lang) {
+    text-transform: uppercase;
+    color: #e5a96a;
+    font-weight: 600;
+  }
+
+  :global(.reader-pre) {
+    padding: 1.25rem;
+    overflow-x: auto;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: #e2e8f0;
+  }
+
+  :global(.reader-inline-code) {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    padding: 0.15rem 0.4rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.875em;
+    color: #f3c28c;
+  }
+
+  .reader-modal-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.15rem 1.75rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(13, 16, 28, 0.8);
+    gap: 1rem;
+  }
+
+  :global(.reader-footer-tags) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+
+  :global(.reader-footer-tag) {
+    font-size: 0.75rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    color: #8e95a5;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+  }
+
+  @media (max-width: 680px) {
+    .reader-modal-dialog {
+      max-height: 95vh;
+    }
+    .reader-modal-body {
+      padding: 1.25rem 1.25rem;
+    }
+    .reader-article-title {
+      font-size: 1.4rem;
+    }
+    .hero-title {
+      font-size: 1.85rem;
+    }
+    .telemetry-bar {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.85rem;
+    }
+    .telemetry-divider {
+      display: none;
+    }
+  }
+</style>

@@ -1,0 +1,2770 @@
+---
+// src/pages/admin.astro - Dedicated Apple-grade Space Admin Mission Control Center
+import Layout from '../layouts/Layout.astro';
+---
+
+<Layout title="Mission Control Center | Space Engineer Admin CMS">
+  <div class="admin-page-root">
+    <!-- ============================================== -->
+    <!-- VIEW 1: AUTHENTICATION LOCK SCREEN             -->
+    <!-- ============================================== -->
+    <section id="admin-auth-screen" class="auth-screen-container">
+      <div class="auth-glass-panel">
+        <div class="auth-header">
+          <div class="auth-icon-halo">
+            <div class="auth-icon-pulse"></div>
+            <div class="auth-icon-core">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+                <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+              </svg>
+            </div>
+          </div>
+          <span class="auth-telemetry-tag">ORBITAL SECURITY PROTOCOL // LEVEL-4 CLEARANCE</span>
+          <h1 class="auth-heading">Mission Control Authorization</h1>
+          <p class="auth-desc">
+            Enter administrative passkey to unlock Harvard CV content studio, upload awards with timeline, and publish flight mission logs.
+          </p>
+        </div>
+
+        <form id="admin-page-login-form" class="auth-form" autocomplete="off">
+          <div class="form-field">
+            <div class="field-label-row">
+              <label for="page-passkey-input" class="field-label">Authorization Passkey</label>
+              <button type="button" id="page-quick-fill-btn" class="quick-pass-hint">
+                Use default (apollo11)
+              </button>
+            </div>
+            <div class="auth-input-wrapper">
+              <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 2l-2 2m-1.5 1.5L16 7l-1.5-1.5-2 2L12 6l-2 2 1.5 1.5L10 11l-1.5-1.5-2 2L8 13l-1.5-1.5-2 2L6 15l-1.5-1.5L3 15v6h6l1.5-1.5L9 18l1.5-1.5 2-2L14 16l1.5-1.5 2 2 1.5-1.5 2-2 2-2z"></path>
+              </svg>
+              <input
+                type="password"
+                id="page-passkey-input"
+                class="auth-input"
+                placeholder="Enter flight passkey..."
+                required
+                autocomplete="current-password"
+              />
+              <button type="button" id="page-toggle-pass" class="auth-eye-btn" aria-label="Toggle password visibility">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                  <circle cx="12" cy="12" r="3"></circle>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <div id="page-auth-feedback" class="auth-feedback" role="alert" style="display: none;">
+            <span class="feedback-dot"></span>
+            <span id="page-feedback-msg">Invalid passkey.</span>
+          </div>
+
+          <div class="auth-submit-row">
+            <a href="/" class="btn-return-home">
+              ← Return to Portfolio
+            </a>
+            <button type="submit" id="page-auth-submit" class="btn-unlock-deck">
+              <span>Authenticate & Access</span>
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="5" y1="12" x2="19" y2="12"></line>
+                <polyline points="12 5 19 12 12 19"></polyline>
+              </svg>
+            </button>
+          </div>
+        </form>
+
+        <div class="auth-security-footer">
+          <span class="security-dot"></span>
+          <span>SYSTEM READY • LOCAL ENCRYPTION ACTIVE • DUAL-REDUNDANT STORAGE</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================== -->
+    <!-- VIEW 2: AUTHENTICATED MISSION CONTROL DASHBOARD-->
+    <!-- ============================================== -->
+    <section id="admin-dashboard-screen" class="dashboard-container" style="display: none;">
+      <div class="dashboard-inner container">
+        
+        <!-- Top Mission Navigation Bar -->
+        <header class="dash-topbar">
+          <div class="dash-topbar-left">
+            <div class="dash-user-badge">
+              <span class="dash-user-avatar">NN</span>
+              <div class="dash-user-meta">
+                <div class="dash-user-name">
+                  <span id="dash-user-display-name">Võ Quang Nhật Nguyên</span>
+                  <span class="dash-pill-active">ADMIN ACTIVE</span>
+                </div>
+                <div class="dash-user-role">Space Systems & Flight Software Architect • Callsign: NHAT-NGUYEN</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="dash-topbar-right">
+            <a href="/" class="dash-action-link">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+              </svg>
+              <span>Live Site</span>
+            </a>
+            <a href="/cv" class="dash-action-link" target="_blank">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              <span>Harvard CV ↗</span>
+            </a>
+            <a href="/blog" class="dash-action-link" target="_blank">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+              <span>Mission Blog ↗</span>
+            </a>
+            <button type="button" id="dash-logout-btn" class="dash-logout-btn" title="End Admin Session">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+              </svg>
+              <span>Lock / Exit</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Metric KPI Cards -->
+        <div class="dash-metrics-grid">
+          <!-- KPI 1 -->
+          <div class="metric-glass-card">
+            <div class="metric-top">
+              <span class="metric-label">TECHNICAL ACHIEVEMENTS</span>
+              <div class="metric-icon-box amber-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="8" r="7"></circle>
+                  <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-val" id="metric-ach-count">--</div>
+            <div class="metric-bottom">
+              <span class="metric-sub">NASA, AIAA & flight honors</span>
+              <button type="button" class="metric-action-btn" data-dash-nav="dash-tab-achievements">+ Add Award</button>
+            </div>
+          </div>
+
+          <!-- KPI 2 -->
+          <div class="metric-glass-card">
+            <div class="metric-top">
+              <span class="metric-label">MISSION ARTICLES</span>
+              <div class="metric-icon-box blue-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M12 20h9"></path>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-val" id="metric-blog-count">--</div>
+            <div class="metric-bottom">
+              <span class="metric-sub">Published technical articles</span>
+              <button type="button" class="metric-action-btn" data-dash-nav="dash-tab-blog">+ Compose</button>
+            </div>
+          </div>
+
+          <!-- KPI 3 -->
+          <div class="metric-glass-card">
+            <div class="metric-top">
+              <span class="metric-label">SITE UPDATES / REVISIONS</span>
+              <div class="metric-icon-box emerald-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"></path>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-val" id="metric-updates-count">--</div>
+            <div class="metric-bottom">
+              <span class="metric-sub">Tracked live telemetry mutations</span>
+              <button type="button" class="metric-action-btn" data-dash-nav="dash-tab-cv">Edit Studio</button>
+            </div>
+          </div>
+
+          <!-- KPI 4 -->
+          <div class="metric-glass-card">
+            <div class="metric-top">
+              <span class="metric-label">TELEMETRY STORE STATUS</span>
+              <div class="metric-icon-box purple-box">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                  <polyline points="7 10 12 15 17 10"></polyline>
+                  <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+              </div>
+            </div>
+            <div class="metric-val text-green" id="metric-sync-status">SYNCHRONIZED</div>
+            <div class="metric-bottom">
+              <span class="metric-sub">localStorage & reactive events</span>
+              <button type="button" class="metric-action-btn" data-dash-nav="dash-tab-system">Backup Data</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Main Workspace Tabs -->
+        <div class="dash-workspace">
+          <!-- Segmented Navigation Header -->
+          <div class="dash-tabs-bar" role="tablist">
+            <button type="button" class="dash-tab is-active" data-dash-tab="dash-tab-achievements" role="tab">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="8" r="7"></circle>
+                <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+              </svg>
+              <span>Achievements & Timeline (Upload)</span>
+            </button>
+            <button type="button" class="dash-tab" data-dash-tab="dash-tab-blog" role="tab">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M12 20h9"></path>
+                <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+              </svg>
+              <span>Mission Blog CMS (Viết blog)</span>
+            </button>
+            <button type="button" class="dash-tab" data-dash-tab="dash-tab-cv" role="tab">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+              </svg>
+              <span>Harvard CV Studio (Chỉnh sửa CV)</span>
+            </button>
+            <button type="button" class="dash-tab" data-dash-tab="dash-tab-system" role="tab">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="3"></circle>
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+              </svg>
+              <span>Security & Backup</span>
+            </button>
+          </div>
+
+          <!-- TAB CONTENT PANELS -->
+          <div class="dash-tab-content">
+            <!-- PANEL 1: ACHIEVEMENTS & TIMELINE -->
+            <div id="dash-tab-achievements" class="dash-panel is-active">
+              <div class="panel-header-split">
+                <div>
+                  <h3 class="dash-panel-title">Technical Achievements & Mission Timeline</h3>
+                  <p class="dash-panel-desc">Add verified NASA space flight awards, IEEE/AIAA technical distinctions, and orbital milestones with exact dates.</p>
+                </div>
+                <button type="button" id="dash-ach-reset-btn" class="dash-sub-btn">+ New Achievement Form</button>
+              </div>
+
+              <!-- Achievement Form -->
+              <form id="dash-ach-form" class="dash-form-card">
+                <input type="hidden" id="dash-ach-id" value="" />
+                
+                <div class="form-row form-row-2">
+                  <div class="form-field">
+                    <label for="dash-ach-title" class="field-label">Achievement / Award Title *</label>
+                    <input type="text" id="dash-ach-title" class="editor-input" placeholder="e.g. NASA Space Flight Honor Award" required />
+                  </div>
+                  <div class="form-field">
+                    <label for="dash-ach-timeline" class="field-label">Timeline / Date *</label>
+                    <input type="text" id="dash-ach-timeline" class="editor-input" placeholder="e.g. 2024 — Present or October 2024" required />
+                  </div>
+                </div>
+
+                <div class="form-row form-row-3">
+                  <div class="form-field">
+                    <label for="dash-ach-cat" class="field-label">Category</label>
+                    <select id="dash-ach-cat" class="editor-select">
+                      <option value="Flight Heritage">Flight Heritage</option>
+                      <option value="Technical Award">Technical Award</option>
+                      <option value="Mission Milestone">Mission Milestone</option>
+                      <option value="Publications">Publications & Whitepapers</option>
+                      <option value="Fellowship">Fellowship / Honor</option>
+                      <option value="Patent">Patent / Intellectual Property</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
+                    <label for="dash-ach-org" class="field-label">Organization / Sponsor</label>
+                    <input type="text" id="dash-ach-org" class="editor-input" placeholder="e.g. NASA Jet Propulsion Laboratory" />
+                  </div>
+                  <div class="form-field">
+                    <label for="dash-ach-metrics" class="field-label">Quantified Metric / Impact</label>
+                    <input type="text" id="dash-ach-metrics" class="editor-input" placeholder="e.g. 0 safe-mode trips / Top 1% distinction" />
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="dash-ach-desc" class="field-label">Description & Harvard Accomplishment Summary</label>
+                  <textarea id="dash-ach-desc" rows="3" class="editor-textarea" placeholder="Detailed technical narrative describing the achievement and engineering leadership..."></textarea>
+                </div>
+
+                <div class="form-field">
+                  <label for="dash-ach-tags" class="field-label">Tags (comma-separated)</label>
+                  <input type="text" id="dash-ach-tags" class="editor-input" placeholder="e.g. Rust, CCSDS, ARM Cortex-M7, FDIR" />
+                </div>
+
+                <div class="form-action-bar">
+                  <button type="submit" id="dash-ach-submit-btn" class="btn-primary-amber">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    </svg>
+                    <span>Save to Timeline & Store</span>
+                  </button>
+                </div>
+              </form>
+
+              <!-- Achievements Inventory -->
+              <div class="dash-inventory-wrapper">
+                <div class="dash-inv-title-bar">
+                  <h4>Live Achievements Directory</h4>
+                  <span id="dash-ach-badge" class="count-pill">0 items</span>
+                </div>
+                <div id="dash-ach-list" class="dash-inventory-list">
+                  <!-- Dynamically rendered -->
+                </div>
+              </div>
+            </div>
+
+            <!-- PANEL 2: MISSION BLOG CMS -->
+            <div id="dash-tab-blog" class="dash-panel">
+              <div class="panel-header-split">
+                <div>
+                  <h3 class="dash-panel-title">Technical Mission Articles Composer</h3>
+                  <p class="dash-panel-desc">Draft and publish space systems engineering articles with rich Markdown, tags, and reading estimates.</p>
+                </div>
+                <button type="button" id="dash-blog-reset-btn" class="dash-sub-btn">+ New Article</button>
+              </div>
+
+              <!-- Blog Form -->
+              <form id="dash-blog-form" class="dash-form-card">
+                <input type="hidden" id="dash-blog-id" value="" />
+
+                <div class="form-row form-row-2">
+                  <div class="form-field">
+                    <label for="dash-blog-title" class="field-label">Article Title *</label>
+                    <input type="text" id="dash-blog-title" class="editor-input" placeholder="e.g. Deterministic Real-Time Flight Software with Rust" required />
+                  </div>
+                  <div class="form-field">
+                    <label for="dash-blog-slug" class="field-label">URL Slug *</label>
+                    <input type="text" id="dash-blog-slug" class="editor-input" placeholder="e.g. deterministic-rtos-flight-software" required />
+                  </div>
+                </div>
+
+                <div class="form-row form-row-3">
+                  <div class="form-field">
+                    <label for="dash-blog-date" class="field-label">Publication Date</label>
+                    <input type="date" id="dash-blog-date" class="editor-input" />
+                  </div>
+                  <div class="form-field">
+                    <label for="dash-blog-readtime" class="field-label">Read Time</label>
+                    <input type="text" id="dash-blog-readtime" class="editor-input" placeholder="e.g. 5 min read" />
+                  </div>
+                  <div class="form-field">
+                    <label for="dash-blog-tags" class="field-label">Category Tags (comma-separated)</label>
+                    <input type="text" id="dash-blog-tags" class="editor-input" placeholder="e.g. Flight Software, Rust, RTOS" />
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="dash-blog-excerpt" class="field-label">Abstract / Excerpt *</label>
+                  <textarea id="dash-blog-excerpt" rows="2" class="editor-textarea" placeholder="Brief technical summary..." required></textarea>
+                </div>
+
+                <div class="form-field">
+                  <label for="dash-blog-content" class="field-label">Article Markdown Content *</label>
+                  <textarea id="dash-blog-content" rows="10" class="editor-textarea font-mono" placeholder="Write full markdown technical post here..." required></textarea>
+                </div>
+
+                <div class="form-action-bar">
+                  <button type="submit" id="dash-blog-submit-btn" class="btn-primary-amber">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    </svg>
+                    <span>Publish Article</span>
+                  </button>
+                </div>
+              </form>
+
+              <!-- Blog Inventory -->
+              <div class="dash-inventory-wrapper">
+                <div class="dash-inv-title-bar">
+                  <h4>Published Articles</h4>
+                  <span id="dash-blog-badge" class="count-pill">0 posts</span>
+                </div>
+                <div id="dash-blog-list" class="dash-inventory-list">
+                  <!-- Dynamically rendered -->
+                </div>
+              </div>
+            </div>
+
+            <!-- PANEL 3: HARVARD CV STUDIO -->
+            <div id="dash-tab-cv" class="dash-panel">
+              <div class="panel-header-split">
+                <div>
+                  <h3 class="dash-panel-title">Harvard CV Content & Sections Studio</h3>
+                  <p class="dash-panel-desc">Modify personal identity, avatar, academic appointments, degrees, thesis titles, or edit the full CV via the Word Document Canvas.</p>
+                </div>
+                <div style="display:flex; gap:0.5rem; align-items:center;">
+                  <a href="/cv" target="_blank" class="dash-sub-btn">Preview Harvard CV ↗</a>
+                </div>
+              </div>
+
+              <!-- Mode Switcher: Form View vs Word Document Editor View -->
+              <div class="cv-mode-selector">
+                <button type="button" class="cv-mode-btn is-active" id="dash-cv-mode-form-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+                  <span>Structured Form Mode</span>
+                </button>
+                <button type="button" class="cv-mode-btn" id="dash-cv-mode-doc-btn">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                  <span>Word Document Editor (Rich Format)</span>
+                </button>
+              </div>
+
+              <!-- Profile Avatar Customizer Card -->
+              <div class="cv-card-inner avatar-studio-card" id="dash-cv-avatar-studio" style="margin-bottom:1.5rem;">
+                <h4 class="cv-sub-title">Profile Photo & Callsign Avatar</h4>
+                <div class="avatar-studio-layout">
+                  <div class="avatar-preview-wrap">
+                    <img id="dash-avatar-preview-img" class="avatar-preview-img" src="" alt="Profile Preview" style="display:none;" />
+                    <div id="dash-avatar-fallback" class="avatar-preview-fallback">NN</div>
+                    <label for="dash-avatar-file-input" class="avatar-camera-overlay" title="Upload local photo">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+                    </label>
+                  </div>
+                  <div class="avatar-controls-col">
+                    <div class="avatar-btn-row">
+                      <label class="dash-sub-btn avatar-upload-btn" style="cursor:pointer;">
+                        <span>📁 Upload Image File</span>
+                        <input type="file" id="dash-avatar-file-input" accept="image/*" style="display:none;" />
+                      </label>
+                      <button type="button" id="dash-avatar-reset-btn" class="btn-micro-action" style="color:#F87171;">Reset Default</button>
+                    </div>
+                    <div class="avatar-url-row" style="display:flex; gap:0.5rem; margin-top:0.4rem;">
+                      <input type="url" id="dash-avatar-url-input" class="editor-input" placeholder="Or enter image URL (https://...)" />
+                      <button type="button" id="dash-avatar-load-url-btn" class="dash-sub-btn">Apply URL</button>
+                    </div>
+                    <div class="avatar-presets-row" style="display:flex; gap:0.5rem; align-items:center; margin-top:0.4rem;">
+                      <span style="font-size:0.74rem; color:#8E95A5;">Presets:</span>
+                      <button type="button" class="dash-preset-pill" data-preset="astronaut">Astronaut Helmet</button>
+                      <button type="button" class="dash-preset-pill" data-preset="spacecraft">Flight Commander</button>
+                      <button type="button" class="dash-preset-pill" data-preset="satellite">Space Specialist</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- VIEW 1: STRUCTURED FORM -->
+              <form id="dash-cv-form" class="dash-form-card">
+                <!-- Section 1: Identity & Profile -->
+                <div class="cv-card-inner">
+                  <h4 class="cv-sub-title">1. Professional Identity & Academic Affiliations</h4>
+                  <div class="form-row form-row-3">
+                    <div class="form-field">
+                      <label for="dash-cv-name" class="field-label">Full Name</label>
+                      <input type="text" id="dash-cv-name" class="editor-input font-mono" />
+                    </div>
+                    <div class="form-field">
+                      <label for="dash-cv-callsign" class="field-label">Callsign</label>
+                      <input type="text" id="dash-cv-callsign" class="editor-input font-mono" />
+                    </div>
+                    <div class="form-field">
+                      <label for="dash-cv-location" class="field-label">Location</label>
+                      <input type="text" id="dash-cv-location" class="editor-input font-mono" />
+                    </div>
+                  </div>
+                  <div class="form-row form-row-2" style="margin-top:0.75rem;">
+                    <div class="form-field">
+                      <label for="dash-cv-title" class="field-label">Professional Title</label>
+                      <input type="text" id="dash-cv-title" class="editor-input font-mono" />
+                    </div>
+                    <div class="form-field">
+                      <label for="dash-cv-clearance" class="field-label">Security Clearance</label>
+                      <input type="text" id="dash-cv-clearance" class="editor-input font-mono" />
+                    </div>
+                  </div>
+                  <div class="form-field" style="margin-top:0.75rem;">
+                    <label for="dash-cv-tagline" class="field-label">Mission Tagline</label>
+                    <input type="text" id="dash-cv-tagline" class="editor-input font-mono" />
+                  </div>
+                  <div class="form-field" style="margin-top:0.75rem;">
+                    <label for="dash-cv-bio" class="field-label">Executive Harvard Bio</label>
+                    <textarea id="dash-cv-bio" rows="4" class="editor-textarea font-mono"></textarea>
+                  </div>
+                </div>
+
+                <!-- Section 2: Experience Repeater -->
+                <div class="cv-card-inner" style="margin-top:1.5rem;">
+                  <div class="field-header-row">
+                    <h4 class="cv-sub-title">2. Professional Appointments & Experience</h4>
+                    <button type="button" id="dash-add-exp-btn" class="btn-micro-action">+ Add Appointment</button>
+                  </div>
+                  <div id="dash-cv-exp-container" class="repeater-list">
+                    <!-- Populated dynamically -->
+                  </div>
+                </div>
+
+                <!-- Section 3: Education Repeater -->
+                <div class="cv-card-inner" style="margin-top:1.5rem;">
+                  <div class="field-header-row">
+                    <h4 class="cv-sub-title">3. Academic Background & Degrees</h4>
+                    <button type="button" id="dash-add-edu-btn" class="btn-micro-action">+ Add Degree</button>
+                  </div>
+                  <div id="dash-cv-edu-container" class="repeater-list">
+                    <!-- Populated dynamically -->
+                  </div>
+                </div>
+
+                <div class="form-action-bar" style="margin-top:1.5rem;">
+                  <button type="submit" id="dash-cv-submit-btn" class="btn-primary-amber">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                    </svg>
+                    <span>Save All CV Changes</span>
+                  </button>
+                </div>
+              </form>
+
+              <!-- VIEW 2: WORD DOCUMENT CANVAS (RICH FORMATTING) -->
+              <div id="dash-cv-word-panel" class="word-editor-container" style="display: none;">
+                <!-- Word Ribbon / Toolbar -->
+                <div class="word-ribbon" role="toolbar" aria-label="Word Formatting Ribbon">
+                  <div class="ribbon-group">
+                    <button type="button" class="word-tool-btn" data-dash-cmd="undo" title="Undo">↩</button>
+                    <button type="button" class="word-tool-btn" data-dash-cmd="redo" title="Redo">↪</button>
+                  </div>
+                  <div class="ribbon-sep"></div>
+                  <div class="ribbon-group">
+                    <select id="dash-word-block-select" class="word-heading-select" title="Paragraph Format">
+                      <option value="p">Paragraph</option>
+                      <option value="h1">Heading 1</option>
+                      <option value="h2">Heading 2</option>
+                      <option value="h3">Heading 3</option>
+                      <option value="blockquote">Callout / Quote</option>
+                    </select>
+                  </div>
+                  <div class="ribbon-sep"></div>
+                  <div class="ribbon-group">
+                    <button type="button" class="word-tool-btn font-bold" data-dash-cmd="bold" title="Bold"><b>B</b></button>
+                    <button type="button" class="word-tool-btn italic" data-dash-cmd="italic" title="Italic"><i>I</i></button>
+                    <button type="button" class="word-tool-btn underline" data-dash-cmd="underline" title="Underline"><u>U</u></button>
+                    <button type="button" class="word-tool-btn line-through" data-dash-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+                  </div>
+                  <div class="ribbon-sep"></div>
+                  <div class="ribbon-group">
+                    <button type="button" class="word-tool-btn" data-dash-cmd="insertUnorderedList" title="Bullet List">• List</button>
+                    <button type="button" class="word-tool-btn" data-dash-cmd="insertOrderedList" title="Numbered List">1. List</button>
+                  </div>
+                  <div class="ribbon-sep"></div>
+                  <div class="ribbon-group">
+                    <button type="button" class="word-tool-btn text-amber" data-dash-cmd="foreColor" data-val="#E5A96A" title="Gold Amber Text">Gold</button>
+                    <button type="button" class="word-tool-btn" data-dash-cmd="hiliteColor" data-val="rgba(229,169,106,0.25)" title="Amber Highlight">Highlight</button>
+                    <button type="button" class="word-tool-btn" data-dash-cmd="insertHorizontalRule" title="Divider Line">― HR</button>
+                    <button type="button" class="word-tool-btn" data-dash-cmd="removeFormat" title="Clear Formatting">Tx Clear</button>
+                  </div>
+                </div>
+
+                <!-- Document Header Info -->
+                <div class="doc-sheet-header">
+                  <span class="doc-icon">📄</span>
+                  <span class="doc-filename">Harvard_Academic_CV_Nhat_Nguyen_Vo.docx</span>
+                  <span class="doc-status-badge">Document Canvas • Monospace Rich Text</span>
+                </div>
+
+                <!-- Document Paper Sheet -->
+                <div class="word-doc-canvas-wrapper">
+                  <div id="dash-word-document-canvas" class="word-doc-canvas font-mono" contenteditable="true" spellcheck="false">
+                    <!-- Loaded dynamically with rich HTML -->
+                  </div>
+                </div>
+
+                <!-- Document Status Footer -->
+                <div class="doc-status-bar">
+                  <div class="doc-status-left font-mono">
+                    <span>Page 1 of 1</span>
+                    <span>•</span>
+                    <span id="dash-doc-word-count">0 words</span>
+                    <span>•</span>
+                    <span>Harvard Academic Standard</span>
+                  </div>
+                  <button type="button" id="dash-word-save-btn" class="btn-primary-amber">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline></svg>
+                    <span>Save Word Document to CV</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- PANEL 4: SECURITY & BACKUP -->
+            <div id="dash-tab-system" class="dash-panel">
+              <div class="panel-header-split">
+                <div>
+                  <h3 class="dash-panel-title">System Operations & Data Vault</h3>
+                  <p class="dash-panel-desc">Export full JSON backups, import external data snapshots, customize admin security passkeys, or reset to defaults.</p>
+                </div>
+              </div>
+
+              <!-- Passkey Management Form -->
+              <div class="dash-form-card" style="margin-bottom:1.5rem;">
+                <h4 class="cv-sub-title">Update Admin Security Passkey</h4>
+                <p style="font-size:0.82rem; color:#8E95A5; margin-bottom:1rem;">Change your secret flight passkey (Default is: apollo11).</p>
+                <form id="dash-passkey-form" class="form-row form-row-2">
+                  <div class="form-field">
+                    <label for="dash-new-passkey" class="field-label">New Passkey (min 4 chars)</label>
+                    <input type="password" id="dash-new-passkey" class="editor-input" placeholder="Enter new passkey..." required />
+                  </div>
+                  <div class="form-field" style="display:flex; align-items:flex-end;">
+                    <button type="submit" class="btn-primary-amber" style="width:100%; justify-content:center;">
+                      Update Passkey
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+              <!-- Backup Operations Grid -->
+              <div class="dash-backup-grid">
+                <div class="backup-tile">
+                  <div class="tile-icon amber-tile">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="7 10 12 15 17 10"></polyline>
+                      <line x1="12" y1="15" x2="12" y2="3"></line>
+                    </svg>
+                  </div>
+                  <h5>Export Data JSON</h5>
+                  <p>Download complete portfolio dataset including achievements, blogs, and CV records.</p>
+                  <button type="button" id="dash-export-btn" class="tile-btn">Download Backup (.json)</button>
+                </div>
+
+                <div class="backup-tile">
+                  <div class="tile-icon blue-tile">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                      <polyline points="17 8 12 3 7 8"></polyline>
+                      <line x1="12" y1="3" x2="12" y2="15"></line>
+                    </svg>
+                  </div>
+                  <h5>Import Data JSON</h5>
+                  <p>Restore or update portfolio from a previously exported JSON backup file.</p>
+                  <label class="tile-btn" style="display:block; cursor:pointer;">
+                    <span>Upload JSON File</span>
+                    <input type="file" id="dash-import-file" accept=".json,application/json" style="display:none;" />
+                  </label>
+                </div>
+
+                <div class="backup-tile">
+                  <div class="tile-icon red-tile">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="1 4 1 10 7 10"></polyline>
+                      <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                    </svg>
+                  </div>
+                  <h5>Factory Reset</h5>
+                  <p>Clear all local modifications and restore built-in space engineer data.</p>
+                  <button type="button" id="dash-reset-btn" class="tile-btn tile-btn-danger">Reset to Defaults</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+  </div>
+</Layout>
+
+<style>
+  .admin-page-root {
+    min-height: calc(100vh - 120px);
+    display: flex;
+    flex-direction: column;
+    padding-top: 1.5rem;
+    padding-bottom: 4rem;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace !important;
+  }
+
+  /* Auth Screen */
+  .auth-screen-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    min-height: 70vh;
+  }
+
+  .auth-glass-panel {
+    width: 100%;
+    max-width: 480px;
+    background: linear-gradient(180deg, rgba(20, 24, 36, 0.92) 0%, rgba(10, 13, 20, 0.97) 100%);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 24px;
+    padding: 2.5rem 2.25rem;
+    box-shadow: 
+      0 30px 60px -12px rgba(0, 0, 0, 0.8),
+      0 0 0 1px rgba(229, 169, 106, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  }
+
+  .auth-header {
+    text-align: center;
+    margin-bottom: 2rem;
+  }
+
+  .auth-icon-halo {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    margin: 0 auto 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .auth-icon-pulse {
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(229, 169, 106, 0.4) 0%, transparent 70%);
+    filter: blur(10px);
+  }
+
+  .auth-icon-core {
+    position: relative;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(35, 42, 60, 0.95), rgba(15, 18, 27, 0.98));
+    border: 1px solid rgba(229, 169, 106, 0.4);
+    color: #E5A96A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .auth-telemetry-tag {
+    display: inline-block;
+    font-size: 0.65rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #E5A96A;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    margin-bottom: 0.5rem;
+  }
+
+  .auth-heading {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+    margin: 0 0 0.5rem;
+  }
+
+  .auth-desc {
+    font-size: 0.86rem;
+    line-height: 1.5;
+    color: #8E95A5;
+    margin: 0;
+  }
+
+  .auth-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+
+  .field-label-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.4rem;
+  }
+
+  .quick-pass-hint {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #E5A96A;
+    font-size: 0.75rem;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+
+  .auth-input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+  }
+
+  .auth-input-icon {
+    position: absolute;
+    left: 1rem;
+    color: #6B7280;
+  }
+
+  .auth-input {
+    width: 100%;
+    padding: 0.8rem 2.8rem 0.8rem 2.8rem;
+    background: rgba(8, 10, 16, 0.75);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 12px;
+    color: #FFFFFF;
+    font-size: 0.95rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .auth-input:focus {
+    border-color: rgba(229, 169, 106, 0.6);
+    box-shadow: 0 0 0 3px rgba(229, 169, 106, 0.15);
+  }
+
+  .auth-eye-btn {
+    position: absolute;
+    right: 0.85rem;
+    background: none;
+    border: none;
+    color: #6B7280;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+
+  .auth-feedback {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 0.85rem;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    color: #FCA5A5;
+  }
+
+  .auth-feedback.is-success {
+    background: rgba(16, 185, 129, 0.12);
+    border-color: rgba(16, 185, 129, 0.3);
+    color: #6EE7B7;
+  }
+
+  .auth-submit-row {
+    display: flex;
+    gap: 0.85rem;
+    margin-top: 0.5rem;
+  }
+
+  .btn-return-home {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #9CA3AF;
+    font-size: 0.84rem;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .btn-return-home:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+  }
+
+  .btn-unlock-deck {
+    flex: 1.6;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #E5A96A 0%, #D4AF37 100%);
+    border: none;
+    color: #0A0C12;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(229, 169, 106, 0.28);
+    transition: all 0.2s;
+  }
+
+  .btn-unlock-deck:hover {
+    filter: brightness(1.1);
+    box-shadow: 0 6px 22px rgba(229, 169, 106, 0.38);
+  }
+
+  .auth-security-footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 0.68rem;
+    color: #64748B;
+    letter-spacing: 0.06em;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .security-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 6px #10B981;
+  }
+
+  /* Dashboard View */
+  .dashboard-container {
+    width: 100%;
+  }
+
+  .dashboard-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.25rem;
+  }
+
+  /* Topbar */
+  .dash-topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(14, 18, 27, 0.7);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    margin-bottom: 1.75rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .dash-user-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .dash-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(229, 169, 106, 0.25), rgba(212, 175, 55, 0.4));
+    border: 1px solid rgba(229, 169, 106, 0.4);
+    color: #E5A96A;
+    font-weight: 700;
+    font-size: 0.95rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .dash-user-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .dash-user-name {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #FFFFFF;
+  }
+
+  .dash-pill-active {
+    font-size: 0.65rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    background: rgba(16, 185, 129, 0.15);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    color: #6EE7B7;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .dash-user-role {
+    font-size: 0.76rem;
+    color: #8E95A5;
+  }
+
+  .dash-topbar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+  }
+
+  .dash-action-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #C8CFDB;
+    font-size: 0.8rem;
+    text-decoration: none;
+    transition: all 0.2s;
+  }
+
+  .dash-action-link:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+  }
+
+  .dash-logout-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.45rem 0.85rem;
+    border-radius: 10px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #F87171;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .dash-logout-btn:hover {
+    background: rgba(239, 68, 68, 0.2);
+    color: #FECACA;
+  }
+
+  /* Metrics Grid */
+  .dash-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .metric-glass-card {
+    background: rgba(14, 18, 27, 0.65);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    transition: transform 0.2s, border-color 0.2s;
+  }
+
+  .metric-glass-card:hover {
+    border-color: rgba(229, 169, 106, 0.3);
+    transform: translateY(-2px);
+  }
+
+  .metric-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .metric-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    color: #8E95A5;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+
+  .metric-icon-box {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .amber-box {
+    background: rgba(229, 169, 106, 0.12);
+    border: 1px solid rgba(229, 169, 106, 0.25);
+    color: #E5A96A;
+  }
+
+  .blue-box {
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: #38BDF8;
+  }
+
+  .emerald-box {
+    background: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    color: #34D399;
+  }
+
+  .purple-box {
+    background: rgba(168, 85, 247, 0.12);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    color: #C084FC;
+  }
+
+  .metric-val {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    letter-spacing: -0.02em;
+  }
+
+  .metric-val.text-green {
+    font-size: 1.15rem;
+    color: #34D399;
+    letter-spacing: 0.02em;
+  }
+
+  .metric-bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .metric-sub {
+    font-size: 0.74rem;
+    color: #8E95A5;
+  }
+
+  .metric-action-btn {
+    background: none;
+    border: none;
+    padding: 0;
+    color: #E5A96A;
+    font-size: 0.74rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: underline;
+    text-underline-offset: 2px;
+  }
+
+  /* Workspace */
+  .dash-workspace {
+    background: rgba(14, 18, 27, 0.65);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  .dash-tabs-bar {
+    display: flex;
+    background: rgba(8, 10, 16, 0.8);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    padding: 0.35rem;
+    gap: 0.35rem;
+    overflow-x: auto;
+  }
+
+  .dash-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1rem;
+    border-radius: 12px;
+    background: transparent;
+    border: none;
+    color: #9CA3AF;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .dash-tab:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .dash-tab.is-active {
+    background: rgba(229, 169, 106, 0.15);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    color: #E5A96A;
+    font-weight: 600;
+  }
+
+  .dash-tab-content {
+    padding: 2rem;
+  }
+
+  .dash-panel {
+    display: none;
+  }
+
+  .dash-panel.is-active {
+    display: block;
+    animation: dashFade 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes dashFade {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-header-split {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+    gap: 1rem;
+  }
+
+  .dash-panel-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #FFFFFF;
+    margin: 0 0 0.3rem;
+  }
+
+  .dash-panel-desc {
+    font-size: 0.84rem;
+    color: #8E95A5;
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .dash-sub-btn {
+    padding: 0.5rem 1rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #E5E7EB;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .dash-sub-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+  }
+
+  .dash-form-card {
+    background: rgba(10, 13, 20, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .form-row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .form-row-2 {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .form-row-3 {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .field-label {
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: #C8CFDB;
+  }
+
+  .editor-input,
+  .editor-select,
+  .editor-textarea {
+    width: 100%;
+    padding: 0.75rem 0.95rem;
+    background: rgba(8, 10, 16, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: #FFFFFF;
+    font-size: 0.9rem;
+    outline: none;
+    transition: all 0.2s;
+  }
+
+  .editor-input:focus,
+  .editor-select:focus,
+  .editor-textarea:focus {
+    border-color: rgba(229, 169, 106, 0.6);
+    box-shadow: 0 0 0 3px rgba(229, 169, 106, 0.15);
+  }
+
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.84rem;
+  }
+
+  .form-action-bar {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+  }
+
+  .btn-primary-amber {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.4rem;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #E5A96A 0%, #D4AF37 100%);
+    border: none;
+    color: #0A0C12;
+    font-size: 0.88rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 15px rgba(229, 169, 106, 0.25);
+    transition: all 0.2s;
+  }
+
+  .btn-primary-amber:hover {
+    filter: brightness(1.1);
+  }
+
+  /* Inventory listings */
+  .dash-inventory-wrapper {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 1.5rem;
+  }
+
+  .dash-inv-title-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .dash-inv-title-bar h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin: 0;
+  }
+
+  .dash-inventory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  :global(.dash-item-card) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.25rem;
+    background: rgba(10, 13, 20, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    gap: 1rem;
+    transition: all 0.2s;
+  }
+
+  :global(.dash-item-card:hover) {
+    border-color: rgba(229, 169, 106, 0.3);
+    background: rgba(14, 18, 27, 0.7);
+  }
+
+  :global(.dash-card-left) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+  }
+
+  :global(.dash-card-title) {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin: 0;
+  }
+
+  :global(.dash-card-meta) {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.78rem;
+    color: #8E95A5;
+    flex-wrap: wrap;
+  }
+
+  :global(.dash-card-actions) {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  /* CV Studio in Dashboard */
+  .cv-card-inner {
+    background: rgba(8, 10, 16, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+
+  .cv-sub-title {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #E5A96A;
+    margin: 0 0 1rem;
+  }
+
+  /* Backup Grid */
+  .dash-backup-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .backup-tile {
+    background: rgba(10, 13, 20, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .tile-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .amber-tile {
+    background: rgba(229, 169, 106, 0.12);
+    border: 1px solid rgba(229, 169, 106, 0.25);
+    color: #E5A96A;
+  }
+
+  .blue-tile {
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: #38BDF8;
+  }
+
+  .red-tile {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #F87171;
+  }
+
+  .backup-tile h5 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin: 0;
+  }
+
+  .backup-tile p {
+    font-size: 0.82rem;
+    color: #8E95A5;
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .tile-btn {
+    margin-top: auto;
+    width: 100%;
+    padding: 0.7rem 1rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .tile-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .tile-btn-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #FECACA;
+  }
+
+  /* CV Mode Selector */
+  .cv-mode-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    background: rgba(8, 10, 16, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 0.35rem;
+  }
+
+  .cv-mode-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.6rem 1rem;
+    border-radius: 10px;
+    background: transparent;
+    border: none;
+    color: #9CA3AF;
+    font-size: 0.85rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .cv-mode-btn:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .cv-mode-btn.is-active {
+    background: rgba(229, 169, 106, 0.18);
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    color: #E5A96A;
+    font-weight: 600;
+  }
+
+  /* Profile Avatar Studio */
+  .avatar-studio-layout {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .avatar-preview-wrap {
+    position: relative;
+    width: 88px;
+    height: 88px;
+    border-radius: 50%;
+    border: 2px solid rgba(229, 169, 106, 0.4);
+    background: linear-gradient(135deg, rgba(20, 26, 38, 0.95), rgba(10, 14, 22, 0.98));
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+  }
+
+  .avatar-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-preview-fallback {
+    font-size: 1.85rem;
+    font-weight: 700;
+    color: #E5A96A;
+    font-family: inherit;
+  }
+
+  .avatar-camera-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .avatar-preview-wrap:hover .avatar-camera-overlay {
+    opacity: 1;
+  }
+
+  .avatar-controls-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    min-width: 260px;
+  }
+
+  .dash-preset-pill {
+    padding: 0.25rem 0.65rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #D1D5DB;
+    font-size: 0.74rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .dash-preset-pill:hover {
+    background: rgba(229, 169, 106, 0.2);
+    border-color: rgba(229, 169, 106, 0.4);
+    color: #E5A96A;
+  }
+
+  /* Word Document Editor */
+  .word-editor-container {
+    background: rgba(10, 13, 20, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .word-ribbon {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.65rem 1rem;
+    background: rgba(16, 20, 30, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    overflow-x: auto;
+    flex-wrap: wrap;
+  }
+
+  .ribbon-group {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .ribbon-sep {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 0.35rem;
+  }
+
+  .word-tool-btn {
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #D1D5DB;
+    font-size: 0.8rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .word-tool-btn:hover {
+    background: rgba(229, 169, 106, 0.2);
+    border-color: rgba(229, 169, 106, 0.4);
+    color: #FFFFFF;
+  }
+
+  .word-heading-select {
+    padding: 0.35rem 0.6rem;
+    background: rgba(8, 10, 16, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: #FFFFFF;
+    font-size: 0.8rem;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .doc-sheet-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.65rem 1.25rem;
+    background: rgba(8, 10, 16, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.8rem;
+    color: #8E95A5;
+  }
+
+  .doc-filename {
+    color: #E5E7EB;
+    font-weight: 600;
+  }
+
+  .doc-status-badge {
+    margin-left: auto;
+    font-size: 0.72rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 9999px;
+    background: rgba(229, 169, 106, 0.12);
+    color: #E5A96A;
+  }
+
+  .word-doc-canvas-wrapper {
+    padding: 2rem 1.25rem;
+    background: rgba(6, 8, 12, 0.6);
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+  }
+
+  .word-doc-canvas {
+    width: 100%;
+    max-width: 840px;
+    min-height: 520px;
+    background: #0E121B;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    padding: 2.5rem;
+    color: #F3F4F6;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    outline: none;
+    white-space: pre-wrap;
+  }
+
+  .word-doc-canvas:focus {
+    border-color: rgba(229, 169, 106, 0.4);
+    box-shadow: 0 0 0 2px rgba(229, 169, 106, 0.12);
+  }
+
+  .word-doc-canvas h1,
+  .word-doc-canvas h2,
+  .word-doc-canvas h3 {
+    color: #E5A96A;
+    margin-top: 1.5rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+
+  .word-doc-canvas hr {
+    border: none;
+    border-top: 1px solid rgba(229, 169, 106, 0.3);
+    margin: 1.25rem 0;
+  }
+
+  .word-doc-canvas ul,
+  .word-doc-canvas ol {
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+  }
+
+  .doc-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    background: rgba(14, 18, 27, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .doc-status-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.76rem;
+    color: #8E95A5;
+  }
+
+  @media (max-width: 768px) {
+    .dash-topbar {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .dash-tab-content {
+      padding: 1.25rem;
+    }
+  }
+</style>
+
+<script>
+  function setupAdminPage() {
+    const authScreen = document.getElementById('admin-auth-screen');
+    const dashScreen = document.getElementById('admin-dashboard-screen');
+    if (!authScreen || !dashScreen) return;
+
+    // Helper to get store
+    async function getStore() {
+      try {
+        return await import('../scripts/store.js');
+      } catch (err) {
+        console.warn('Failed to load store module:', err);
+        return null;
+      }
+    }
+
+    // Check if user is authenticated
+    async function checkAuth() {
+      const store = await getStore();
+      if (store && typeof store.checkAdminAuth === 'function') {
+        return store.checkAdminAuth();
+      }
+      return (
+        localStorage.getItem('space_portfolio_admin_auth') === 'true' ||
+        localStorage.getItem('astro_admin_auth') === 'true'
+      );
+    }
+
+    async function syncViews() {
+      const isAuthed = await checkAuth();
+      if (isAuthed) {
+        authScreen.style.display = 'none';
+        dashScreen.style.display = 'block';
+        loadDashboardData();
+      } else {
+        authScreen.style.display = 'flex';
+        dashScreen.style.display = 'none';
+      }
+    }
+
+    // ----------------------------------------------------
+    // AUTH SCREEN LOGIC
+    // ----------------------------------------------------
+    const loginForm = document.getElementById('admin-page-login-form') as HTMLFormElement;
+    const passInput = document.getElementById('page-passkey-input') as HTMLInputElement;
+    const togglePassBtn = document.getElementById('page-toggle-pass');
+    const quickFillBtn = document.getElementById('page-quick-fill-btn');
+    const feedbackBox = document.getElementById('page-auth-feedback');
+    const feedbackMsg = document.getElementById('page-feedback-msg');
+
+    quickFillBtn?.addEventListener('click', () => {
+      if (passInput) {
+        passInput.value = 'apollo11';
+        passInput.focus();
+      }
+    });
+
+    togglePassBtn?.addEventListener('click', () => {
+      if (!passInput) return;
+      const isPass = passInput.type === 'password';
+      passInput.type = isPass ? 'text' : 'password';
+      togglePassBtn.style.color = isPass ? '#E5A96A' : '#6B7280';
+    });
+
+    loginForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const entered = passInput?.value?.trim() || '';
+      const store = await getStore();
+
+      let authResult: any = { success: false };
+      if (store && typeof store.loginAdmin === 'function') {
+        authResult = store.loginAdmin(entered);
+      } else {
+        const storedKey = localStorage.getItem('astro_admin_passkey') || 'apollo11';
+        authResult = { success: entered === storedKey };
+        if (authResult.success) {
+          localStorage.setItem('space_portfolio_admin_auth', 'true');
+          localStorage.setItem('astro_admin_auth', 'true');
+        }
+      }
+
+      if (authResult.success) {
+        if (feedbackBox && feedbackMsg) {
+          feedbackMsg.textContent = 'Access granted. Welcome to Mission Control.';
+          feedbackBox.className = 'auth-feedback is-success';
+          feedbackBox.style.display = 'flex';
+        }
+        localStorage.setItem('space_portfolio_admin_auth', 'true');
+        localStorage.setItem('astro_admin_auth', 'true');
+        window.dispatchEvent(new CustomEvent('portfolio-admin-auth-changed', { detail: { authenticated: true } }));
+
+        setTimeout(() => {
+          syncViews();
+        }, 500);
+      } else {
+        if (feedbackBox && feedbackMsg) {
+          feedbackMsg.textContent = authResult.error || 'Invalid authorization passkey. Default is: apollo11';
+          feedbackBox.className = 'auth-feedback';
+          feedbackBox.style.display = 'flex';
+        }
+        passInput?.select();
+      }
+    });
+
+    // ----------------------------------------------------
+    // DASHBOARD TOPBAR & TABS LOGIC
+    // ----------------------------------------------------
+    const logoutBtn = document.getElementById('dash-logout-btn');
+    logoutBtn?.addEventListener('click', async () => {
+      const store = await getStore();
+      if (store && typeof store.logoutAdmin === 'function') {
+        store.logoutAdmin();
+      }
+      localStorage.removeItem('space_portfolio_admin_auth');
+      localStorage.removeItem('astro_admin_auth');
+      localStorage.removeItem('portfolio_admin_authenticated');
+      localStorage.removeItem('astro_portfolio_auth');
+      window.dispatchEvent(new CustomEvent('portfolio-admin-auth-changed', { detail: { authenticated: false } }));
+      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+      syncViews();
+    });
+
+    const tabs = document.querySelectorAll('.dash-tab');
+    const panels = document.querySelectorAll('.dash-panel');
+
+    function switchDashTab(tabId: string) {
+      tabs.forEach(t => {
+        const matches = t.getAttribute('data-dash-tab') === tabId;
+        t.classList.toggle('is-active', matches);
+      });
+      panels.forEach(p => {
+        p.classList.toggle('is-active', p.id === tabId);
+      });
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.getAttribute('data-dash-tab');
+        if (target) switchDashTab(target);
+      });
+    });
+
+    document.querySelectorAll('[data-dash-nav]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const target = btn.getAttribute('data-dash-nav');
+        if (target) switchDashTab(target);
+      });
+    });
+
+    // ----------------------------------------------------
+    // TAB 1: ACHIEVEMENTS & TIMELINE (UPLOAD THÀNH TÍCH)
+    // ----------------------------------------------------
+    const achForm = document.getElementById('dash-ach-form') as HTMLFormElement;
+    const achId = document.getElementById('dash-ach-id') as HTMLInputElement;
+    const achTitle = document.getElementById('dash-ach-title') as HTMLInputElement;
+    const achTimeline = document.getElementById('dash-ach-timeline') as HTMLInputElement;
+    const achCat = document.getElementById('dash-ach-cat') as HTMLSelectElement;
+    const achOrg = document.getElementById('dash-ach-org') as HTMLInputElement;
+    const achMetrics = document.getElementById('dash-ach-metrics') as HTMLInputElement;
+    const achDesc = document.getElementById('dash-ach-desc') as HTMLTextAreaElement;
+    const achTags = document.getElementById('dash-ach-tags') as HTMLInputElement;
+    const achList = document.getElementById('dash-ach-list');
+    const achBadge = document.getElementById('dash-ach-badge');
+    const metricAchCount = document.getElementById('metric-ach-count');
+    const achResetBtn = document.getElementById('dash-ach-reset-btn');
+
+    function resetAchForm() {
+      if (!achForm) return;
+      achId.value = '';
+      achTitle.value = '';
+      achTimeline.value = '';
+      achCat.value = 'Flight Heritage';
+      achOrg.value = '';
+      achMetrics.value = '';
+      achDesc.value = '';
+      achTags.value = '';
+      const sBtn = document.getElementById('dash-ach-submit-btn');
+      if (sBtn) sBtn.querySelector('span')!.textContent = 'Save to Timeline & Store';
+    }
+
+    achResetBtn?.addEventListener('click', resetAchForm);
+
+    async function loadAchievements() {
+      if (!achList) return;
+      const store = await getStore();
+      const list = store && typeof store.getAchievements === 'function' ? store.getAchievements() : [];
+
+      if (achBadge) achBadge.textContent = `${list.length} items`;
+      if (metricAchCount) metricAchCount.textContent = `${list.length}`;
+
+      if (list.length === 0) {
+        achList.innerHTML = `<div style="text-align:center; padding:2rem; color:#8E95A5;">No achievements recorded yet. Add one above!</div>`;
+        return;
+      }
+
+      achList.innerHTML = list.map((item: any) => `
+        <div class="dash-item-card" data-id="${item.id}">
+          <div class="dash-card-left">
+            <h5 class="dash-card-title">${item.title || 'Untitled'}</h5>
+            <div class="dash-card-meta">
+              <span style="color:#E5A96A; font-weight:600;">${item.date || item.timeline || 'Date N/A'}</span>
+              <span>•</span>
+              <span>${item.category || 'Achievement'}</span>
+              ${item.organization ? `<span>•</span><span>${item.organization}</span>` : ''}
+              ${item.metrics ? `<span>•</span><span style="color:#34D399;">${item.metrics}</span>` : ''}
+            </div>
+          </div>
+          <div class="dash-card-actions">
+            <button type="button" class="btn-inv-edit" data-edit-ach="${item.id}">Edit</button>
+            <button type="button" class="btn-inv-delete" data-delete-ach="${item.id}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Wire edit
+      achList.querySelectorAll('[data-edit-ach]').forEach(b => {
+        b.addEventListener('click', () => {
+          const id = b.getAttribute('data-edit-ach');
+          const target = list.find((a: any) => a.id === id);
+          if (target) {
+            achId.value = target.id || '';
+            achTitle.value = target.title || '';
+            achTimeline.value = target.timeline || target.date || '';
+            achCat.value = target.category || 'Flight Heritage';
+            achOrg.value = target.organization || '';
+            achMetrics.value = target.metrics || '';
+            achDesc.value = target.description || '';
+            achTags.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
+            const sBtn = document.getElementById('dash-ach-submit-btn');
+            if (sBtn) sBtn.querySelector('span')!.textContent = 'Update Achievement';
+            achForm.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+
+      // Wire delete
+      achList.querySelectorAll('[data-delete-ach]').forEach(b => {
+        b.addEventListener('click', async () => {
+          const id = b.getAttribute('data-delete-ach');
+          if (!confirm('Are you sure you want to delete this achievement?')) return;
+          const store = await getStore();
+          if (store && typeof store.deleteAchievement === 'function') {
+            store.deleteAchievement(id);
+          }
+          loadAchievements();
+        });
+      });
+    }
+
+    achForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const store = await getStore();
+      const payload = {
+        title: achTitle.value.trim(),
+        timeline: achTimeline.value.trim(),
+        date: achTimeline.value.trim(),
+        category: achCat.value,
+        organization: achOrg.value.trim(),
+        metrics: achMetrics.value.trim(),
+        description: achDesc.value.trim(),
+        tags: achTags.value.split(',').map(t => t.trim()).filter(Boolean),
+      };
+
+      if (achId.value) {
+        if (store && typeof store.updateAchievement === 'function') {
+          store.updateAchievement(achId.value, payload);
+        }
+      } else {
+        if (store && typeof store.addAchievement === 'function') {
+          store.addAchievement(payload);
+        }
+      }
+
+      resetAchForm();
+      loadAchievements();
+      alert('Achievement successfully saved to store & timeline!');
+    });
+
+    // ----------------------------------------------------
+    // TAB 2: BLOG CMS (VIẾT BLOG)
+    // ----------------------------------------------------
+    const blogForm = document.getElementById('dash-blog-form') as HTMLFormElement;
+    const blogId = document.getElementById('dash-blog-id') as HTMLInputElement;
+    const blogTitle = document.getElementById('dash-blog-title') as HTMLInputElement;
+    const blogSlug = document.getElementById('dash-blog-slug') as HTMLInputElement;
+    const blogDate = document.getElementById('dash-blog-date') as HTMLInputElement;
+    const blogReadtime = document.getElementById('dash-blog-readtime') as HTMLInputElement;
+    const blogTags = document.getElementById('dash-blog-tags') as HTMLInputElement;
+    const blogExcerpt = document.getElementById('dash-blog-excerpt') as HTMLTextAreaElement;
+    const blogContent = document.getElementById('dash-blog-content') as HTMLTextAreaElement;
+    const blogList = document.getElementById('dash-blog-list');
+    const blogBadge = document.getElementById('dash-blog-badge');
+    const metricBlogCount = document.getElementById('metric-blog-count');
+    const blogResetBtn = document.getElementById('dash-blog-reset-btn');
+
+    blogTitle?.addEventListener('input', () => {
+      if (!blogId.value && blogSlug) {
+        blogSlug.value = blogTitle.value
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/[\s_-]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+    });
+
+    function resetBlogForm() {
+      if (!blogForm) return;
+      blogId.value = '';
+      blogTitle.value = '';
+      blogSlug.value = '';
+      blogDate.value = new Date().toISOString().split('T')[0];
+      blogReadtime.value = '5 min read';
+      blogTags.value = '';
+      blogExcerpt.value = '';
+      blogContent.value = '';
+      const sBtn = document.getElementById('dash-blog-submit-btn');
+      if (sBtn) sBtn.querySelector('span')!.textContent = 'Publish Article';
+    }
+
+    blogResetBtn?.addEventListener('click', resetBlogForm);
+
+    async function loadBlogs() {
+      if (!blogList) return;
+      const store = await getStore();
+      const list = store && typeof store.getBlogs === 'function' ? store.getBlogs() : [];
+
+      if (blogBadge) blogBadge.textContent = `${list.length} posts`;
+      if (metricBlogCount) metricBlogCount.textContent = `${list.length}`;
+
+      if (list.length === 0) {
+        blogList.innerHTML = `<div style="text-align:center; padding:2rem; color:#8E95A5;">No blog posts authored yet. Write your first above!</div>`;
+        return;
+      }
+
+      blogList.innerHTML = list.map((b: any) => `
+        <div class="dash-item-card" data-id="${b.slug || b.id}">
+          <div class="dash-card-left">
+            <h5 class="dash-card-title">${b.title || 'Untitled'}</h5>
+            <div class="dash-card-meta">
+              <span style="color:#E5A96A;">${b.date || 'Recent'}</span>
+              <span>•</span>
+              <span>${b.readTime || '5 min read'}</span>
+              <span>•</span>
+              <span style="color:#38BDF8;">/${b.slug || ''}</span>
+            </div>
+          </div>
+          <div class="dash-card-actions">
+            <a href="/blog/${b.slug}" target="_blank" class="btn-inv-edit" style="text-decoration:none;">View</a>
+            <button type="button" class="btn-inv-edit" data-edit-blog="${b.slug || b.id}">Edit</button>
+            <button type="button" class="btn-inv-delete" data-delete-blog="${b.slug || b.id}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      blogList.querySelectorAll('[data-edit-blog]').forEach(b => {
+        b.addEventListener('click', () => {
+          const id = b.getAttribute('data-edit-blog');
+          const target = list.find((item: any) => item.slug === id || item.id === id);
+          if (target) {
+            blogId.value = target.slug || target.id || '';
+            blogTitle.value = target.title || '';
+            blogSlug.value = target.slug || '';
+            blogDate.value = target.date || '';
+            blogReadtime.value = target.readTime || '';
+            blogTags.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
+            blogExcerpt.value = target.summary || target.excerpt || '';
+            blogContent.value = target.content || '';
+            const sBtn = document.getElementById('dash-blog-submit-btn');
+            if (sBtn) sBtn.querySelector('span')!.textContent = 'Update Article';
+            blogForm.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+
+      blogList.querySelectorAll('[data-delete-blog]').forEach(b => {
+        b.addEventListener('click', async () => {
+          const id = b.getAttribute('data-delete-blog');
+          if (!confirm('Are you sure you want to delete this article?')) return;
+          const store = await getStore();
+          if (store && typeof store.deleteBlog === 'function') {
+            store.deleteBlog(id);
+          }
+          loadBlogs();
+        });
+      });
+    }
+
+    blogForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const store = await getStore();
+      const payload = {
+        title: blogTitle.value.trim(),
+        slug: blogSlug.value.trim(),
+        date: blogDate.value || new Date().toISOString().split('T')[0],
+        readTime: blogReadtime.value.trim() || '5 min read',
+        tags: blogTags.value.split(',').map(t => t.trim()).filter(Boolean),
+        summary: blogExcerpt.value.trim(),
+        content: blogContent.value.trim(),
+      };
+
+      if (blogId.value) {
+        if (store && typeof store.updateBlog === 'function') {
+          store.updateBlog(blogId.value, payload);
+        }
+      } else {
+        if (store && typeof store.addBlog === 'function') {
+          store.addBlog(payload);
+        }
+      }
+
+      resetBlogForm();
+      loadBlogs();
+      alert('Blog article saved and published to Mission Log!');
+    });
+
+    // ----------------------------------------------------
+    // TAB 3: HARVARD CV STUDIO & WORD DOCUMENT CANVAS
+    // ----------------------------------------------------
+    const cvForm = document.getElementById('dash-cv-form') as HTMLFormElement;
+    const cvName = document.getElementById('dash-cv-name') as HTMLInputElement;
+    const cvCallsign = document.getElementById('dash-cv-callsign') as HTMLInputElement;
+    const cvLocation = document.getElementById('dash-cv-location') as HTMLInputElement;
+    const cvTitle = document.getElementById('dash-cv-title') as HTMLInputElement;
+    const cvClearance = document.getElementById('dash-cv-clearance') as HTMLInputElement;
+    const cvTagline = document.getElementById('dash-cv-tagline') as HTMLInputElement;
+    const cvBio = document.getElementById('dash-cv-bio') as HTMLTextAreaElement;
+    const cvExpContainer = document.getElementById('dash-cv-exp-container');
+    const cvEduContainer = document.getElementById('dash-cv-edu-container');
+    const metricExpCount = document.getElementById('metric-exp-count');
+
+    // Dual Mode Switcher
+    const dashCvModeFormBtn = document.getElementById('dash-cv-mode-form-btn');
+    const dashCvModeDocBtn = document.getElementById('dash-cv-mode-doc-btn');
+    const dashCvWordPanel = document.getElementById('dash-cv-word-panel');
+
+    // Avatar Controls
+    const dashAvatarPreviewImg = document.getElementById('dash-avatar-preview-img') as HTMLImageElement;
+    const dashAvatarFallback = document.getElementById('dash-avatar-fallback');
+    const dashAvatarFileInput = document.getElementById('dash-avatar-file-input') as HTMLInputElement;
+    const dashAvatarUrlInput = document.getElementById('dash-avatar-url-input') as HTMLInputElement;
+    const dashAvatarLoadUrlBtn = document.getElementById('dash-avatar-load-url-btn');
+    const dashAvatarResetBtn = document.getElementById('dash-avatar-reset-btn');
+
+    // Word Document Canvas & Toolbar
+    const dashWordDocCanvas = document.getElementById('dash-word-document-canvas');
+    const dashDocWordCount = document.getElementById('dash-doc-word-count');
+    const dashWordSaveBtn = document.getElementById('dash-word-save-btn');
+    const dashWordBlockSelect = document.getElementById('dash-word-block-select') as HTMLSelectElement;
+
+    let currentExp: any[] = [];
+    let currentEdu: any[] = [];
+
+    // Switch between Structured Form and Word Editor
+    function setDashCVMode(mode: 'form' | 'word') {
+      if (mode === 'form') {
+        dashCvModeFormBtn?.classList.add('is-active');
+        dashCvModeDocBtn?.classList.remove('is-active');
+        if (cvForm) cvForm.style.display = 'flex';
+        if (dashCvWordPanel) dashCvWordPanel.style.display = 'none';
+      } else {
+        dashCvModeDocBtn?.classList.add('is-active');
+        dashCvModeFormBtn?.classList.remove('is-active');
+        if (cvForm) cvForm.style.display = 'none';
+        if (dashCvWordPanel) dashCvWordPanel.style.display = 'block';
+        loadDashWordDocument();
+      }
+    }
+
+    dashCvModeFormBtn?.addEventListener('click', () => setDashCVMode('form'));
+    dashCvModeDocBtn?.addEventListener('click', () => setDashCVMode('word'));
+
+    // Avatar Preview
+    function setDashAvatarPreview(url: string | null) {
+      if (url && url.trim()) {
+        if (dashAvatarPreviewImg) {
+          dashAvatarPreviewImg.src = url;
+          dashAvatarPreviewImg.style.display = 'block';
+        }
+        if (dashAvatarFallback) dashAvatarFallback.style.display = 'none';
+        if (dashAvatarUrlInput) dashAvatarUrlInput.value = url.startsWith('data:') ? '' : url;
+      } else {
+        if (dashAvatarPreviewImg) {
+          dashAvatarPreviewImg.src = '';
+          dashAvatarPreviewImg.style.display = 'none';
+        }
+        if (dashAvatarFallback) dashAvatarFallback.style.display = 'block';
+        if (dashAvatarUrlInput) dashAvatarUrlInput.value = '';
+      }
+    }
+
+    async function saveDashAvatar(avatarUrlOrData: string) {
+      const store = await getStore();
+      if (store && typeof store.updateProfileAvatar === 'function') {
+        store.updateProfileAvatar(avatarUrlOrData);
+      } else if (store && typeof store.updateCVData === 'function') {
+        const current = store.getCVData();
+        const p = current.profile || {};
+        p.avatar = avatarUrlOrData;
+        store.updateCVData('profile', p);
+      }
+      setDashAvatarPreview(avatarUrlOrData);
+      alert('Profile photo updated successfully!');
+    }
+
+    dashAvatarFileInput?.addEventListener('change', () => {
+      const file = dashAvatarFileInput.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+        if (base64) await saveDashAvatar(base64);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    dashAvatarLoadUrlBtn?.addEventListener('click', async () => {
+      const url = dashAvatarUrlInput?.value?.trim() || '';
+      if (!url) {
+        alert('Please enter a valid image URL');
+        return;
+      }
+      await saveDashAvatar(url);
+    });
+
+    document.querySelectorAll('.dash-preset-pill').forEach(pill => {
+      pill.addEventListener('click', async () => {
+        const preset = pill.getAttribute('data-preset');
+        let presetUrl = '';
+        if (preset === 'astronaut') {
+          presetUrl = 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=300&auto=format&fit=crop&q=80';
+        } else if (preset === 'spacecraft') {
+          presetUrl = 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=300&auto=format&fit=crop&q=80';
+        } else {
+          presetUrl = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300&auto=format&fit=crop&q=80';
+        }
+        await saveDashAvatar(presetUrl);
+      });
+    });
+
+    dashAvatarResetBtn?.addEventListener('click', async () => {
+      await saveDashAvatar('');
+    });
+
+    // Word Toolbar Execution
+    document.querySelectorAll('[data-dash-cmd]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cmd = btn.getAttribute('data-dash-cmd');
+        const val = btn.getAttribute('data-val') || '';
+        if (!cmd) return;
+        document.execCommand(cmd, false, val);
+        dashWordDocCanvas?.focus();
+        updateDashWordCount();
+      });
+    });
+
+    dashWordBlockSelect?.addEventListener('change', () => {
+      const val = dashWordBlockSelect.value;
+      if (val) {
+        document.execCommand('formatBlock', false, val);
+        dashWordDocCanvas?.focus();
+        updateDashWordCount();
+      }
+    });
+
+    function updateDashWordCount() {
+      if (!dashWordDocCanvas || !dashDocWordCount) return;
+      const text = dashWordDocCanvas.innerText || '';
+      const words = text.trim().split(/\s+/).filter(Boolean).length;
+      dashDocWordCount.textContent = `${words} words`;
+    }
+
+    dashWordDocCanvas?.addEventListener('input', updateDashWordCount);
+
+    async function loadDashWordDocument() {
+      if (!dashWordDocCanvas) return;
+      const store = await getStore();
+      let html = '';
+      if (store && typeof store.getCVDocumentHtml === 'function') {
+        html = store.getCVDocumentHtml();
+      }
+
+      if (!html) {
+        const cv = store && typeof store.getCVData === 'function' ? store.getCVData() : {};
+        const p = cv.profile || {};
+        const expList = cv.experience || cv.timeline || [];
+        const eduList = cv.education || [];
+
+        html = `
+          <div style="text-align:center; border-bottom:1px solid #E5A96A; padding-bottom:1rem; margin-bottom:1.5rem;">
+            <h1 style="color:#FFFFFF; font-size:1.6rem; margin-bottom:0.25rem;">${p.name || 'Võ Quang Nhật Nguyên'}</h1>
+            <p style="color:#E5A96A; font-weight:600; margin:0;">${p.title || 'Space Systems & Flight Software Architect'} [${p.callsign || 'NHAT-NGUYEN'}]</p>
+            <p style="color:#8E95A5; font-size:0.85rem; margin-top:0.35rem;">${p.location || 'Pasadena, CA'} • Clearance: ${p.clearance || 'Public Trust / NASA Heritage'}</p>
+          </div>
+
+          <h2>EXECUTIVE BIO & HARVARD SUMMARY</h2>
+          <hr/>
+          <p>${p.bio || 'Dual-specialist in aerospace engineering and deterministic real-time flight software.'}</p>
+
+          <h2>PROFESSIONAL APPOINTMENTS & EXPERIENCE</h2>
+          <hr/>
+          ${expList.map((e: any) => `
+            <div style="margin-bottom:1rem;">
+              <h3 style="color:#FFFFFF; margin-bottom:0.2rem;">${e.role || 'Flight Engineer'} • <span style="color:#E5A96A;">${e.organization || ''}</span></h3>
+              <p style="color:#8E95A5; font-size:0.82rem; margin:0;">${e.period || ''} | ${e.location || 'LEO Operations'} | <i>${e.badge || ''}</i></p>
+              <p style="margin-top:0.35rem;">${e.summary || ''}</p>
+              <ul>
+                ${(Array.isArray(e.highlights) ? e.highlights : [e.highlights || '']).map((h: string) => `<li>${h}</li>`).join('')}
+              </ul>
+            </div>
+          `).join('')}
+
+          <h2>ACADEMIC BACKGROUND & DEGREES</h2>
+          <hr/>
+          ${eduList.map((ed: any) => `
+            <div style="margin-bottom:0.85rem;">
+              <h3 style="color:#FFFFFF; margin-bottom:0.15rem;">${ed.degree || ''} — <span style="color:#E5A96A;">${ed.institution || ''}</span></h3>
+              <p style="color:#8E95A5; font-size:0.82rem; margin:0;">${ed.period || ''} | Honors: ${ed.honors || 'High Honors'}</p>
+              ${ed.thesis ? `<p style="margin-top:0.25rem; font-style:italic;">Thesis: "${ed.thesis}"</p>` : ''}
+            </div>
+          `).join('')}
+        `;
+      }
+
+      dashWordDocCanvas.innerHTML = html;
+      updateDashWordCount();
+    }
+
+    dashWordSaveBtn?.addEventListener('click', async () => {
+      if (!dashWordDocCanvas) return;
+      const html = dashWordDocCanvas.innerHTML;
+      const store = await getStore();
+
+      if (store && typeof store.updateCVDocumentHtml === 'function') {
+        store.updateCVDocumentHtml(html);
+      } else if (store && typeof store.updateCVData === 'function') {
+        store.updateCVData('cvDocumentHtml', html);
+      }
+
+      alert('Word Document CV saved and synchronized successfully!');
+    });
+
+    async function loadCV() {
+      const store = await getStore();
+      if (!store || typeof store.getCVData !== 'function') return;
+      const cv = store.getCVData();
+      const p = cv.profile || {};
+
+      if (cvName) cvName.value = p.name || '';
+      if (cvCallsign) cvCallsign.value = p.callsign || '';
+      if (cvLocation) cvLocation.value = p.location || '';
+      if (cvTitle) cvTitle.value = p.title || '';
+      if (cvClearance) cvClearance.value = p.clearance || '';
+      if (cvTagline) cvTagline.value = p.tagline || '';
+      if (cvBio) cvBio.value = p.bio || '';
+
+      // Load avatar
+      let avatar = p.avatar;
+      if (!avatar && store && typeof store.getProfileAvatar === 'function') {
+        avatar = store.getProfileAvatar();
+      }
+      setDashAvatarPreview(avatar);
+
+      currentExp = cv.experience || cv.timeline || [];
+      currentEdu = cv.education || [];
+
+      if (metricExpCount) metricExpCount.textContent = `${currentExp.length}`;
+
+      renderExpList();
+      renderEduList();
+    }
+
+    function renderExpList() {
+      if (!cvExpContainer) return;
+      cvExpContainer.innerHTML = currentExp.map((exp, idx) => `
+        <div class="repeater-item" data-exp-idx="${idx}">
+          <button type="button" class="repeater-remove-btn" data-rem-exp="${idx}">Remove</button>
+          <div class="form-row form-row-2">
+            <div class="form-field">
+              <label class="field-label">Role Title</label>
+              <input type="text" class="editor-input role-input" value="${exp.role || ''}" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Organization</label>
+              <input type="text" class="editor-input org-input" value="${exp.organization || ''}" />
+            </div>
+          </div>
+          <div class="form-row form-row-2" style="margin-top:0.5rem;">
+            <div class="form-field">
+              <label class="field-label">Period / Dates</label>
+              <input type="text" class="editor-input period-input" value="${exp.period || ''}" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Badge / Subsystem</label>
+              <input type="text" class="editor-input badge-input" value="${exp.badge || ''}" />
+            </div>
+          </div>
+          <div class="form-field" style="margin-top:0.5rem;">
+            <label class="field-label">Role Summary</label>
+            <textarea rows="2" class="editor-textarea summary-input">${exp.summary || ''}</textarea>
+          </div>
+          <div class="form-field" style="margin-top:0.5rem;">
+            <label class="field-label">Harvard Action Highlights (one per line)</label>
+            <textarea rows="3" class="editor-textarea highlights-input">${Array.isArray(exp.highlights) ? exp.highlights.join('\n') : (exp.highlights || '')}</textarea>
+          </div>
+        </div>
+      `).join('');
+
+      cvExpContainer.querySelectorAll('[data-rem-exp]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-rem-exp') || '0', 10);
+          currentExp.splice(idx, 1);
+          renderExpList();
+        });
+      });
+    }
+
+    function renderEduList() {
+      if (!cvEduContainer) return;
+      cvEduContainer.innerHTML = currentEdu.map((edu, idx) => `
+        <div class="repeater-item" data-edu-idx="${idx}">
+          <button type="button" class="repeater-remove-btn" data-rem-edu="${idx}">Remove</button>
+          <div class="form-row form-row-2">
+            <div class="form-field">
+              <label class="field-label">Degree Title</label>
+              <input type="text" class="editor-input deg-input" value="${edu.degree || ''}" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Institution</label>
+              <input type="text" class="editor-input inst-input" value="${edu.institution || ''}" />
+            </div>
+          </div>
+          <div class="form-row form-row-2" style="margin-top:0.5rem;">
+            <div class="form-field">
+              <label class="field-label">Period / Year</label>
+              <input type="text" class="editor-input yr-input" value="${edu.period || ''}" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Honors / GPA</label>
+              <input type="text" class="editor-input honors-input" value="${edu.honors || ''}" />
+            </div>
+          </div>
+          <div class="form-field" style="margin-top:0.5rem;">
+            <label class="field-label">Thesis Title</label>
+            <input type="text" class="editor-input thesis-input" value="${edu.thesis || ''}" />
+          </div>
+        </div>
+      `).join('');
+
+      cvEduContainer.querySelectorAll('[data-rem-edu]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-rem-edu') || '0', 10);
+          currentEdu.splice(idx, 1);
+          renderEduList();
+        });
+      });
+    }
+
+    document.getElementById('dash-add-exp-btn')?.addEventListener('click', () => {
+      currentExp.unshift({
+        role: 'Senior Flight Software Lead',
+        organization: 'Space Mission Laboratory',
+        period: '2024 — Present',
+        badge: 'Mission Operations',
+        summary: 'Leading smallsat flight software...',
+        highlights: ['Engineered fault-tolerant FSW...', 'Zero telemetry dropouts...']
+      });
+      renderExpList();
+    });
+
+    document.getElementById('dash-add-edu-btn')?.addEventListener('click', () => {
+      currentEdu.unshift({
+        degree: 'M.S. in Aerospace Engineering',
+        institution: 'Massachusetts Institute of Technology',
+        period: '2021 — 2023',
+        honors: 'High Honors',
+        thesis: 'Distributed Orbital Navigation'
+      });
+      renderEduList();
+    });
+
+    cvForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const store = await getStore();
+
+      // Read current state from inputs
+      const expItems = cvExpContainer?.querySelectorAll('.repeater-item') || [];
+      const updatedExp: any[] = [];
+      expItems.forEach(item => {
+        const role = (item.querySelector('.role-input') as HTMLInputElement)?.value || '';
+        const organization = (item.querySelector('.org-input') as HTMLInputElement)?.value || '';
+        const period = (item.querySelector('.period-input') as HTMLInputElement)?.value || '';
+        const badge = (item.querySelector('.badge-input') as HTMLInputElement)?.value || '';
+        const summary = (item.querySelector('.summary-input') as HTMLTextAreaElement)?.value || '';
+        const highlightsText = (item.querySelector('.highlights-input') as HTMLTextAreaElement)?.value || '';
+        const highlights = highlightsText.split('\n').map(h => h.trim()).filter(Boolean);
+        updatedExp.push({ role, organization, period, badge, summary, highlights });
+      });
+
+      const eduItems = cvEduContainer?.querySelectorAll('.repeater-item') || [];
+      const updatedEdu: any[] = [];
+      eduItems.forEach(item => {
+        const degree = (item.querySelector('.deg-input') as HTMLInputElement)?.value || '';
+        const institution = (item.querySelector('.inst-input') as HTMLInputElement)?.value || '';
+        const period = (item.querySelector('.yr-input') as HTMLInputElement)?.value || '';
+        const honors = (item.querySelector('.honors-input') as HTMLInputElement)?.value || '';
+        const thesis = (item.querySelector('.thesis-input') as HTMLInputElement)?.value || '';
+        updatedEdu.push({ degree, institution, period, honors, thesis });
+      });
+
+      const currentAvatar = (dashAvatarPreviewImg && dashAvatarPreviewImg.style.display !== 'none' ? dashAvatarPreviewImg.src : '') || (store && typeof store.getProfileAvatar === 'function' ? store.getProfileAvatar() : '');
+
+      const updatedCV = {
+        profile: {
+          name: cvName?.value || '',
+          callsign: cvCallsign?.value || '',
+          location: cvLocation?.value || '',
+          title: cvTitle?.value || '',
+          clearance: cvClearance?.value || '',
+          tagline: cvTagline?.value || '',
+          bio: cvBio?.value || '',
+          avatar: currentAvatar
+        },
+        experience: updatedExp,
+        education: updatedEdu
+      };
+
+      if (store && typeof store.updateCVData === 'function') {
+        store.updateCVData(updatedCV);
+      }
+
+      alert('Harvard CV profile, appointments, and education successfully updated!');
+    });
+
+    // ----------------------------------------------------
+    // TAB 4: SYSTEM SECURITY & BACKUP
+    // ----------------------------------------------------
+    const exportBtn = document.getElementById('dash-export-btn');
+    const importInput = document.getElementById('dash-import-file') as HTMLInputElement;
+    const resetBtn = document.getElementById('dash-reset-btn');
+    const passkeyForm = document.getElementById('dash-passkey-form');
+    const newPasskeyInput = document.getElementById('dash-new-passkey') as HTMLInputElement;
+
+    passkeyForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const store = await getStore();
+      const val = newPasskeyInput?.value?.trim() || '';
+      if (store && typeof store.updateAdminPasskey === 'function') {
+        const res = store.updateAdminPasskey(val);
+        if (res.success) {
+          alert('Passkey updated successfully! Remember your new passkey: ' + val);
+          newPasskeyInput.value = '';
+        } else {
+          alert(res.error || 'Failed to update passkey');
+        }
+      }
+    });
+
+    exportBtn?.addEventListener('click', async () => {
+      const store = await getStore();
+      if (!store || typeof store.exportDataJSON !== 'function') return;
+      const json = store.exportDataJSON();
+      const blob = new Blob([json], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `space-portfolio-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    });
+
+    importInput?.addEventListener('change', () => {
+      const file = importInput.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const store = await getStore();
+          const jsonStr = evt.target?.result as string;
+          if (store && typeof store.importDataJSON === 'function') {
+            const res = store.importDataJSON(jsonStr);
+            if (res.success) {
+              alert('Full portfolio dataset imported and updated!');
+              loadDashboardData();
+            } else {
+              alert('Import failed: ' + res.error);
+            }
+          }
+        } catch (err) {
+          alert('Invalid JSON file format.');
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    resetBtn?.addEventListener('click', async () => {
+      if (!confirm('Warning: Factory Reset will clear all your saved achievements, blog posts, and CV customizations and restore original data. Proceed?')) return;
+      const store = await getStore();
+      if (store && typeof store.resetToDefaults === 'function') {
+        store.resetToDefaults();
+      }
+      alert('System reset to default flight telemetry data.');
+      syncViews();
+    });
+
+    async function updateDashboardTelemetryStats() {
+      try {
+        const store = await getStore();
+        const metricUpdatesCount = document.getElementById('metric-updates-count');
+        const metricUserDisplayName = document.getElementById('dash-user-display-name');
+        if (store && typeof store.getDashboardStats === 'function') {
+          const stats = store.getDashboardStats();
+          if (metricUpdatesCount && typeof stats.updatesCount !== 'undefined') {
+            metricUpdatesCount.textContent = `${stats.updatesCount}`;
+          }
+          if (metricAchCount && typeof stats.achievementsCount !== 'undefined') {
+            metricAchCount.textContent = `${stats.achievementsCount}`;
+          }
+          if (metricBlogCount && typeof stats.blogsCount !== 'undefined') {
+            metricBlogCount.textContent = `${stats.blogsCount}`;
+          }
+        } else if (store && typeof store.getUpdateCount === 'function') {
+          if (metricUpdatesCount) metricUpdatesCount.textContent = `${store.getUpdateCount()}`;
+        }
+
+        if (store && typeof store.getCVData === 'function') {
+          const cv = store.getCVData();
+          if (cv?.profile?.name && metricUserDisplayName) {
+            metricUserDisplayName.textContent = cv.profile.name;
+          }
+        }
+      } catch (err) {
+        console.warn('Dashboard telemetry stats update failed:', err);
+      }
+    }
+
+    function loadDashboardData() {
+      loadAchievements();
+      loadBlogs();
+      loadCV();
+      updateDashboardTelemetryStats();
+    }
+
+    // Initial load
+    syncViews();
+
+    // Listen to reactive updates
+    window.addEventListener('portfolio-data-updated', () => {
+      if (dashScreen.style.display !== 'none') {
+        loadDashboardData();
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupAdminPage);
+  } else {
+    setupAdminPage();
+  }
+  document.addEventListener('astro:page-load', setupAdminPage);
+</script>

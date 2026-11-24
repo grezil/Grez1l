@@ -1,0 +1,1025 @@
+---
+// [slug].astro - Dedicated Aerospace Engineering Article Reader
+import Layout from '../../layouts/Layout.astro';
+import portfolioData from '../../data/portfolio.json';
+import { DEFAULT_BLOGS } from '../../data/defaultBlogs.js';
+import { renderMarkdown } from '../../scripts/markdown.js';
+
+export async function getStaticPaths() {
+  const dataBlogs = (portfolioData as any).blogs;
+  const blogs = (Array.isArray(dataBlogs) && dataBlogs.length > 0) ? dataBlogs : DEFAULT_BLOGS;
+
+  return blogs.map((post: any, index: number) => {
+    const prevPost = index > 0 ? blogs[index - 1] : null;
+    const nextPost = index < blogs.length - 1 ? blogs[index + 1] : null;
+    return {
+      params: { slug: post.slug },
+      props: { post, prevPost, nextPost }
+    };
+  });
+}
+
+const { post, prevPost, nextPost } = Astro.props;
+
+// Category color class helper
+const getCategoryBadgeClass = (category: string) => {
+  const cat = (category || '').toLowerCase();
+  if (cat.includes('flight') || cat.includes('software') || cat.includes('rust')) return 'badge-cat-fsw';
+  if (cat.includes('orbit') || cat.includes('dynamics') || cat.includes('astrodynamics') || cat.includes('gnc')) return 'badge-cat-orbit';
+  if (cat.includes('avionics') || cat.includes('fdir') || cat.includes('hardware')) return 'badge-cat-avionics';
+  if (cat.includes('comms') || cat.includes('ground') || cat.includes('optical') || cat.includes('sdr') || cat.includes('packet')) return 'badge-cat-comms';
+  return 'badge-cat-fsw';
+};
+
+const author = typeof post.author === 'object' && post.author !== null 
+  ? post.author 
+  : { name: post.author || 'Võ Quang Nhật Nguyên', role: 'Flight Software Architect', callsign: 'NHAT-NGUYEN' };
+
+const renderedHtml = renderMarkdown(post.content || post.summary || '');
+---
+
+<Layout 
+  title={`${post.title} | Space Engineering Journal`}
+  description={post.summary || `Aerospace technical dispatch on ${post.title} by Võ Quang Nhật Nguyên.`}
+>
+  <!-- Scroll Reading Progress Bar -->
+  <div class="reading-progress-track">
+    <div class="reading-progress-fill" id="reading-progress"></div>
+  </div>
+
+  <article class="article-page" data-article-slug={post.slug} data-article-id={post.id}>
+    <div class="container article-container">
+      
+      <!-- Top Mission Nav Header -->
+      <header class="article-top-nav">
+        <a href="/blog" class="back-link">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="19" y1="12" x2="5" y2="12"></line>
+            <polyline points="12 19 5 12 12 5"></polyline>
+          </svg>
+          <span>Back to Mission Log</span>
+        </a>
+
+        <div class="top-nav-actions">
+          <button type="button" class="nav-action-btn" id="share-dispatch-btn" title="Copy Dispatch Link">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="18" cy="5" r="3"></circle>
+              <circle cx="6" cy="12" r="3"></circle>
+              <circle cx="18" cy="19" r="3"></circle>
+              <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+              <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+            </svg>
+            <span id="share-btn-text">Share Dispatch</span>
+          </button>
+
+          <!-- Edit Dispatch Button (Shown to authenticated Admin) -->
+          <a href={`/admin#edit-blog-${post.slug}`} class="nav-action-btn edit-btn" id="admin-edit-link" style="display: none;">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 20h9"></path>
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+            </svg>
+            <span>Edit Article</span>
+          </a>
+        </div>
+      </header>
+
+      <!-- Main Article Header -->
+      <div class="article-header-card">
+        <div class="article-meta-badge-row">
+          <span class={`cat-pill ${getCategoryBadgeClass(post.category)}`} id="article-cat-pill">
+            <span class="pill-dot"></span>
+            <span id="article-cat-text">{post.category || 'Flight Software'}</span>
+          </span>
+          <span class="meta-tag-id">DISPATCH // {post.slug}</span>
+        </div>
+
+        <h1 class="article-main-title" id="article-title">{post.title}</h1>
+
+        {post.summary && (
+          <p class="article-summary-lead" id="article-summary">{post.summary}</p>
+        )}
+
+        <!-- Author & Metadata Row -->
+        <div class="article-author-row">
+          <div class="author-profile">
+            <div class="avatar-ring">
+              <span class="avatar-beacon"></span>
+              <span class="avatar-initials">NN</span>
+            </div>
+            <div class="author-text">
+              <div class="author-name-row">
+                <span class="author-name" id="article-author-name">{author.name}</span>
+                <span class="author-callsign">[{author.callsign || 'NHAT-NGUYEN'}]</span>
+              </div>
+              <span class="author-role" id="article-author-role">{author.role || author.title || 'Principal Flight Software Architect'}</span>
+            </div>
+          </div>
+
+          <div class="article-specs-meta">
+            <div class="spec-item">
+              <span class="spec-label">PUBLISHED</span>
+              <span class="spec-val" id="article-date">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                {post.date}
+              </span>
+            </div>
+            <div class="spec-divider"></div>
+            <div class="spec-item">
+              <span class="spec-label">READING TIME</span>
+              <span class="spec-val text-amber" id="article-readtime">{post.readTime}</span>
+            </div>
+            <div class="spec-divider"></div>
+            <div class="spec-item">
+              <span class="spec-label">CLASSIFICATION</span>
+              <span class="spec-val text-cyan">UNCLASSIFIED // AIAA</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Article Content Body -->
+      <div class="article-body-wrapper">
+        <div class="article-body" id="article-content" set:html={renderedHtml}></div>
+      </div>
+
+      <!-- Tags Section -->
+      {post.tags && post.tags.length > 0 && (
+        <div class="article-tags-section">
+          <span class="tags-header-label">// TOPIC TAXONOMY:</span>
+          <div class="article-tags-list" id="article-tags-list">
+            {post.tags.map((tag: string) => (
+              <span class="tag-pill">#{tag}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <!-- Bottom Next / Prev Navigation -->
+      <footer class="article-footer-nav">
+        <div class="nav-grid">
+          {prevPost ? (
+            <a href={`/blog/${prevPost.slug}`} class="nav-card prev-card">
+              <span class="nav-direction">← PREVIOUS DISPATCH</span>
+              <span class="nav-post-title">{prevPost.title}</span>
+              <span class="nav-post-meta">{prevPost.category} • {prevPost.readTime}</span>
+            </a>
+          ) : (
+            <div class="nav-card disabled">
+              <span class="nav-direction">FIRST MISSION LOG</span>
+              <span class="nav-post-title">Initial Flight Commissioning</span>
+            </div>
+          )}
+
+          {nextPost ? (
+            <a href={`/blog/${nextPost.slug}`} class="nav-card next-card">
+              <span class="nav-direction">NEXT DISPATCH →</span>
+              <span class="nav-post-title">{nextPost.title}</span>
+              <span class="nav-post-meta">{nextPost.category} • {nextPost.readTime}</span>
+            </a>
+          ) : (
+            <a href="/blog" class="nav-card return-card">
+              <span class="nav-direction">MISSION ARCHIVE</span>
+              <span class="nav-post-title">Explore All Orbital Dispatches</span>
+              <span class="nav-post-meta">Return to Log Index →</span>
+            </a>
+          )}
+        </div>
+
+        <div class="footer-back-to-log">
+          <a href="/blog" class="btn btn-secondary btn-sm">
+            <span>← Back to All Flight Dispatches</span>
+          </a>
+        </div>
+      </footer>
+
+    </div>
+  </article>
+
+  <!-- Toast Notification for Copy / Share -->
+  <div class="telemetry-toast" id="telemetry-toast">
+    <span class="toast-beacon"></span>
+    <span class="toast-message" id="toast-message">Telemetry link copied to clipboard</span>
+  </div>
+</Layout>
+
+<script>
+  import { renderMarkdown } from '../../scripts/markdown.js';
+
+  (function initArticleReader() {
+    const slug = document.querySelector('[data-article-slug]')?.getAttribute('data-article-slug');
+    const progressBar = document.getElementById('reading-progress');
+    const toast = document.getElementById('telemetry-toast');
+    const toastMsg = document.getElementById('toast-message');
+    const shareBtn = document.getElementById('share-dispatch-btn');
+    const adminEditLink = document.getElementById('admin-edit-link');
+
+    // DOM Elements for live hydration
+    const titleEl = document.getElementById('article-title');
+    const summaryEl = document.getElementById('article-summary');
+    const catTextEl = document.getElementById('article-cat-text');
+    const dateEl = document.getElementById('article-date');
+    const readTimeEl = document.getElementById('article-readtime');
+    const authorNameEl = document.getElementById('article-author-name');
+    const authorRoleEl = document.getElementById('article-author-role');
+    const contentEl = document.getElementById('article-content');
+    const tagsListEl = document.getElementById('article-tags-list');
+
+    // 1. Reading Progress Bar
+    function updateProgress() {
+      if (!progressBar) return;
+      const scrollY = window.scrollY;
+      const docHeight = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = docHeight > 0 ? (scrollY / docHeight) * 100 : 0;
+      progressBar.style.width = `${Math.min(100, Math.max(0, progress))}%`;
+    }
+    window.addEventListener('scroll', updateProgress, { passive: true });
+
+    // 2. Toast feedback
+    function showToast(text: string) {
+      if (!toast || !toastMsg) return;
+      toastMsg.textContent = text;
+      toast.classList.add('visible');
+      setTimeout(() => {
+        toast.classList.remove('visible');
+      }, 3000);
+    }
+
+    // 3. Share link handler
+    if (shareBtn) {
+      shareBtn.addEventListener('click', async () => {
+        try {
+          if (navigator.clipboard) {
+            await navigator.clipboard.writeText(window.location.href);
+            showToast('Dispatch URL copied to clipboard');
+          } else {
+            showToast('URL: ' + window.location.href);
+          }
+        } catch (err) {
+          showToast('URL: ' + window.location.href);
+        }
+      });
+    }
+
+    // 4. Copy Code Blocks
+    document.addEventListener('click', async (e) => {
+      const btn = (e.target as HTMLElement).closest('.copy-code-btn');
+      if (btn) {
+        const rawCode = decodeURIComponent(btn.getAttribute('data-code') || '');
+        if (rawCode && navigator.clipboard) {
+          try {
+            await navigator.clipboard.writeText(rawCode);
+            const label = btn.querySelector('span');
+            if (label) {
+              const original = label.textContent;
+              label.textContent = 'Copied!';
+              btn.classList.add('copied');
+              setTimeout(() => {
+                label.textContent = original;
+                btn.classList.remove('copied');
+              }, 2000);
+            }
+          } catch (err) {
+            console.error('Failed to copy code:', err);
+          }
+        }
+      }
+    });
+
+    // 5. Live Store Hydration: check if post was updated in localStorage
+    function checkLiveStoreUpdate() {
+      if (!slug) return;
+      try {
+        const store = (window as any).PortfolioStore;
+        let post = null;
+
+        if (store && typeof store.getBlogBySlug === 'function') {
+          post = store.getBlogBySlug(slug);
+        } else {
+          const raw = localStorage.getItem('space_portfolio_data_v1') || localStorage.getItem('space_portfolio_data');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && Array.isArray(parsed.blogs)) {
+              post = parsed.blogs.find((b: any) => b.slug === slug || b.id === slug);
+            }
+          }
+        }
+
+        if (post) {
+          if (titleEl && post.title) titleEl.textContent = post.title;
+          if (summaryEl && post.summary) summaryEl.textContent = post.summary;
+          if (catTextEl && post.category) catTextEl.textContent = post.category;
+          if (dateEl && post.date) dateEl.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${post.date}`;
+          if (readTimeEl && post.readTime) readTimeEl.textContent = post.readTime;
+          
+          if (post.author) {
+            const authName = typeof post.author === 'object' ? post.author.name : post.author;
+            const authRole = typeof post.author === 'object' ? (post.author.role || post.author.title) : 'Flight Software Architect';
+            if (authorNameEl) authorNameEl.textContent = authName;
+            if (authorRoleEl) authorRoleEl.textContent = authRole;
+          }
+
+          if (contentEl && post.content) {
+            contentEl.innerHTML = renderMarkdown(post.content);
+          }
+
+          if (tagsListEl && Array.isArray(post.tags)) {
+            tagsListEl.innerHTML = post.tags.map((t: string) => `<span class="tag-pill">#${t}</span>`).join('');
+          }
+        }
+      } catch (e) {
+        console.warn('Live store check failed:', e);
+      }
+    }
+
+    // 6. Check Admin Auth to show Edit link
+    function checkAdminState() {
+      try {
+        const store = (window as any).PortfolioStore;
+        const isAdmin = (store && typeof store.checkAdminAuth === 'function')
+          ? store.checkAdminAuth()
+          : (localStorage.getItem('space_portfolio_admin_auth') === 'true' || sessionStorage.getItem('space_portfolio_admin_auth') === 'true');
+
+        if (adminEditLink) {
+          adminEditLink.style.display = isAdmin ? 'inline-flex' : 'none';
+        }
+      } catch (e) {
+        // quiet
+      }
+    }
+
+    // React to store updates
+    window.addEventListener('portfolio-data-updated', () => {
+      checkLiveStoreUpdate();
+      checkAdminState();
+    });
+
+    // Run on startup
+    checkLiveStoreUpdate();
+    checkAdminState();
+  })();
+</script>
+
+<style>
+  /* ============================================================
+     ARTICLE PAGE STYLES - Space Engineering Apple Editorial
+     ============================================================ */
+  .reading-progress-track {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: transparent;
+    z-index: 1000;
+  }
+
+  .reading-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #e5a96a 0%, #00f2fe 100%);
+    box-shadow: 0 0 8px rgba(229, 169, 106, 0.6);
+    transition: width 0.05s linear;
+  }
+
+  .article-page {
+    padding: 2.5rem 0 6rem;
+    position: relative;
+  }
+
+  .article-container {
+    max-width: 880px;
+    margin: 0 auto;
+  }
+
+  /* Top Navigation */
+  .article-top-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.84rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    color: #8e95a5;
+    text-decoration: none;
+    padding: 0.4rem 0.85rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    transition: all 0.2s ease;
+  }
+
+  .back-link:hover {
+    color: #e5a96a;
+    border-color: rgba(229, 169, 106, 0.3);
+    background: rgba(229, 169, 106, 0.08);
+    transform: translateX(-3px);
+  }
+
+  .top-nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .nav-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8125rem;
+    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    padding: 0.4rem 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .nav-action-btn:hover {
+    color: #f3f4f6;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .edit-btn {
+    color: #e5a96a;
+    border-color: rgba(229, 169, 106, 0.3);
+    background: rgba(229, 169, 106, 0.1);
+  }
+
+  .edit-btn:hover {
+    background: rgba(229, 169, 106, 0.2);
+    color: #fce7cf;
+  }
+
+  /* Article Header Card */
+  .article-header-card {
+    background: rgba(18, 22, 36, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    backdrop-filter: blur(20px);
+    border-radius: 18px;
+    padding: 2.25rem 2.5rem;
+    margin-bottom: 2.5rem;
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+  }
+
+  .article-meta-badge-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .cat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.25rem 0.75rem;
+    border-radius: 9999px;
+    font-size: 0.775rem;
+    font-weight: 600;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  .badge-cat-fsw {
+    background: rgba(229, 169, 106, 0.12);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    color: #f3c28c;
+  }
+  .badge-cat-fsw .pill-dot { background: #e5a96a; box-shadow: 0 0 6px #e5a96a; }
+
+  .badge-cat-orbit {
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid rgba(0, 242, 254, 0.3);
+    color: #4facfe;
+  }
+  .badge-cat-orbit .pill-dot { background: #00f2fe; box-shadow: 0 0 6px #00f2fe; }
+
+  .badge-cat-avionics {
+    background: rgba(167, 139, 250, 0.12);
+    border: 1px solid rgba(167, 139, 250, 0.3);
+    color: #c4b5fd;
+  }
+  .badge-cat-avionics .pill-dot { background: #a78bfa; box-shadow: 0 0 6px #a78bfa; }
+
+  .badge-cat-comms {
+    background: rgba(52, 211, 153, 0.12);
+    border: 1px solid rgba(52, 211, 153, 0.3);
+    color: #6ee7b7;
+  }
+  .badge-cat-comms .pill-dot { background: #34d399; box-shadow: 0 0 6px #34d399; }
+
+  .meta-tag-id {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    color: #6b7280;
+    letter-spacing: 0.06em;
+  }
+
+  .article-main-title {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.025em;
+    color: #f3f4f6;
+    margin-bottom: 1.25rem;
+  }
+
+  .article-summary-lead {
+    font-size: 1.15rem;
+    line-height: 1.65;
+    color: #9ca3af;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Author & Specs */
+  .article-author-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .author-profile {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .avatar-ring {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1f293d 0%, #111827 100%);
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #e5a96a;
+  }
+
+  .avatar-beacon {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: #10b981;
+    border: 2px solid #0b0d13;
+  }
+
+  .author-text {
+    display: flex;
+    flex-direction: column;
+    gap: 0.15rem;
+  }
+
+  .author-name-row {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .author-name {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: #f3f4f6;
+  }
+
+  .author-callsign {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    color: #e5a96a;
+  }
+
+  .author-role {
+    font-size: 0.775rem;
+    color: #8e95a5;
+  }
+
+  .article-specs-meta {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .spec-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+
+  .spec-label {
+    font-size: 0.6875rem;
+    color: #6b7280;
+    letter-spacing: 0.05em;
+  }
+
+  .spec-val {
+    font-size: 0.8125rem;
+    color: #d1d5db;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .spec-divider {
+    width: 1px;
+    height: 24px;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .text-amber { color: #f59e0b; }
+  .text-cyan { color: #00f2fe; }
+
+  /* Article Content */
+  .article-body-wrapper {
+    background: rgba(18, 22, 36, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 18px;
+    padding: 3rem 3rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .article-body {
+    color: #d1d5db;
+    font-size: 1.075rem;
+    line-height: 1.8;
+  }
+
+  /* Global typography classes injected by markdown parser */
+  :global(.article-h2) {
+    font-size: 1.65rem;
+    font-weight: 700;
+    color: #f3f4f6;
+    margin: 2.75rem 0 1.25rem;
+    letter-spacing: -0.015em;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding-bottom: 0.5rem;
+  }
+
+  :global(.article-h3) {
+    font-size: 1.3rem;
+    font-weight: 600;
+    color: #e5a96a;
+    margin: 2rem 0 0.85rem;
+  }
+
+  :global(.article-p) {
+    margin-bottom: 1.5rem;
+  }
+
+  :global(.article-ul), :global(.article-ol) {
+    margin: 1.25rem 0 1.75rem 0.5rem;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  :global(.article-li), :global(.article-oli) {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+    font-size: 1.025rem;
+    color: #d1d5db;
+  }
+
+  :global(.li-bullet) {
+    color: #e5a96a;
+    font-weight: 700;
+    font-size: 1.2rem;
+    line-height: 1;
+  }
+
+  :global(.oli-num) {
+    color: #e5a96a;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+
+  :global(.mission-callout-box) {
+    background: rgba(229, 169, 106, 0.08);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    border-left: 4px solid #e5a96a;
+    border-radius: 10px;
+    padding: 1.25rem 1.5rem;
+    margin: 2rem 0;
+  }
+
+  :global(.callout-badge-title) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #e5a96a;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.875rem;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  :global(.callout-indicator-dot) {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #e5a96a;
+    box-shadow: 0 0 6px #e5a96a;
+  }
+
+  :global(.callout-content-text) {
+    font-size: 0.975rem;
+    color: #f3f4f6;
+    line-height: 1.65;
+  }
+
+  :global(.code-block-container) {
+    background: #090c14;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    overflow: hidden;
+    margin: 2rem 0;
+    box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.6);
+  }
+
+  :global(.code-block-header) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.6rem 1.25rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+  }
+
+  :global(.code-header-left) {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  :global(.code-dot) {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+  }
+  :global(.code-dot.red) { background: #ef4444; }
+  :global(.code-dot.yellow) { background: #f59e0b; }
+  :global(.code-dot.green) { background: #10b981; }
+
+  :global(.code-lang-label) {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    color: #e5a96a;
+    text-transform: uppercase;
+    margin-left: 0.4rem;
+    font-weight: 600;
+  }
+
+  :global(.copy-code-btn) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.25rem 0.65rem;
+    font-size: 0.75rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  :global(.copy-code-btn:hover) {
+    color: #f3f4f6;
+    background: rgba(255, 255, 255, 0.12);
+  }
+
+  :global(.copy-code-btn.copied) {
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+
+  :global(.code-pre) {
+    padding: 1.5rem 1.5rem;
+    overflow-x: auto;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.9rem;
+    line-height: 1.65;
+    color: #e2e8f0;
+  }
+
+  :global(.inline-code) {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 4px;
+    padding: 0.15rem 0.45rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.875em;
+    color: #f3c28c;
+  }
+
+  :global(.mission-hr) {
+    border: none;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 2.5rem 0;
+  }
+
+  /* Tags Section */
+  .article-tags-section {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 3.5rem;
+    padding-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+  }
+
+  .tags-header-label {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.775rem;
+    color: #6b7280;
+    letter-spacing: 0.06em;
+  }
+
+  .article-tags-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .tag-pill {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.775rem;
+    color: #8e95a5;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .tag-pill:hover {
+    color: #e5a96a;
+    border-color: rgba(229, 169, 106, 0.3);
+  }
+
+  /* Next / Prev Navigation */
+  .article-footer-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+
+  .nav-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 680px) {
+    .nav-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .nav-card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+    padding: 1.5rem;
+    border-radius: 14px;
+    background: rgba(18, 22, 36, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    text-decoration: none;
+    transition: all 0.2s ease;
+  }
+
+  .nav-card:hover {
+    border-color: rgba(229, 169, 106, 0.35);
+    background: rgba(25, 30, 50, 0.75);
+    transform: translateY(-3px);
+  }
+
+  .nav-card.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+  }
+
+  .nav-direction {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    color: #e5a96a;
+    font-weight: 600;
+  }
+
+  .nav-post-title {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: #f3f4f6;
+    line-height: 1.35;
+  }
+
+  .nav-post-meta {
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    color: #8e95a5;
+  }
+
+  .footer-back-to-log {
+    display: flex;
+    justify-content: center;
+    padding-top: 1rem;
+  }
+
+  /* Toast */
+  .telemetry-toast {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    background: rgba(18, 22, 36, 0.95);
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    border-radius: 10px;
+    padding: 0.75rem 1.25rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6);
+    color: #f3f4f6;
+    font-size: 0.85rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    z-index: 2000;
+    transform: translateY(30px);
+    opacity: 0;
+    pointer-events: none;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .telemetry-toast.visible {
+    transform: translateY(0);
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .toast-beacon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+  }
+
+  @media (max-width: 680px) {
+    .article-header-card {
+      padding: 1.5rem 1.25rem;
+    }
+    .article-body-wrapper {
+      padding: 1.75rem 1.25rem;
+    }
+    .article-specs-meta {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.5rem;
+    }
+    .spec-divider {
+      display: none;
+    }
+  }
+</style>

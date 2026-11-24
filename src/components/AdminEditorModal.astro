@@ -1,0 +1,2441 @@
+---
+// AdminEditorModal.astro - Comprehensive Apple-style Content Management Modal
+// Handles: Achievements & Timeline, Blog Composer, Harvard CV Content, Backup/Restore
+---
+
+<div id="admin-editor-modal" class="editor-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="editor-modal-title">
+  <div class="editor-modal-window">
+    <!-- Header with Segmented Tab Control -->
+    <div class="editor-header">
+      <div class="editor-title-row">
+        <div class="editor-title-wrapper">
+          <span class="editor-sys-pill">MISSION CONTROL CMS</span>
+          <h2 id="editor-modal-title" class="editor-title">Content & Telemetry Studio</h2>
+        </div>
+        <button type="button" class="editor-close-btn" id="editor-modal-close" aria-label="Close editor modal">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+
+      <!-- Apple Segmented Navigation Bar -->
+      <div class="segmented-control" role="tablist">
+        <button type="button" class="segment-tab is-active" data-tab="tab-achievement" role="tab" aria-selected="true">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="8" r="7"></circle>
+            <polyline points="8.21 13.89 7 23 12 20 17 23 15.79 13.88"></polyline>
+          </svg>
+          <span>Achievements</span>
+        </button>
+        <button type="button" class="segment-tab" data-tab="tab-blog" role="tab" aria-selected="false">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 20h9"></path>
+            <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
+          </svg>
+          <span>Blog Composer</span>
+        </button>
+        <button type="button" class="segment-tab" data-tab="tab-cv" role="tab" aria-selected="false">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span>Harvard CV</span>
+        </button>
+        <button type="button" class="segment-tab" data-tab="tab-backup" role="tab" aria-selected="false">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+            <polyline points="7 10 12 15 17 10"></polyline>
+            <line x1="12" y1="15" x2="12" y2="3"></line>
+          </svg>
+          <span>Data & Backup</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Body Scroll Area -->
+    <div class="editor-body">
+      <!-- ============================================== -->
+      <!-- TAB 1: ACHIEVEMENTS & TIMELINE                 -->
+      <!-- ============================================== -->
+      <div id="tab-achievement" class="editor-tab-panel is-active" role="tabpanel">
+        <div class="panel-intro">
+          <div>
+            <h3 class="panel-heading">Achievements & Mission Timeline</h3>
+            <p class="panel-subtext">Upload honors, NASA/AIAA awards, flight heritage missions, and technical distinctions with exact chronology.</p>
+          </div>
+          <button type="button" id="achievement-new-btn" class="btn-secondary-action">
+            + Reset Form
+          </button>
+        </div>
+
+        <form id="achievement-form" class="editor-grid-form">
+          <input type="hidden" id="achievement-id-input" value="" />
+
+          <div class="form-row form-row-2">
+            <div class="form-field">
+              <label for="achievement-title-input" class="field-label">Achievement / Award Title *</label>
+              <input type="text" id="achievement-title-input" class="editor-input" placeholder="e.g. NASA Space Flight Honor Award" required />
+            </div>
+
+            <div class="form-field">
+              <label for="achievement-date-input" class="field-label">Timeline / Date *</label>
+              <input type="text" id="achievement-date-input" class="editor-input" placeholder="e.g. 2024 — Present or October 2024" required />
+            </div>
+          </div>
+
+          <div class="form-row form-row-3">
+            <div class="form-field">
+              <label for="achievement-category-select" class="field-label">Category</label>
+              <select id="achievement-category-select" class="editor-select">
+                <option value="Flight Heritage">Flight Heritage</option>
+                <option value="Technical Award">Technical Award</option>
+                <option value="Mission Milestone">Mission Milestone</option>
+                <option value="Research & Papers">Research & Papers</option>
+                <option value="Fellowship / Honor">Fellowship / Honor</option>
+                <option value="Patent">Patent / Intellectual Property</option>
+              </select>
+            </div>
+
+            <div class="form-field">
+              <label for="achievement-org-input" class="field-label">Organization / Sponsor</label>
+              <input type="text" id="achievement-org-input" class="editor-input" placeholder="e.g. NASA Jet Propulsion Laboratory / Caltech" />
+            </div>
+
+            <div class="form-field">
+              <label for="achievement-metrics-input" class="field-label">Key Metrics / Impact</label>
+              <input type="text" id="achievement-metrics-input" class="editor-input" placeholder="e.g. 0 Anomaly Trips / Top 1% Distinction" />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="achievement-desc-input" class="field-label">Description & Harvard Accomplishment Details</label>
+            <textarea id="achievement-desc-input" rows="3" class="editor-textarea" placeholder="Detail the technical achievement, role leadership, and operational outcomes..."></textarea>
+          </div>
+
+          <div class="form-field">
+            <label for="achievement-tags-input" class="field-label">Tags (comma-separated)</label>
+            <input type="text" id="achievement-tags-input" class="editor-input" placeholder="e.g. Rust, CCSDS, ARM Cortex-M7, FDIR" />
+          </div>
+
+          <div class="form-submit-row">
+            <button type="submit" id="achievement-save-btn" class="btn-save-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              <span>Save Achievement</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Existing Achievements List -->
+        <div class="inventory-section">
+          <div class="inventory-header">
+            <h4>Existing Achievements & Timeline Entries</h4>
+            <span id="achievement-count-badge" class="count-pill">0 entries</span>
+          </div>
+          <div id="achievement-list-container" class="inventory-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 2: BLOG COMPOSER                           -->
+      <!-- ============================================== -->
+      <div id="tab-blog" class="editor-tab-panel" role="tabpanel">
+        <div class="panel-intro">
+          <div>
+            <h3 class="panel-heading">Technical Article Composer</h3>
+            <p class="panel-subtext">Author, edit, and publish space engineering articles and flight software mission logs.</p>
+          </div>
+          <button type="button" id="blog-new-btn" class="btn-secondary-action">
+            + New Article
+          </button>
+        </div>
+
+        <form id="blog-form" class="editor-grid-form">
+          <input type="hidden" id="blog-id-input" value="" />
+
+          <div class="form-row form-row-2">
+            <div class="form-field">
+              <label for="blog-title-input" class="field-label">Article Title *</label>
+              <input type="text" id="blog-title-input" class="editor-input" placeholder="e.g. Deterministic Real-Time Flight Software with Rust & FreeRTOS" required />
+            </div>
+
+            <div class="form-field">
+              <label for="blog-slug-input" class="field-label">URL Slug *</label>
+              <input type="text" id="blog-slug-input" class="editor-input" placeholder="e.g. deterministic-rtos-flight-software" required />
+            </div>
+          </div>
+
+          <div class="form-row form-row-3">
+            <div class="form-field">
+              <label for="blog-date-input" class="field-label">Publish Date</label>
+              <input type="date" id="blog-date-input" class="editor-input" />
+            </div>
+
+            <div class="form-field">
+              <label for="blog-readtime-input" class="field-label">Reading Time</label>
+              <input type="text" id="blog-readtime-input" class="editor-input" placeholder="e.g. 6 min read" />
+            </div>
+
+            <div class="form-field">
+              <label for="blog-tags-input" class="field-label">Category Tags (comma-separated)</label>
+              <input type="text" id="blog-tags-input" class="editor-input" placeholder="e.g. Flight Software, Rust, RTOS" />
+            </div>
+          </div>
+
+          <div class="form-field">
+            <label for="blog-excerpt-input" class="field-label">Abstract / Excerpt *</label>
+            <textarea id="blog-excerpt-input" rows="2" class="editor-textarea" placeholder="Brief summary displayed on cards and search index..." required></textarea>
+          </div>
+
+          <div class="form-field">
+            <div class="field-header-row">
+              <label for="blog-content-input" class="field-label">Article Body (Markdown Supported) *</label>
+              <div class="editor-quick-tools">
+                <button type="button" class="tool-btn" data-tool="h2" title="Heading 2">H2</button>
+                <button type="button" class="tool-btn" data-tool="bold" title="Bold">B</button>
+                <button type="button" class="tool-btn" data-tool="italic" title="Italic">I</button>
+                <button type="button" class="tool-btn" data-tool="code" title="Code snippet">&lt;/&gt;</button>
+                <button type="button" class="tool-btn" data-tool="bullet" title="Bullet list">• List</button>
+              </div>
+            </div>
+            <textarea id="blog-content-input" rows="8" class="editor-textarea font-mono" placeholder="Write full article here using Markdown..." required></textarea>
+          </div>
+
+          <div class="form-submit-row">
+            <button type="submit" id="blog-save-btn" class="btn-save-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              <span>Publish / Update Article</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- Published Articles List -->
+        <div class="inventory-section">
+          <div class="inventory-header">
+            <h4>Published Mission Articles</h4>
+            <span id="blog-count-badge" class="count-pill">0 articles</span>
+          </div>
+          <div id="blog-list-container" class="inventory-list">
+            <!-- Dynamically populated -->
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 3: HARVARD CV CONTENT STUDIO               -->
+      <!-- ============================================== -->
+      <div id="tab-cv" class="editor-tab-panel" role="tabpanel">
+        <div class="panel-intro">
+          <div>
+            <h3 class="panel-heading">Harvard Academic & Technical CV Studio</h3>
+            <p class="panel-subtext">Directly modify Harvard CV sections: Profile Header, Avatar, Professional Appointments, Academic Credentials, and Word Document Canvas.</p>
+          </div>
+          <div style="display:flex; gap:0.5rem; align-items:center;">
+            <a href="/cv" target="_blank" class="btn-secondary-action">
+              View Live CV ↗
+            </a>
+          </div>
+        </div>
+
+        <!-- Mode Switcher: Form View vs Word Document Editor View -->
+        <div class="cv-mode-selector">
+          <button type="button" class="cv-mode-btn is-active" id="cv-mode-form-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+            <span>Structured Form Mode</span>
+          </button>
+          <button type="button" class="cv-mode-btn" id="cv-mode-doc-btn">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+            <span>Word Document Editor (Rich Format)</span>
+          </button>
+        </div>
+
+        <!-- Profile Avatar Studio (Shared) -->
+        <div class="cv-section-card avatar-studio-card" id="cv-avatar-studio">
+          <h4 class="cv-card-title">Profile Photo & Callsign Avatar</h4>
+          <div class="avatar-studio-layout">
+            <div class="avatar-preview-wrap">
+              <img id="cv-avatar-preview-img" class="avatar-preview-img" src="" alt="Profile Preview" style="display:none;" />
+              <div id="cv-avatar-fallback" class="avatar-preview-fallback">NN</div>
+              <label for="cv-avatar-file-input" class="avatar-camera-overlay" title="Upload local image">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path><circle cx="12" cy="13" r="4"></circle></svg>
+              </label>
+            </div>
+            <div class="avatar-controls-col">
+              <div class="avatar-btn-row">
+                <label class="btn-secondary-action avatar-upload-btn">
+                  <span>📁 Upload Image File</span>
+                  <input type="file" id="cv-avatar-file-input" accept="image/*" style="display:none;" />
+                </label>
+                <button type="button" id="cv-avatar-reset-btn" class="btn-micro-action" style="color:#F87171;">Reset Default</button>
+              </div>
+              <div class="avatar-url-row">
+                <input type="url" id="cv-avatar-url-input" class="editor-input" placeholder="Or enter image URL (https://...)" />
+                <button type="button" id="cv-avatar-load-url-btn" class="btn-secondary-action">Apply URL</button>
+              </div>
+              <div class="avatar-presets-row">
+                <span class="preset-label">Quick Presets:</span>
+                <button type="button" class="preset-pill" data-preset="astronaut">Astronaut Helmet</button>
+                <button type="button" class="preset-pill" data-preset="spacecraft">Flight Commander</button>
+                <button type="button" class="preset-pill" data-preset="satellite">Space Specialist</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- VIEW 1: STRUCTURED FORM -->
+        <form id="cv-editor-form" class="editor-grid-form">
+          <!-- Profile Section -->
+          <div class="cv-section-card">
+            <h4 class="cv-card-title">1. Professional Header & Identity</h4>
+            
+            <div class="form-row form-row-3">
+              <div class="form-field">
+                <label for="cv-name-input" class="field-label">Full Name</label>
+                <input type="text" id="cv-name-input" class="editor-input" />
+              </div>
+              <div class="form-field">
+                <label for="cv-callsign-input" class="field-label">Callsign / Code</label>
+                <input type="text" id="cv-callsign-input" class="editor-input" />
+              </div>
+              <div class="form-field">
+                <label for="cv-location-input" class="field-label">Location</label>
+                <input type="text" id="cv-location-input" class="editor-input" />
+              </div>
+            </div>
+
+            <div class="form-row form-row-2">
+              <div class="form-field">
+                <label for="cv-title-input" class="field-label">Professional Title</label>
+                <input type="text" id="cv-title-input" class="editor-input" />
+              </div>
+              <div class="form-field">
+                <label for="cv-clearance-input" class="field-label">Clearance / Status</label>
+                <input type="text" id="cv-clearance-input" class="editor-input" />
+              </div>
+            </div>
+
+            <div class="form-field">
+              <label for="cv-tagline-input" class="field-label">Mission Tagline</label>
+              <input type="text" id="cv-tagline-input" class="editor-input" />
+            </div>
+
+            <div class="form-field">
+              <label for="cv-bio-input" class="field-label">Executive Bio / Harvard Summary</label>
+              <textarea id="cv-bio-input" rows="3" class="editor-textarea"></textarea>
+            </div>
+          </div>
+
+          <!-- Professional Experience Section -->
+          <div class="cv-section-card">
+            <div class="field-header-row">
+              <h4 class="cv-card-title">2. Professional Appointments & Experience</h4>
+              <button type="button" id="cv-add-experience-btn" class="btn-micro-action">+ Add Role</button>
+            </div>
+            <div id="cv-experience-list" class="repeater-list">
+              <!-- Dynamically populated repeater items -->
+            </div>
+          </div>
+
+          <!-- Education Section -->
+          <div class="cv-section-card">
+            <div class="field-header-row">
+              <h4 class="cv-card-title">3. Academic Background & Degrees</h4>
+              <button type="button" id="cv-add-education-btn" class="btn-micro-action">+ Add Degree</button>
+            </div>
+            <div id="cv-education-list" class="repeater-list">
+              <!-- Dynamically populated repeater items -->
+            </div>
+          </div>
+
+          <div class="form-submit-row">
+            <button type="submit" id="cv-save-btn" class="btn-save-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                <polyline points="7 3 7 8 15 8"></polyline>
+              </svg>
+              <span>Save Full CV Data</span>
+            </button>
+          </div>
+        </form>
+
+        <!-- VIEW 2: WORD DOCUMENT CANVAS (RICH FORMATTING) -->
+        <div id="cv-word-editor-panel" class="word-editor-container" style="display: none;">
+          <!-- Word Ribbon / Toolbar -->
+          <div class="word-ribbon" role="toolbar" aria-label="Word Formatting Ribbon">
+            <div class="ribbon-group">
+              <button type="button" class="word-tool-btn" data-doc-cmd="undo" title="Undo">↩</button>
+              <button type="button" class="word-tool-btn" data-doc-cmd="redo" title="Redo">↪</button>
+            </div>
+            <div class="ribbon-sep"></div>
+            <div class="ribbon-group">
+              <select id="word-block-select" class="word-heading-select" title="Paragraph Format">
+                <option value="p">Paragraph</option>
+                <option value="h1">Heading 1</option>
+                <option value="h2">Heading 2</option>
+                <option value="h3">Heading 3</option>
+                <option value="blockquote">Callout / Quote</option>
+              </select>
+            </div>
+            <div class="ribbon-sep"></div>
+            <div class="ribbon-group">
+              <button type="button" class="word-tool-btn font-bold" data-doc-cmd="bold" title="Bold"><b>B</b></button>
+              <button type="button" class="word-tool-btn italic" data-doc-cmd="italic" title="Italic"><i>I</i></button>
+              <button type="button" class="word-tool-btn underline" data-doc-cmd="underline" title="Underline"><u>U</u></button>
+              <button type="button" class="word-tool-btn line-through" data-doc-cmd="strikeThrough" title="Strikethrough"><s>S</s></button>
+            </div>
+            <div class="ribbon-sep"></div>
+            <div class="ribbon-group">
+              <button type="button" class="word-tool-btn" data-doc-cmd="insertUnorderedList" title="Bullet List">• List</button>
+              <button type="button" class="word-tool-btn" data-doc-cmd="insertOrderedList" title="Numbered List">1. List</button>
+            </div>
+            <div class="ribbon-sep"></div>
+            <div class="ribbon-group">
+              <button type="button" class="word-tool-btn text-amber" data-doc-cmd="foreColor" data-val="#E5A96A" title="Gold Amber Text">Gold</button>
+              <button type="button" class="word-tool-btn" data-doc-cmd="hiliteColor" data-val="rgba(229,169,106,0.25)" title="Amber Highlight">Highlight</button>
+              <button type="button" class="word-tool-btn" data-doc-cmd="insertHorizontalRule" title="Divider Line">― HR</button>
+              <button type="button" class="word-tool-btn" data-doc-cmd="removeFormat" title="Clear Formatting">Tx Clear</button>
+            </div>
+          </div>
+
+          <!-- Document Header Info -->
+          <div class="doc-sheet-header">
+            <span class="doc-icon">📄</span>
+            <span class="doc-filename">Harvard_Academic_CV_Nhat_Nguyen_Vo.docx</span>
+            <span class="doc-status-badge">Document Canvas • Monospace Rich Text</span>
+          </div>
+
+          <!-- Document Paper Sheet -->
+          <div class="word-doc-canvas-wrapper">
+            <div id="cv-word-document-canvas" class="word-doc-canvas font-mono" contenteditable="true" spellcheck="false">
+              <!-- Loaded dynamically with rich HTML -->
+            </div>
+          </div>
+
+          <!-- Document Status Footer -->
+          <div class="doc-status-bar">
+            <div class="doc-status-left font-mono">
+              <span>Page 1 of 1</span>
+              <span>•</span>
+              <span id="cv-doc-word-count">0 words</span>
+              <span>•</span>
+              <span>Harvard Academic Standard</span>
+            </div>
+            <button type="button" id="cv-word-save-btn" class="btn-save-primary">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline></svg>
+              <span>Save Word Document to CV</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- ============================================== -->
+      <!-- TAB 4: DATA BACKUP & RESTORE                   -->
+      <!-- ============================================== -->
+      <div id="tab-backup" class="editor-tab-panel" role="tabpanel">
+        <div class="panel-intro">
+          <div>
+            <h3 class="panel-heading">System Data Management & Backups</h3>
+            <p class="panel-subtext">Export your entire space engineer portfolio dataset to JSON, import backups, or restore factory defaults.</p>
+          </div>
+        </div>
+
+        <div class="backup-cards-grid">
+          <!-- Card 1: Export -->
+          <div class="backup-action-card">
+            <div class="backup-card-icon icon-amber">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+            </div>
+            <h4>Export Data (JSON)</h4>
+            <p>Download a complete snapshot of all achievements, blog posts, CV records, and projects.</p>
+            <button type="button" id="backup-export-btn" class="btn-card-action">
+              Download JSON Backup
+            </button>
+          </div>
+
+          <!-- Card 2: Import -->
+          <div class="backup-action-card">
+            <div class="backup-card-icon icon-blue">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="17 8 12 3 7 8"></polyline>
+                <line x1="12" y1="3" x2="12" y2="15"></line>
+              </svg>
+            </div>
+            <h4>Import Data (JSON)</h4>
+            <p>Restore or update portfolio data from a previously exported JSON backup file.</p>
+            <label class="btn-card-action file-upload-label">
+              <span>Select JSON File</span>
+              <input type="file" id="backup-import-file" accept=".json,application/json" style="display:none;" />
+            </label>
+          </div>
+
+          <!-- Card 3: Reset -->
+          <div class="backup-action-card">
+            <div class="backup-card-icon icon-red">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="1 4 1 10 7 10"></polyline>
+                <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+              </svg>
+            </div>
+            <h4>Factory Reset</h4>
+            <p>Clear all local changes and reset entire portfolio back to default space engineer data.</p>
+            <button type="button" id="backup-reset-btn" class="btn-card-action btn-card-danger">
+              Reset to Defaults
+            </button>
+          </div>
+        </div>
+
+        <!-- Raw JSON Inspector / Paste Box -->
+        <div class="raw-json-box">
+          <div class="field-header-row">
+            <label for="raw-json-textarea" class="field-label">Raw Portfolio JSON View & Direct Paste</label>
+            <button type="button" id="apply-raw-json-btn" class="btn-micro-action">Apply Raw JSON</button>
+          </div>
+          <textarea id="raw-json-textarea" rows="6" class="editor-textarea font-mono" placeholder="Paste or inspect full JSON here..."></textarea>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .editor-modal-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 9998;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background-color: rgba(6, 8, 14, 0.82);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .editor-modal-backdrop.is-active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .editor-modal-window {
+    position: relative;
+    width: 100%;
+    max-width: 960px;
+    height: 90vh;
+    max-height: 860px;
+    background: linear-gradient(180deg, rgba(18, 22, 32, 0.98) 0%, rgba(10, 13, 20, 0.99) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
+    border-radius: 20px;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace !important;
+    box-shadow: 
+      0 30px 60px -12px rgba(0, 0, 0, 0.85),
+      0 0 0 1px rgba(229, 169, 106, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    color: #F3F4F6;
+    transform: scale(0.96) translateY(10px);
+    transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .editor-modal-backdrop.is-active .editor-modal-window {
+    transform: scale(1) translateY(0);
+  }
+
+  /* Header */
+  .editor-header {
+    padding: 1.25rem 1.75rem 1rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    background: rgba(14, 18, 26, 0.6);
+  }
+
+  .editor-title-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1rem;
+  }
+
+  .editor-sys-pill {
+    display: inline-block;
+    font-size: 0.64rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    color: #E5A96A;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    margin-bottom: 0.25rem;
+  }
+
+  .editor-title {
+    font-size: 1.35rem;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    color: #FFFFFF;
+    margin: 0;
+  }
+
+  .editor-close-btn {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    background: rgba(255, 255, 255, 0.05);
+    color: #9CA3AF;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .editor-close-btn:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #FFFFFF;
+  }
+
+  /* Segmented control */
+  .segmented-control {
+    display: flex;
+    background: rgba(8, 10, 16, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 0.25rem;
+    gap: 0.25rem;
+    overflow-x: auto;
+  }
+
+  .segment-tab {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 9px;
+    background: transparent;
+    border: none;
+    color: #9CA3AF;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .segment-tab:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.04);
+  }
+
+  .segment-tab.is-active {
+    background: rgba(229, 169, 106, 0.16);
+    color: #E5A96A;
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    font-weight: 600;
+  }
+
+  /* Body Scroll */
+  .editor-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 1.5rem 1.75rem;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+  }
+
+  .editor-body::-webkit-scrollbar {
+    width: 6px;
+  }
+  .editor-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+
+  .editor-tab-panel {
+    display: none;
+  }
+
+  .editor-tab-panel.is-active {
+    display: block;
+    animation: fadeInTab 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  @keyframes fadeInTab {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .panel-intro {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.25rem;
+    gap: 1rem;
+  }
+
+  .panel-heading {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin: 0 0 0.25rem;
+  }
+
+  .panel-subtext {
+    font-size: 0.82rem;
+    color: #8E95A5;
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .btn-secondary-action {
+    padding: 0.45rem 0.85rem;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    color: #D1D5DB;
+    font-size: 0.78rem;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+    white-space: nowrap;
+    transition: all 0.2s;
+  }
+
+  .btn-secondary-action:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+  }
+
+  /* Form layouts */
+  .editor-grid-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    background: rgba(14, 18, 26, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .form-row {
+    display: grid;
+    gap: 1rem;
+  }
+
+  .form-row-2 {
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  }
+
+  .form-row-3 {
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  }
+
+  .form-field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .field-header-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .field-label {
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #C8CFDB;
+  }
+
+  .editor-input,
+  .editor-select,
+  .editor-textarea {
+    width: 100%;
+    padding: 0.65rem 0.85rem;
+    background: rgba(8, 10, 16, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    color: #FFFFFF;
+    font-size: 0.88rem;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+  }
+
+  .editor-input:focus,
+  .editor-select:focus,
+  .editor-textarea:focus {
+    border-color: rgba(229, 169, 106, 0.6);
+    box-shadow: 0 0 0 3px rgba(229, 169, 106, 0.12);
+  }
+
+  .editor-textarea {
+    resize: vertical;
+    line-height: 1.5;
+  }
+
+  .font-mono {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-size: 0.82rem;
+  }
+
+  .editor-quick-tools {
+    display: flex;
+    gap: 0.25rem;
+  }
+
+  .tool-btn {
+    padding: 0.2rem 0.45rem;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    color: #9CA3AF;
+    font-size: 0.72rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tool-btn:hover {
+    background: rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+  }
+
+  .form-submit-row {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.5rem;
+  }
+
+  .btn-save-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.25rem;
+    background: linear-gradient(135deg, #E5A96A 0%, #D4AF37 100%);
+    border: none;
+    border-radius: 10px;
+    color: #0A0C12;
+    font-size: 0.86rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(229, 169, 106, 0.25);
+    transition: filter 0.2s, transform 0.15s;
+  }
+
+  .btn-save-primary:hover {
+    filter: brightness(1.1);
+  }
+
+  .btn-save-primary:active {
+    transform: scale(0.97);
+  }
+
+  /* Inventory & Listings */
+  .inventory-section {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding-top: 1.25rem;
+  }
+
+  .inventory-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.85rem;
+  }
+
+  .inventory-header h4 {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #E5E7EB;
+    margin: 0;
+  }
+
+  .count-pill {
+    font-size: 0.72rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.06);
+    color: #9CA3AF;
+  }
+
+  .inventory-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+  }
+
+  :global(.inventory-card) {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1rem;
+    background: rgba(14, 18, 26, 0.5);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    gap: 1rem;
+    transition: border-color 0.2s;
+  }
+
+  :global(.inventory-card:hover) {
+    border-color: rgba(229, 169, 106, 0.3);
+  }
+
+  :global(.inv-card-left) {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+  }
+
+  :global(.inv-card-title) {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin: 0;
+  }
+
+  :global(.inv-card-meta) {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.75rem;
+    color: #8E95A5;
+  }
+
+  :global(.inv-card-actions) {
+    display: flex;
+    gap: 0.45rem;
+  }
+
+  :global(.btn-inv-edit) {
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    background: rgba(229, 169, 106, 0.12);
+    border: 1px solid rgba(229, 169, 106, 0.25);
+    color: #E5A96A;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  :global(.btn-inv-edit:hover) {
+    background: rgba(229, 169, 106, 0.2);
+  }
+
+  :global(.btn-inv-delete) {
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    color: #F87171;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  :global(.btn-inv-delete:hover) {
+    background: rgba(239, 68, 68, 0.2);
+  }
+
+  /* CV Studio Cards */
+  .cv-section-card {
+    background: rgba(14, 18, 26, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1.25rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .cv-card-title {
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: #E5A96A;
+    margin: 0 0 1rem;
+  }
+
+  .btn-micro-action {
+    padding: 0.3rem 0.65rem;
+    background: rgba(229, 169, 106, 0.15);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    border-radius: 6px;
+    color: #E5A96A;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .btn-micro-action:hover {
+    background: rgba(229, 169, 106, 0.25);
+  }
+
+  .repeater-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  :global(.repeater-item) {
+    background: rgba(8, 10, 16, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 10px;
+    padding: 1rem;
+    position: relative;
+  }
+
+  :global(.repeater-remove-btn) {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    background: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    border-radius: 6px;
+    color: #F87171;
+    font-size: 0.7rem;
+    padding: 0.2rem 0.5rem;
+    cursor: pointer;
+  }
+
+  /* CV Mode Selector */
+  .cv-mode-selector {
+    display: flex;
+    gap: 0.5rem;
+    margin-bottom: 1.25rem;
+    background: rgba(8, 10, 16, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 12px;
+    padding: 0.3rem;
+  }
+
+  .cv-mode-btn {
+    flex: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.55rem 0.85rem;
+    border-radius: 8px;
+    background: transparent;
+    border: none;
+    color: #9CA3AF;
+    font-size: 0.82rem;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .cv-mode-btn:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .cv-mode-btn.is-active {
+    background: rgba(229, 169, 106, 0.18);
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    color: #E5A96A;
+    font-weight: 600;
+  }
+
+  /* Profile Avatar Studio */
+  .avatar-studio-card {
+    margin-bottom: 1.5rem;
+  }
+
+  .avatar-studio-layout {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex-wrap: wrap;
+  }
+
+  .avatar-preview-wrap {
+    position: relative;
+    width: 84px;
+    height: 84px;
+    border-radius: 50%;
+    border: 2px solid rgba(229, 169, 106, 0.4);
+    background: linear-gradient(135deg, rgba(20, 26, 38, 0.95), rgba(10, 14, 22, 0.98));
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    flex-shrink: 0;
+  }
+
+  .avatar-preview-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .avatar-preview-fallback {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #E5A96A;
+    font-family: inherit;
+  }
+
+  .avatar-camera-overlay {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #FFFFFF;
+    opacity: 0;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+
+  .avatar-preview-wrap:hover .avatar-camera-overlay {
+    opacity: 1;
+  }
+
+  .avatar-controls-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    min-width: 260px;
+  }
+
+  .avatar-btn-row {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .avatar-url-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+
+  .avatar-presets-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .preset-label {
+    font-size: 0.74rem;
+    color: #8E95A5;
+  }
+
+  .preset-pill {
+    padding: 0.2rem 0.55rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #D1D5DB;
+    font-size: 0.72rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.2s;
+  }
+
+  .preset-pill:hover {
+    background: rgba(229, 169, 106, 0.2);
+    border-color: rgba(229, 169, 106, 0.4);
+    color: #E5A96A;
+  }
+
+  /* Word Document Editor */
+  .word-editor-container {
+    background: rgba(10, 13, 20, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 16px;
+    overflow: hidden;
+    margin-bottom: 2rem;
+  }
+
+  .word-ribbon {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.6rem 0.85rem;
+    background: rgba(16, 20, 30, 0.95);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    overflow-x: auto;
+    flex-wrap: wrap;
+  }
+
+  .ribbon-group {
+    display: flex;
+    align-items: center;
+    gap: 0.2rem;
+  }
+
+  .ribbon-sep {
+    width: 1px;
+    height: 20px;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0 0.3rem;
+  }
+
+  .word-tool-btn {
+    padding: 0.35rem 0.6rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #D1D5DB;
+    font-size: 0.78rem;
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+  }
+
+  .word-tool-btn:hover {
+    background: rgba(229, 169, 106, 0.2);
+    border-color: rgba(229, 169, 106, 0.4);
+    color: #FFFFFF;
+  }
+
+  .word-heading-select {
+    padding: 0.35rem 0.6rem;
+    background: rgba(8, 10, 16, 0.8);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 6px;
+    color: #FFFFFF;
+    font-size: 0.78rem;
+    outline: none;
+    font-family: inherit;
+  }
+
+  .doc-sheet-header {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    padding: 0.6rem 1.25rem;
+    background: rgba(8, 10, 16, 0.5);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.78rem;
+    color: #8E95A5;
+  }
+
+  .doc-filename {
+    color: #E5E7EB;
+    font-weight: 600;
+  }
+
+  .doc-status-badge {
+    margin-left: auto;
+    font-size: 0.7rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    background: rgba(229, 169, 106, 0.12);
+    color: #E5A96A;
+  }
+
+  .word-doc-canvas-wrapper {
+    padding: 1.5rem 1rem;
+    background: rgba(6, 8, 12, 0.6);
+    display: flex;
+    justify-content: center;
+    overflow-x: auto;
+  }
+
+  .word-doc-canvas {
+    width: 100%;
+    max-width: 820px;
+    min-height: 480px;
+    background: #0E121B;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+    padding: 2.25rem;
+    color: #F3F4F6;
+    font-size: 0.88rem;
+    line-height: 1.7;
+    outline: none;
+    white-space: pre-wrap;
+  }
+
+  .word-doc-canvas:focus {
+    border-color: rgba(229, 169, 106, 0.4);
+    box-shadow: 0 0 0 2px rgba(229, 169, 106, 0.12);
+  }
+
+  .word-doc-canvas h1,
+  .word-doc-canvas h2,
+  .word-doc-canvas h3 {
+    color: #E5A96A;
+    margin-top: 1.25rem;
+    margin-bottom: 0.5rem;
+    font-weight: 700;
+  }
+
+  .word-doc-canvas ul,
+  .word-doc-canvas ol {
+    padding-left: 1.5rem;
+    margin: 0.5rem 0;
+  }
+
+  .word-doc-canvas hr {
+    border: none;
+    border-top: 1px solid rgba(229, 169, 106, 0.3);
+    margin: 1.25rem 0;
+  }
+
+  .doc-status-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.85rem 1.25rem;
+    background: rgba(14, 18, 27, 0.9);
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .doc-status-left {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: #8E95A5;
+  }
+
+  /* Backup & Data Cards */
+  .backup-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .backup-action-card {
+    background: rgba(14, 18, 26, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 14px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .backup-card-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .icon-amber {
+    background: rgba(229, 169, 106, 0.12);
+    border: 1px solid rgba(229, 169, 106, 0.25);
+    color: #E5A96A;
+  }
+
+  .icon-blue {
+    background: rgba(56, 189, 248, 0.12);
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    color: #38BDF8;
+  }
+
+  .icon-red {
+    background: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    color: #F87171;
+  }
+
+  .backup-action-card h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #FFFFFF;
+    margin: 0;
+  }
+
+  .backup-action-card p {
+    font-size: 0.8rem;
+    color: #8E95A5;
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .btn-card-action {
+    margin-top: auto;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
+    font-size: 0.84rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+  }
+
+  .btn-card-action:hover {
+    background: rgba(255, 255, 255, 0.15);
+  }
+
+  .btn-card-danger:hover {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #FCA5A5;
+  }
+
+  .file-upload-label {
+    display: block;
+    cursor: pointer;
+  }
+
+  .raw-json-box {
+    background: rgba(14, 18, 26, 0.45);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+</style>
+
+<script>
+  function setupAdminEditorModal() {
+    const modal = document.getElementById('admin-editor-modal');
+    if (!modal) return;
+
+    const closeBtn = document.getElementById('editor-modal-close');
+    const tabs = document.querySelectorAll('.segment-tab');
+    const panels = document.querySelectorAll('.editor-tab-panel');
+
+    // Helper to get store
+    async function getStore() {
+      try {
+        const storeModule = await import('../scripts/store.js');
+        return storeModule;
+      } catch (e) {
+        console.warn('Could not import store.js directly:', e);
+        return null;
+      }
+    }
+
+    function switchTab(tabId: string) {
+      tabs.forEach(t => {
+        const matches = t.getAttribute('data-tab') === tabId;
+        t.classList.toggle('is-active', matches);
+        t.setAttribute('aria-selected', matches ? 'true' : 'false');
+      });
+
+      panels.forEach(p => {
+        p.classList.toggle('is-active', p.id === tabId);
+      });
+    }
+
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const target = tab.getAttribute('data-tab');
+        if (target) switchTab(target);
+      });
+    });
+
+    function openModal(defaultTab?: string) {
+      modal?.classList.add('is-active');
+      modal?.setAttribute('aria-hidden', 'false');
+      if (defaultTab) {
+        switchTab(`tab-${defaultTab}`);
+      }
+      refreshAllData();
+    }
+
+    function closeModal() {
+      modal?.classList.remove('is-active');
+      modal?.setAttribute('aria-hidden', 'true');
+    }
+
+    closeBtn?.addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => {
+      if (e.target === modal) closeModal();
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && modal.classList.contains('is-active')) {
+        closeModal();
+      }
+    });
+
+    // Listen for custom open event
+    window.addEventListener('open-admin-editor', (e: any) => {
+      const tab = e.detail?.tab || 'achievement';
+      openModal(tab);
+    });
+
+    // ----------------------------------------------------
+    // TAB 1: ACHIEVEMENTS LOGIC
+    // ----------------------------------------------------
+    const achForm = document.getElementById('achievement-form') as HTMLFormElement;
+    const achIdInput = document.getElementById('achievement-id-input') as HTMLInputElement;
+    const achTitleInput = document.getElementById('achievement-title-input') as HTMLInputElement;
+    const achDateInput = document.getElementById('achievement-date-input') as HTMLInputElement;
+    const achCatSelect = document.getElementById('achievement-category-select') as HTMLSelectElement;
+    const achOrgInput = document.getElementById('achievement-org-input') as HTMLInputElement;
+    const achMetricsInput = document.getElementById('achievement-metrics-input') as HTMLInputElement;
+    const achDescInput = document.getElementById('achievement-desc-input') as HTMLTextAreaElement;
+    const achTagsInput = document.getElementById('achievement-tags-input') as HTMLInputElement;
+    const achListContainer = document.getElementById('achievement-list-container');
+    const achCountBadge = document.getElementById('achievement-count-badge');
+    const achNewBtn = document.getElementById('achievement-new-btn');
+
+    function resetAchForm() {
+      achIdInput.value = '';
+      achTitleInput.value = '';
+      achDateInput.value = '';
+      achCatSelect.value = 'Flight Heritage';
+      achOrgInput.value = '';
+      achMetricsInput.value = '';
+      achDescInput.value = '';
+      achTagsInput.value = '';
+      const submitBtn = document.getElementById('achievement-save-btn');
+      if (submitBtn) submitBtn.querySelector('span')!.textContent = 'Save Achievement';
+    }
+
+    achNewBtn?.addEventListener('click', resetAchForm);
+
+    async function loadAchievements() {
+      if (!achListContainer) return;
+      const store = await getStore();
+      let list: any[] = [];
+      if (store && typeof store.getAchievements === 'function') {
+        list = store.getAchievements();
+      } else {
+        const raw = localStorage.getItem('portfolio_achievements');
+        list = raw ? JSON.parse(raw) : [];
+      }
+
+      if (achCountBadge) achCountBadge.textContent = `${list.length} entries`;
+
+      if (list.length === 0) {
+        achListContainer.innerHTML = `<div style="text-align:center; padding:1.5rem; color:#8E95A5; font-size:0.84rem;">No achievements recorded yet. Add your first above!</div>`;
+        return;
+      }
+
+      achListContainer.innerHTML = list.map((item: any, idx: number) => {
+        const id = item.id || `ach-${idx}`;
+        return `
+          <div class="inventory-card" data-id="${id}">
+            <div class="inv-card-left">
+              <h5 class="inv-card-title">${item.title || 'Untitled Achievement'}</h5>
+              <div class="inv-card-meta">
+                <span style="color:#E5A96A;">${item.date || item.timeline || 'Date N/A'}</span>
+                <span>•</span>
+                <span>${item.category || 'General'}</span>
+                ${item.organization ? `<span>•</span><span>${item.organization}</span>` : ''}
+              </div>
+            </div>
+            <div class="inv-card-actions">
+              <button type="button" class="btn-inv-edit" data-edit-ach="${id}">Edit</button>
+              <button type="button" class="btn-inv-delete" data-delete-ach="${id}">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Wire edit buttons
+      achListContainer.querySelectorAll('[data-edit-ach]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-edit-ach');
+          const target = list.find((it: any) => (it.id || '') === id || `ach-${list.indexOf(it)}` === id);
+          if (target) {
+            achIdInput.value = target.id || id || '';
+            achTitleInput.value = target.title || '';
+            achDateInput.value = target.date || target.timeline || '';
+            achCatSelect.value = target.category || 'Flight Heritage';
+            achOrgInput.value = target.organization || '';
+            achMetricsInput.value = target.metrics || target.metric || '';
+            achDescInput.value = target.description || target.summary || '';
+            achTagsInput.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
+            const submitBtn = document.getElementById('achievement-save-btn');
+            if (submitBtn) submitBtn.querySelector('span')!.textContent = 'Update Achievement';
+            achForm.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+
+      // Wire delete buttons
+      achListContainer.querySelectorAll('[data-delete-ach]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-delete-ach');
+          if (!confirm('Are you sure you want to delete this achievement?')) return;
+          const store = await getStore();
+          if (store && typeof store.deleteAchievement === 'function') {
+            store.deleteAchievement(id);
+          } else {
+            const filtered = list.filter((it: any, i: number) => (it.id || `ach-${i}`) !== id);
+            localStorage.setItem('portfolio_achievements', JSON.stringify(filtered));
+            window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+          }
+          window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Achievement deleted' } }));
+          loadAchievements();
+        });
+      });
+    }
+
+    achForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = achIdInput.value || `ach-${Date.now()}`;
+      const payload = {
+        id,
+        title: achTitleInput.value.trim(),
+        date: achDateInput.value.trim(),
+        timeline: achDateInput.value.trim(),
+        category: achCatSelect.value,
+        organization: achOrgInput.value.trim(),
+        metrics: achMetricsInput.value.trim(),
+        description: achDescInput.value.trim(),
+        tags: achTagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
+      };
+
+      const store = await getStore();
+      if (achIdInput.value) {
+        // Update
+        if (store && typeof store.updateAchievement === 'function') {
+          store.updateAchievement(id, payload);
+        } else {
+          // fallback
+          let rawList = JSON.parse(localStorage.getItem('portfolio_achievements') || '[]');
+          const idx = rawList.findIndex((item: any) => item.id === id);
+          if (idx >= 0) rawList[idx] = payload; else rawList.push(payload);
+          localStorage.setItem('portfolio_achievements', JSON.stringify(rawList));
+          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+        }
+        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Achievement updated successfully' } }));
+      } else {
+        // Add new
+        if (store && typeof store.addAchievement === 'function') {
+          store.addAchievement(payload);
+        } else {
+          let rawList = JSON.parse(localStorage.getItem('portfolio_achievements') || '[]');
+          rawList.unshift(payload);
+          localStorage.setItem('portfolio_achievements', JSON.stringify(rawList));
+          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+        }
+        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'New achievement added to timeline!' } }));
+      }
+
+      resetAchForm();
+      loadAchievements();
+    });
+
+    // ----------------------------------------------------
+    // TAB 2: BLOG COMPOSER LOGIC
+    // ----------------------------------------------------
+    const blogForm = document.getElementById('blog-form') as HTMLFormElement;
+    const blogIdInput = document.getElementById('blog-id-input') as HTMLInputElement;
+    const blogTitleInput = document.getElementById('blog-title-input') as HTMLInputElement;
+    const blogSlugInput = document.getElementById('blog-slug-input') as HTMLInputElement;
+    const blogDateInput = document.getElementById('blog-date-input') as HTMLInputElement;
+    const blogReadtimeInput = document.getElementById('blog-readtime-input') as HTMLInputElement;
+    const blogTagsInput = document.getElementById('blog-tags-input') as HTMLInputElement;
+    const blogExcerptInput = document.getElementById('blog-excerpt-input') as HTMLTextAreaElement;
+    const blogContentInput = document.getElementById('blog-content-input') as HTMLTextAreaElement;
+    const blogListContainer = document.getElementById('blog-list-container');
+    const blogCountBadge = document.getElementById('blog-count-badge');
+    const blogNewBtn = document.getElementById('blog-new-btn');
+
+    // Auto-generate slug from title
+    blogTitleInput?.addEventListener('input', () => {
+      if (!blogIdInput.value) {
+        blogSlugInput.value = blogTitleInput.value
+          .toLowerCase()
+          .replace(/[^\w\s-]/g, '')
+          .replace(/[\s_-]+/g, '-')
+          .replace(/^-+|-+$/g, '');
+      }
+    });
+
+    // Markdown quick toolbar helpers
+    document.querySelectorAll('.tool-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tool = btn.getAttribute('data-tool');
+        if (!blogContentInput) return;
+        const start = blogContentInput.selectionStart;
+        const end = blogContentInput.selectionEnd;
+        const sel = blogContentInput.value.substring(start, end);
+        let replacement = '';
+
+        if (tool === 'h2') replacement = `\n## ${sel || 'Section Heading'}\n`;
+        else if (tool === 'bold') replacement = `**${sel || 'bold text'}**`;
+        else if (tool === 'italic') replacement = `*${sel || 'italic text'}*`;
+        else if (tool === 'code') replacement = `\`${sel || 'code'}\``;
+        else if (tool === 'bullet') replacement = `\n- ${sel || 'List item'}\n`;
+
+        blogContentInput.setRangeText(replacement, start, end, 'end');
+        blogContentInput.focus();
+      });
+    });
+
+    function resetBlogForm() {
+      blogIdInput.value = '';
+      blogTitleInput.value = '';
+      blogSlugInput.value = '';
+      blogDateInput.value = new Date().toISOString().split('T')[0];
+      blogReadtimeInput.value = '5 min read';
+      blogTagsInput.value = '';
+      blogExcerptInput.value = '';
+      blogContentInput.value = '';
+      const submitBtn = document.getElementById('blog-save-btn');
+      if (submitBtn) submitBtn.querySelector('span')!.textContent = 'Publish / Update Article';
+    }
+
+    blogNewBtn?.addEventListener('click', resetBlogForm);
+
+    async function loadBlogs() {
+      if (!blogListContainer) return;
+      const store = await getStore();
+      let list: any[] = [];
+      if (store && typeof store.getBlogs === 'function') {
+        list = store.getBlogs();
+      } else {
+        const raw = localStorage.getItem('portfolio_blogs');
+        list = raw ? JSON.parse(raw) : [];
+      }
+
+      if (blogCountBadge) blogCountBadge.textContent = `${list.length} articles`;
+
+      if (list.length === 0) {
+        blogListContainer.innerHTML = `<div style="text-align:center; padding:1.5rem; color:#8E95A5; font-size:0.84rem;">No articles published yet. Compose your first flight post!</div>`;
+        return;
+      }
+
+      blogListContainer.innerHTML = list.map((b: any, idx: number) => {
+        const id = b.id || b.slug || `blog-${idx}`;
+        return `
+          <div class="inventory-card" data-id="${id}">
+            <div class="inv-card-left">
+              <h5 class="inv-card-title">${b.title || 'Untitled Article'}</h5>
+              <div class="inv-card-meta">
+                <span style="color:#E5A96A;">${b.date || 'Recent'}</span>
+                <span>•</span>
+                <span>${b.readTime || '5 min read'}</span>
+                <span>•</span>
+                <span>/${b.slug || ''}</span>
+              </div>
+            </div>
+            <div class="inv-card-actions">
+              <button type="button" class="btn-inv-edit" data-edit-blog="${id}">Edit</button>
+              <button type="button" class="btn-inv-delete" data-delete-blog="${id}">Delete</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      // Wire edit
+      blogListContainer.querySelectorAll('[data-edit-blog]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const id = btn.getAttribute('data-edit-blog');
+          const target = list.find((item: any) => (item.id || item.slug) === id || `blog-${list.indexOf(item)}` === id);
+          if (target) {
+            blogIdInput.value = target.id || target.slug || id || '';
+            blogTitleInput.value = target.title || '';
+            blogSlugInput.value = target.slug || '';
+            blogDateInput.value = target.date || '';
+            blogReadtimeInput.value = target.readTime || '5 min read';
+            blogTagsInput.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
+            blogExcerptInput.value = target.excerpt || target.summary || '';
+            blogContentInput.value = target.content || '';
+            const submitBtn = document.getElementById('blog-save-btn');
+            if (submitBtn) submitBtn.querySelector('span')!.textContent = 'Update Article';
+            blogForm.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+
+      // Wire delete
+      blogListContainer.querySelectorAll('[data-delete-blog]').forEach(btn => {
+        btn.addEventListener('click', async () => {
+          const id = btn.getAttribute('data-delete-blog');
+          if (!confirm('Are you sure you want to delete this blog post?')) return;
+          const store = await getStore();
+          if (store && typeof store.deleteBlog === 'function') {
+            store.deleteBlog(id);
+          } else {
+            const filtered = list.filter((item: any, i: number) => (item.id || item.slug || `blog-${i}`) !== id);
+            localStorage.setItem('portfolio_blogs', JSON.stringify(filtered));
+            window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+          }
+          window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Blog article removed' } }));
+          loadBlogs();
+        });
+      });
+    }
+
+    blogForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const id = blogIdInput.value || blogSlugInput.value || `blog-${Date.now()}`;
+      const payload = {
+        id,
+        title: blogTitleInput.value.trim(),
+        slug: blogSlugInput.value.trim(),
+        date: blogDateInput.value || new Date().toISOString().split('T')[0],
+        readTime: blogReadtimeInput.value.trim() || '5 min read',
+        tags: blogTagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
+        summary: blogExcerptInput.value.trim(),
+        excerpt: blogExcerptInput.value.trim(),
+        content: blogContentInput.value.trim(),
+      };
+
+      const store = await getStore();
+      if (blogIdInput.value) {
+        if (store && typeof store.updateBlog === 'function') {
+          store.updateBlog(id, payload);
+        } else {
+          let rawList = JSON.parse(localStorage.getItem('portfolio_blogs') || '[]');
+          const idx = rawList.findIndex((item: any) => item.id === id || item.slug === id);
+          if (idx >= 0) rawList[idx] = payload; else rawList.push(payload);
+          localStorage.setItem('portfolio_blogs', JSON.stringify(rawList));
+          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+        }
+        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Blog article updated successfully' } }));
+      } else {
+        if (store && typeof store.addBlog === 'function') {
+          store.addBlog(payload);
+        } else {
+          let rawList = JSON.parse(localStorage.getItem('portfolio_blogs') || '[]');
+          rawList.unshift(payload);
+          localStorage.setItem('portfolio_blogs', JSON.stringify(rawList));
+          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+        }
+        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'New article published to Mission Log!' } }));
+      }
+
+      resetBlogForm();
+      loadBlogs();
+    });
+
+    // ----------------------------------------------------
+    // TAB 3: HARVARD CV STUDIO LOGIC & WORD DOCUMENT EDITOR
+    // ----------------------------------------------------
+    const cvForm = document.getElementById('cv-editor-form') as HTMLFormElement;
+    const cvNameInput = document.getElementById('cv-name-input') as HTMLInputElement;
+    const cvCallsignInput = document.getElementById('cv-callsign-input') as HTMLInputElement;
+    const cvLocationInput = document.getElementById('cv-location-input') as HTMLInputElement;
+    const cvTitleInput = document.getElementById('cv-title-input') as HTMLInputElement;
+    const cvClearanceInput = document.getElementById('cv-clearance-input') as HTMLInputElement;
+    const cvTaglineInput = document.getElementById('cv-tagline-input') as HTMLInputElement;
+    const cvBioInput = document.getElementById('cv-bio-input') as HTMLTextAreaElement;
+
+    const cvExpContainer = document.getElementById('cv-experience-list');
+    const cvEduContainer = document.getElementById('cv-education-list');
+
+    // Dual Mode Switcher
+    const cvModeFormBtn = document.getElementById('cv-mode-form-btn');
+    const cvModeDocBtn = document.getElementById('cv-mode-doc-btn');
+    const cvWordEditorPanel = document.getElementById('cv-word-editor-panel');
+
+    // Avatar Controls
+    const cvAvatarPreviewImg = document.getElementById('cv-avatar-preview-img') as HTMLImageElement;
+    const cvAvatarFallback = document.getElementById('cv-avatar-fallback');
+    const cvAvatarFileInput = document.getElementById('cv-avatar-file-input') as HTMLInputElement;
+    const cvAvatarUrlInput = document.getElementById('cv-avatar-url-input') as HTMLInputElement;
+    const cvAvatarLoadUrlBtn = document.getElementById('cv-avatar-load-url-btn');
+    const cvAvatarResetBtn = document.getElementById('cv-avatar-reset-btn');
+
+    // Word Document Canvas & Toolbar
+    const cvWordDocCanvas = document.getElementById('cv-word-document-canvas');
+    const cvDocWordCount = document.getElementById('cv-doc-word-count');
+    const cvWordSaveBtn = document.getElementById('cv-word-save-btn');
+    const wordBlockSelect = document.getElementById('word-block-select') as HTMLSelectElement;
+
+    let currentExpList: any[] = [];
+    let currentEduList: any[] = [];
+
+    // Switch between Structured Form and Word Editor
+    function setCVMode(mode: 'form' | 'word') {
+      if (mode === 'form') {
+        cvModeFormBtn?.classList.add('is-active');
+        cvModeDocBtn?.classList.remove('is-active');
+        if (cvForm) cvForm.style.display = 'flex';
+        if (cvWordEditorPanel) cvWordEditorPanel.style.display = 'none';
+      } else {
+        cvModeDocBtn?.classList.add('is-active');
+        cvModeFormBtn?.classList.remove('is-active');
+        if (cvForm) cvForm.style.display = 'none';
+        if (cvWordEditorPanel) cvWordEditorPanel.style.display = 'block';
+        loadWordDocument();
+      }
+    }
+
+    cvModeFormBtn?.addEventListener('click', () => setCVMode('form'));
+    cvModeDocBtn?.addEventListener('click', () => setCVMode('word'));
+
+    // Update Avatar Preview
+    function setAvatarPreview(url: string | null) {
+      if (url && url.trim()) {
+        if (cvAvatarPreviewImg) {
+          cvAvatarPreviewImg.src = url;
+          cvAvatarPreviewImg.style.display = 'block';
+        }
+        if (cvAvatarFallback) cvAvatarFallback.style.display = 'none';
+        if (cvAvatarUrlInput) cvAvatarUrlInput.value = url.startsWith('data:') ? '' : url;
+      } else {
+        if (cvAvatarPreviewImg) {
+          cvAvatarPreviewImg.src = '';
+          cvAvatarPreviewImg.style.display = 'none';
+        }
+        if (cvAvatarFallback) cvAvatarFallback.style.display = 'block';
+        if (cvAvatarUrlInput) cvAvatarUrlInput.value = '';
+      }
+    }
+
+    async function saveAvatar(avatarUrlOrData: string) {
+      const store = await getStore();
+      if (store && typeof store.updateProfileAvatar === 'function') {
+        store.updateProfileAvatar(avatarUrlOrData);
+      } else if (store && typeof store.updateCVData === 'function') {
+        const current = store.getCVData();
+        const p = current.profile || {};
+        p.avatar = avatarUrlOrData;
+        store.updateCVData('profile', p);
+      } else {
+        localStorage.setItem('portfolio_profile_avatar', avatarUrlOrData);
+        window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+      }
+      setAvatarPreview(avatarUrlOrData);
+      window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Profile photo updated successfully!' } }));
+    }
+
+    // Avatar File Upload
+    cvAvatarFileInput?.addEventListener('change', () => {
+      const file = cvAvatarFileInput.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (e) => {
+        const base64 = e.target?.result as string;
+        if (base64) {
+          await saveAvatar(base64);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Avatar URL Input
+    cvAvatarLoadUrlBtn?.addEventListener('click', async () => {
+      const url = cvAvatarUrlInput?.value?.trim() || '';
+      if (!url) {
+        alert('Please enter a valid image URL');
+        return;
+      }
+      await saveAvatar(url);
+    });
+
+    // Avatar Presets
+    document.querySelectorAll('.preset-pill').forEach(pill => {
+      pill.addEventListener('click', async () => {
+        const preset = pill.getAttribute('data-preset');
+        let presetUrl = '';
+        if (preset === 'astronaut') {
+          presetUrl = 'https://images.unsplash.com/photo-1446776811953-b23d57bd21aa?w=300&auto=format&fit=crop&q=80';
+        } else if (preset === 'spacecraft') {
+          presetUrl = 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?w=300&auto=format&fit=crop&q=80';
+        } else {
+          presetUrl = 'https://images.unsplash.com/photo-1451187580459-43490279c0fa?w=300&auto=format&fit=crop&q=80';
+        }
+        await saveAvatar(presetUrl);
+      });
+    });
+
+    // Avatar Reset
+    cvAvatarResetBtn?.addEventListener('click', async () => {
+      await saveAvatar('');
+    });
+
+    // Word Document Toolbar Execution
+    document.querySelectorAll('[data-doc-cmd]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const cmd = btn.getAttribute('data-doc-cmd');
+        const val = btn.getAttribute('data-val') || '';
+        if (!cmd) return;
+        document.execCommand(cmd, false, val);
+        cvWordDocCanvas?.focus();
+        updateWordCount();
+      });
+    });
+
+    wordBlockSelect?.addEventListener('change', () => {
+      const val = wordBlockSelect.value;
+      if (val) {
+        document.execCommand('formatBlock', false, val);
+        cvWordDocCanvas?.focus();
+        updateWordCount();
+      }
+    });
+
+    function updateWordCount() {
+      if (!cvWordDocCanvas || !cvDocWordCount) return;
+      const text = cvWordDocCanvas.innerText || '';
+      const words = text.trim().split(/\s+/).filter(Boolean).length;
+      cvDocWordCount.textContent = `${words} words`;
+    }
+
+    cvWordDocCanvas?.addEventListener('input', updateWordCount);
+
+    // Load Word Document Canvas content
+    async function loadWordDocument() {
+      if (!cvWordDocCanvas) return;
+      const store = await getStore();
+      let html = '';
+      if (store && typeof store.getCVDocumentHtml === 'function') {
+        html = store.getCVDocumentHtml();
+      }
+
+      if (!html) {
+        // Generate formatted Harvard CV HTML
+        const cv = store && typeof store.getCVData === 'function' ? store.getCVData() : {};
+        const p = cv.profile || {};
+        const expList = cv.experience || cv.timeline || [];
+        const eduList = cv.education || [];
+
+        html = `
+          <div style="text-align:center; border-bottom:1px solid #E5A96A; padding-bottom:1rem; margin-bottom:1.5rem;">
+            <h1 style="color:#FFFFFF; font-size:1.6rem; margin-bottom:0.25rem;">${p.name || 'Võ Quang Nhật Nguyên'}</h1>
+            <p style="color:#E5A96A; font-weight:600; margin:0;">${p.title || 'Space Systems & Flight Software Architect'} [${p.callsign || 'NHAT-NGUYEN'}]</p>
+            <p style="color:#8E95A5; font-size:0.85rem; margin-top:0.35rem;">${p.location || 'Pasadena, CA'} • Clearance: ${p.clearance || 'Public Trust / NASA Heritage'}</p>
+          </div>
+
+          <h2>EXECUTIVE BIO & HARVARD SUMMARY</h2>
+          <hr/>
+          <p>${p.bio || 'Dual-specialist in aerospace engineering and deterministic real-time flight software.'}</p>
+
+          <h2>PROFESSIONAL APPOINTMENTS & EXPERIENCE</h2>
+          <hr/>
+          ${expList.map((e: any) => `
+            <div style="margin-bottom:1rem;">
+              <h3 style="color:#FFFFFF; margin-bottom:0.2rem;">${e.role || 'Flight Engineer'} • <span style="color:#E5A96A;">${e.organization || ''}</span></h3>
+              <p style="color:#8E95A5; font-size:0.82rem; margin:0;">${e.period || ''} | ${e.location || 'LEO Operations'} | <i>${e.badge || ''}</i></p>
+              <p style="margin-top:0.35rem;">${e.summary || ''}</p>
+              <ul>
+                ${(Array.isArray(e.highlights) ? e.highlights : [e.highlights || '']).map((h: string) => `<li>${h}</li>`).join('')}
+              </ul>
+            </div>
+          `).join('')}
+
+          <h2>ACADEMIC BACKGROUND & DEGREES</h2>
+          <hr/>
+          ${eduList.map((ed: any) => `
+            <div style="margin-bottom:0.85rem;">
+              <h3 style="color:#FFFFFF; margin-bottom:0.15rem;">${ed.degree || ''} — <span style="color:#E5A96A;">${ed.institution || ''}</span></h3>
+              <p style="color:#8E95A5; font-size:0.82rem; margin:0;">${ed.period || ''} | Honors: ${ed.honors || 'High Honors'}</p>
+              ${ed.thesis ? `<p style="margin-top:0.25rem; font-style:italic;">Thesis: "${ed.thesis}"</p>` : ''}
+            </div>
+          `).join('')}
+        `;
+      }
+
+      cvWordDocCanvas.innerHTML = html;
+      updateWordCount();
+    }
+
+    // Save Word Document Canvas
+    cvWordSaveBtn?.addEventListener('click', async () => {
+      if (!cvWordDocCanvas) return;
+      const html = cvWordDocCanvas.innerHTML;
+      const store = await getStore();
+
+      if (store && typeof store.updateCVDocumentHtml === 'function') {
+        store.updateCVDocumentHtml(html);
+      } else if (store && typeof store.updateCVData === 'function') {
+        store.updateCVData('cvDocumentHtml', html);
+      } else {
+        localStorage.setItem('portfolio_cv_doc_html', html);
+        window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+      }
+
+      window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Word Document CV updated & synced successfully!' } }));
+    });
+
+    async function loadCVData() {
+      const store = await getStore();
+      let cvData: any = null;
+      if (store && typeof store.getCVData === 'function') {
+        cvData = store.getCVData();
+      } else {
+        const raw = localStorage.getItem('portfolio_cv');
+        cvData = raw ? JSON.parse(raw) : null;
+      }
+
+      if (!cvData) return;
+
+      const prof = cvData.profile || {};
+      if (cvNameInput) cvNameInput.value = prof.name || '';
+      if (cvCallsignInput) cvCallsignInput.value = prof.callsign || '';
+      if (cvLocationInput) cvLocationInput.value = prof.location || '';
+      if (cvTitleInput) cvTitleInput.value = prof.title || '';
+      if (cvClearanceInput) cvClearanceInput.value = prof.clearance || '';
+      if (cvTaglineInput) cvTaglineInput.value = prof.tagline || '';
+      if (cvBioInput) cvBioInput.value = prof.bio || '';
+
+      // Load avatar
+      let avatar = prof.avatar;
+      if (!avatar && store && typeof store.getProfileAvatar === 'function') {
+        avatar = store.getProfileAvatar();
+      }
+      setAvatarPreview(avatar);
+
+      currentExpList = cvData.experience || cvData.timeline || [];
+      currentEduList = cvData.education || [];
+
+      renderExperienceRepeater();
+      renderEducationRepeater();
+    }
+
+    function renderExperienceRepeater() {
+      if (!cvExpContainer) return;
+      cvExpContainer.innerHTML = currentExpList.map((exp, idx) => `
+        <div class="repeater-item" data-idx="${idx}">
+          <button type="button" class="repeater-remove-btn" data-remove-exp="${idx}">Remove</button>
+          <div class="form-row form-row-2">
+            <div class="form-field">
+              <label class="field-label">Role Title</label>
+              <input type="text" class="editor-input exp-role font-mono" value="${exp.role || ''}" placeholder="e.g. Lead Flight Software Engineer" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Organization</label>
+              <input type="text" class="editor-input exp-org font-mono" value="${exp.organization || ''}" placeholder="e.g. Astraea Space Labs" />
+            </div>
+          </div>
+          <div class="form-row form-row-2" style="margin-top:0.5rem;">
+            <div class="form-field">
+              <label class="field-label">Period / Dates</label>
+              <input type="text" class="editor-input exp-period font-mono" value="${exp.period || ''}" placeholder="e.g. 2023 — Present" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Location / Badge</label>
+              <input type="text" class="editor-input exp-badge font-mono" value="${exp.badge || exp.location || ''}" placeholder="e.g. Mission Flight Heritage" />
+            </div>
+          </div>
+          <div class="form-field" style="margin-top:0.5rem;">
+            <label class="field-label">Summary</label>
+            <textarea rows="2" class="editor-textarea exp-summary font-mono">${exp.summary || ''}</textarea>
+          </div>
+          <div class="form-field" style="margin-top:0.5rem;">
+            <label class="field-label">Harvard Action Highlights (one bullet per line)</label>
+            <textarea rows="3" class="editor-textarea exp-highlights font-mono">${Array.isArray(exp.highlights) ? exp.highlights.join('\n') : (exp.highlights || '')}</textarea>
+          </div>
+        </div>
+      `).join('');
+
+      cvExpContainer.querySelectorAll('[data-remove-exp]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-remove-exp') || '0', 10);
+          currentExpList.splice(idx, 1);
+          renderExperienceRepeater();
+        });
+      });
+    }
+
+    function renderEducationRepeater() {
+      if (!cvEduContainer) return;
+      cvEduContainer.innerHTML = currentEduList.map((edu, idx) => `
+        <div class="repeater-item" data-idx="${idx}">
+          <button type="button" class="repeater-remove-btn" data-remove-edu="${idx}">Remove</button>
+          <div class="form-row form-row-2">
+            <div class="form-field">
+              <label class="field-label">Degree Title</label>
+              <input type="text" class="editor-input edu-degree font-mono" value="${edu.degree || edu.role || ''}" placeholder="e.g. Ph.D. in Aerospace Engineering" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Institution</label>
+              <input type="text" class="editor-input edu-inst font-mono" value="${edu.institution || edu.organization || ''}" placeholder="e.g. Caltech" />
+            </div>
+          </div>
+          <div class="form-row form-row-2" style="margin-top:0.5rem;">
+            <div class="form-field">
+              <label class="field-label">Period / Year</label>
+              <input type="text" class="editor-input edu-period font-mono" value="${edu.period || ''}" placeholder="e.g. 2019 — 2023" />
+            </div>
+            <div class="form-field">
+              <label class="field-label">Honors / Distinction</label>
+              <input type="text" class="editor-input edu-honors font-mono" value="${edu.honors || edu.badge || ''}" placeholder="e.g. Summa Cum Laude" />
+            </div>
+          </div>
+          <div class="form-field" style="margin-top:0.5rem;">
+            <label class="field-label">Thesis / Dissertation Title</label>
+            <input type="text" class="editor-input edu-thesis font-mono" value="${edu.thesis || ''}" placeholder="e.g. Autonomous Guidance for Low-Thrust SmallSats" />
+          </div>
+        </div>
+      `).join('');
+
+      cvEduContainer.querySelectorAll('[data-remove-edu]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const idx = parseInt(btn.getAttribute('data-remove-edu') || '0', 10);
+          currentEduList.splice(idx, 1);
+          renderEducationRepeater();
+        });
+      });
+    }
+
+    document.getElementById('cv-add-experience-btn')?.addEventListener('click', () => {
+      currentExpList.unshift({
+        role: 'New Engineering Role',
+        organization: 'Space Agency / Lab',
+        period: '2024 — Present',
+        location: 'Pasadena, CA',
+        badge: 'Flight Software',
+        summary: 'Brief role overview...',
+        highlights: ['Architected key avionics subsystem...', 'Reduced telemetry latency by 45%...']
+      });
+      renderExperienceRepeater();
+    });
+
+    document.getElementById('cv-add-education-btn')?.addEventListener('click', () => {
+      currentEduList.unshift({
+        degree: 'M.S. in Aerospace Engineering',
+        institution: 'University / Institute',
+        period: '2020 — 2022',
+        location: 'Cambridge, MA',
+        honors: 'Honors Fellowship',
+        thesis: 'Research in Astrodynamics'
+      });
+      renderEducationRepeater();
+    });
+
+    cvForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+
+      // Collect updated experiences
+      const expItems = cvExpContainer?.querySelectorAll('.repeater-item') || [];
+      const updatedExp: any[] = [];
+      expItems.forEach(item => {
+        const role = (item.querySelector('.exp-role') as HTMLInputElement)?.value || '';
+        const organization = (item.querySelector('.exp-org') as HTMLInputElement)?.value || '';
+        const period = (item.querySelector('.exp-period') as HTMLInputElement)?.value || '';
+        const badge = (item.querySelector('.exp-badge') as HTMLInputElement)?.value || '';
+        const summary = (item.querySelector('.exp-summary') as HTMLTextAreaElement)?.value || '';
+        const highlightsText = (item.querySelector('.exp-highlights') as HTMLTextAreaElement)?.value || '';
+        const highlights = highlightsText.split('\n').map(h => h.trim()).filter(Boolean);
+
+        updatedExp.push({ role, organization, period, badge, summary, highlights });
+      });
+
+      // Collect updated education
+      const eduItems = cvEduContainer?.querySelectorAll('.repeater-item') || [];
+      const updatedEdu: any[] = [];
+      eduItems.forEach(item => {
+        const degree = (item.querySelector('.edu-degree') as HTMLInputElement)?.value || '';
+        const institution = (item.querySelector('.edu-inst') as HTMLInputElement)?.value || '';
+        const period = (item.querySelector('.edu-period') as HTMLInputElement)?.value || '';
+        const honors = (item.querySelector('.edu-honors') as HTMLInputElement)?.value || '';
+        const thesis = (item.querySelector('.edu-thesis') as HTMLInputElement)?.value || '';
+
+        updatedEdu.push({ degree, institution, period, honors, thesis });
+      });
+
+      const store = await getStore();
+      const currentAvatar = store && typeof store.getProfileAvatar === 'function' ? store.getProfileAvatar() : '';
+
+      const updatedCV = {
+        profile: {
+          name: cvNameInput?.value || '',
+          callsign: cvCallsignInput?.value || '',
+          location: cvLocationInput?.value || '',
+          title: cvTitleInput?.value || '',
+          clearance: cvClearanceInput?.value || '',
+          tagline: cvTaglineInput?.value || '',
+          bio: cvBioInput?.value || '',
+          avatar: currentAvatar
+        },
+        experience: updatedExp,
+        timeline: updatedExp,
+        education: updatedEdu
+      };
+
+      if (store && typeof store.updateCVData === 'function') {
+        store.updateCVData(updatedCV);
+      } else {
+        localStorage.setItem('portfolio_cv', JSON.stringify(updatedCV));
+        window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+      }
+
+      window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Harvard CV content updated successfully!' } }));
+    });
+
+    // Global listener to trigger avatar editing directly
+    window.addEventListener('open-avatar-editor', () => {
+      openModal('cv');
+      setCVMode('form');
+      setTimeout(() => {
+        const el = document.getElementById('cv-avatar-studio');
+        el?.scrollIntoView({ behavior: 'smooth' });
+      }, 200);
+    });
+
+    document.querySelectorAll('[data-avatar-edit-trigger]').forEach(el => {
+      el.addEventListener('click', (e) => {
+        e.preventDefault();
+        window.dispatchEvent(new CustomEvent('open-avatar-editor'));
+      });
+    });
+
+    // ----------------------------------------------------
+    // TAB 4: BACKUP & DATA LOGIC
+    // ----------------------------------------------------
+    const exportBtn = document.getElementById('backup-export-btn');
+    const importFileInput = document.getElementById('backup-import-file') as HTMLInputElement;
+    const resetBtn = document.getElementById('backup-reset-btn');
+    const rawJsonTextarea = document.getElementById('raw-json-textarea') as HTMLTextAreaElement;
+    const applyRawJsonBtn = document.getElementById('apply-raw-json-btn');
+
+    async function loadRawJson() {
+      if (!rawJsonTextarea) return;
+      const store = await getStore();
+      let data: any = {};
+      if (store && typeof store.exportDataJSON === 'function') {
+        try {
+          data = JSON.parse(store.exportDataJSON());
+        } catch (e) {
+          data = store.exportDataJSON();
+        }
+      } else {
+        data = {
+          cv: JSON.parse(localStorage.getItem('portfolio_cv') || '{}'),
+          achievements: JSON.parse(localStorage.getItem('portfolio_achievements') || '[]'),
+          blogs: JSON.parse(localStorage.getItem('portfolio_blogs') || '[]'),
+        };
+      }
+      rawJsonTextarea.value = typeof data === 'string' ? data : JSON.stringify(data, null, 2);
+    }
+
+    exportBtn?.addEventListener('click', async () => {
+      const store = await getStore();
+      let jsonString = '';
+      if (store && typeof store.exportDataJSON === 'function') {
+        jsonString = store.exportDataJSON();
+      } else {
+        jsonString = rawJsonTextarea?.value || '{}';
+      }
+
+      const blob = new Blob([jsonString], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `space-portfolio-backup-${new Date().toISOString().split('T')[0]}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Portfolio backup downloaded.' } }));
+    });
+
+    importFileInput?.addEventListener('change', (e) => {
+      const file = importFileInput.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async (evt) => {
+        try {
+          const content = evt.target?.result as string;
+          const store = await getStore();
+          if (store && typeof store.importDataJSON === 'function') {
+            const res = store.importDataJSON(content);
+            if (!res.success) throw new Error(res.error || 'Import error');
+          } else {
+            const parsed = JSON.parse(content);
+            localStorage.setItem('portfolio_custom_data', JSON.stringify(parsed));
+            if (parsed.achievements) localStorage.setItem('portfolio_achievements', JSON.stringify(parsed.achievements));
+            if (parsed.blogs) localStorage.setItem('portfolio_blogs', JSON.stringify(parsed.blogs));
+            if (parsed.profile || parsed.education || parsed.experience) {
+              localStorage.setItem('portfolio_cv', JSON.stringify(parsed));
+            }
+          }
+
+          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+          window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Data imported successfully!' } }));
+          refreshAllData();
+        } catch (err: any) {
+          alert('Failed to parse uploaded JSON file: ' + (err?.message || 'Invalid format'));
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    applyRawJsonBtn?.addEventListener('click', async () => {
+      try {
+        const val = rawJsonTextarea.value;
+        const store = await getStore();
+        if (store && typeof store.importDataJSON === 'function') {
+          const res = store.importDataJSON(val);
+          if (!res.success) throw new Error(res.error || 'Import error');
+        } else {
+          const parsed = JSON.parse(val);
+          localStorage.setItem('portfolio_custom_data', JSON.stringify(parsed));
+          if (parsed.achievements) localStorage.setItem('portfolio_achievements', JSON.stringify(parsed.achievements));
+          if (parsed.blogs) localStorage.setItem('portfolio_blogs', JSON.stringify(parsed.blogs));
+          if (parsed.profile || parsed.education || parsed.experience) {
+            localStorage.setItem('portfolio_cv', JSON.stringify(parsed));
+          }
+        }
+        window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Applied raw JSON changes.' } }));
+        refreshAllData();
+      } catch (err: any) {
+        alert('Invalid JSON in raw editor: ' + (err?.message || 'Syntax error'));
+      }
+    });
+
+    resetBtn?.addEventListener('click', async () => {
+      if (!confirm('Are you sure you want to reset all portfolio data back to factory defaults? All unsaved modifications will be restored.')) return;
+      const store = await getStore();
+      if (store && typeof store.resetToDefaults === 'function') {
+        store.resetToDefaults();
+      } else {
+        localStorage.removeItem('portfolio_achievements');
+        localStorage.removeItem('portfolio_blogs');
+        localStorage.removeItem('portfolio_cv');
+        localStorage.removeItem('portfolio_custom_data');
+        window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+      }
+      window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Reset to factory defaults.' } }));
+      refreshAllData();
+    });
+
+    function refreshAllData() {
+      loadAchievements();
+      loadBlogs();
+      loadCVData();
+      loadRawJson();
+    }
+
+    // Refresh when external update occurs
+    window.addEventListener('portfolio-data-updated', () => {
+      if (modal.classList.contains('is-active')) {
+        refreshAllData();
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupAdminEditorModal);
+  } else {
+    setupAdminEditorModal();
+  }
+  document.addEventListener('astro:page-load', setupAdminEditorModal);
+</script>

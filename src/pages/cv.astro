@@ -1,0 +1,215 @@
+---
+/**
+ * cv.astro - Dedicated Harvard Academic Curriculum Vitae Page
+ *
+ * Route: /cv
+ * Features:
+ * - Dedicated page showcasing authentic Harvard Academic CV format
+ * - 1-Click 'Print / Save as PDF' triggering system print dialog with pristine @media print styling
+ * - Seamless toggle between 'Academic Paper Mode' and 'Cosmic Dark Mode'
+ * - Reactive real-time updates from store.js without page refresh
+ * - Apple-style navigation and telemetry status
+ */
+import Layout from '../layouts/Layout.astro';
+import HarvardCV from '../components/HarvardCV.astro';
+import defaultData from '../data/portfolio.json';
+
+const profile = defaultData.profile || {};
+const title = `${profile.name} (${profile.englishName || 'Nhat Nguyen Vo'}) | Harvard Academic Curriculum Vitae | Space Systems`;
+const description = `Official Harvard-style Academic and Technical Curriculum Vitae for ${profile.name} (Nhat Nguyen Vo), ${profile.title}. Flight heritage, publications, and space engineering credentials.`;
+---
+
+<Layout title={title} description={description}>
+  <div class="cv-page-container">
+    {/* Breadcrumb & Navigation Bar */}
+    <div class="cv-page-nav container no-print">
+      <div class="nav-breadcrumbs">
+        <a href="/" class="crumb-link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Return to Telemetry Console</span>
+        </a>
+        <span class="crumb-sep">/</span>
+        <span class="crumb-current">Academic CV (Harvard Format)</span>
+      </div>
+
+      <div class="cv-status-meta">
+        <span class="meta-tag">CLEARANCE: {profile.clearance?.split('(')[0] || 'PUBLIC TRUST'}</span>
+        <span class="meta-dot">•</span>
+        <span class="meta-tag text-amber">HARVARD FAS STANDARDS</span>
+      </div>
+    </div>
+
+    {/* Primary Harvard CV Component */}
+    <main class="cv-main-wrapper container">
+      <HarvardCV initialTheme="paper" hideControls={false} />
+    </main>
+
+    {/* Quick-Action Floating Print Pill (Mobile & Quick Access) */}
+    <div class="floating-print-dock no-print" id="floating-print-dock">
+      <button
+        type="button"
+        class="floating-print-btn"
+        id="floating-print-trigger"
+        title="Quick Print or Save PDF"
+        aria-label="Print CV"
+      >
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="6 9 6 2 18 2 18 9"></polyline>
+          <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+          <rect x="6" y="14" width="12" height="8"></rect>
+        </svg>
+        <span>Print / Save PDF</span>
+      </button>
+    </div>
+  </div>
+</Layout>
+
+<script>
+  // Floating print button trigger
+  const floatBtn = document.getElementById('floating-print-trigger');
+  if (floatBtn) {
+    floatBtn.addEventListener('click', () => {
+      window.print();
+    });
+  }
+
+  // Keyboard shortcut listener: Cmd+P / Ctrl+P triggers print
+  window.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'p') {
+      // Let natural browser print fire or enhance it
+    }
+  });
+</script>
+
+<style>
+  /* ==========================================================================
+     CV PAGE STYLES
+     ========================================================================== */
+  .cv-page-container {
+    min-height: 100vh;
+    padding-top: 1.5rem;
+    padding-bottom: 5rem;
+    position: relative;
+  }
+
+  .cv-page-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-top: 0.5rem;
+  }
+
+  .nav-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-family: var(--font-mono, monospace);
+  }
+
+  .crumb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--titanium, #8E95A5);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .crumb-link:hover {
+    color: var(--amber, #E5A96A);
+  }
+
+  .crumb-sep {
+    color: rgba(142, 149, 165, 0.4);
+  }
+
+  .crumb-current {
+    color: var(--text-ivory, #F3F4F6);
+    font-weight: 500;
+  }
+
+  .cv-status-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.72rem;
+    font-family: var(--font-mono, monospace);
+  }
+
+  .meta-tag {
+    color: var(--titanium, #8E95A5);
+  }
+
+  .meta-dot {
+    color: rgba(142, 149, 165, 0.4);
+  }
+
+  .text-amber {
+    color: var(--amber, #E5A96A);
+  }
+
+  .cv-main-wrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+
+  /* Floating Print Dock for Quick Access */
+  .floating-print-dock {
+    position: fixed;
+    bottom: 2rem;
+    right: 2rem;
+    z-index: 90;
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .floating-print-dock {
+      display: block;
+    }
+  }
+
+  .floating-print-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    background: rgba(18, 22, 32, 0.92);
+    border: 1px solid rgba(229, 169, 106, 0.4);
+    color: var(--text-ivory, #F3F4F6);
+    padding: 0.65rem 1.15rem;
+    border-radius: 9999px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), 0 0 12px rgba(229, 169, 106, 0.2);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+  }
+
+  .floating-print-btn:hover {
+    transform: translateY(-2px);
+    background: rgba(26, 32, 47, 0.95);
+    border-color: var(--amber, #E5A96A);
+    color: var(--amber, #E5A96A);
+  }
+
+  @media print {
+    .cv-page-container {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    .cv-main-wrapper {
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+    }
+  }
+</style>

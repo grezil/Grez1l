@@ -1,0 +1,717 @@
+---
+// Apple-Style Executive Space Engineer Hero Component
+export interface TelemetryStat {
+  label: string;
+  value: string;
+  unit: string;
+}
+
+export interface Profile {
+  name: string;
+  callsign: string;
+  title: string;
+  tagline: string;
+  bio: string;
+  location: string;
+  status: string;
+  clearance: string;
+  avatar?: string;
+  avatarAlt?: string;
+  telemetryStats: TelemetryStat[];
+  social: {
+    github?: string;
+    linkedin?: string;
+    email?: string;
+    twitter?: string;
+  };
+}
+
+export interface Props {
+  profile: Profile;
+}
+
+const { profile } = Astro.props;
+---
+
+<section id="about" class="hero section" aria-label="Executive Profile">
+  <div class="container">
+    <div class="hero-grid">
+      <!-- Left Column: Primary Pitch & Credentials -->
+      <div class="hero-content">
+        <!-- Subdued Status Pill -->
+        <div class="executive-pill">
+          <span class="beacon-dot"></span>
+          <span class="pill-text">{profile.status}</span>
+        </div>
+
+        <h1 class="hero-name">
+          {profile.name}
+        </h1>
+
+        <div class="hero-title-wrapper">
+          <span class="hero-title glow-text">{profile.title}</span>
+        </div>
+
+        <p class="hero-tagline">
+          {profile.tagline}
+        </p>
+
+        <p class="hero-bio">
+          {profile.bio}
+        </p>
+
+        <!-- Academic & Flight Pedigree -->
+        <div class="hero-credentials">
+          <div class="cred-item">
+            <span class="cred-icon">🎓</span>
+            <div class="cred-text">
+              <span class="cred-label">Academic Heritage</span>
+              <span class="cred-val">Ph.D. Caltech • M.S. MIT</span>
+            </div>
+          </div>
+
+          <div class="cred-item">
+            <span class="cred-icon">🛰️</span>
+            <div class="cred-text">
+              <span class="cred-label">Flight Record</span>
+              <span class="cred-val">3 SmallSat Missions in Orbit</span>
+            </div>
+          </div>
+
+          <div class="cred-item">
+            <span class="cred-icon">🛡️</span>
+            <div class="cred-text">
+              <span class="cred-label">Clearance & Heritage</span>
+              <span class="cred-val">{profile.clearance}</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Apple-Style CTA Action Buttons -->
+        <div class="hero-actions">
+          <a href="/cv" class="btn btn-apple-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span>View Harvard Academic CV</span>
+          </a>
+
+          <a href="/blog" class="btn btn-apple-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+            </svg>
+            <span>Technical Blog</span>
+          </a>
+
+          <a href={`mailto:${profile.social.email}`} class="btn btn-apple-secondary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+            </svg>
+            <span>Direct Email</span>
+          </a>
+        </div>
+      </div>
+
+      <!-- Right Column: Clean Executive Identity Card (Apple-Grade) -->
+      <div class="hero-card-wrapper">
+        <div class="executive-card glass-card">
+          <!-- Ambient Card Header Glow -->
+          <div class="card-ambient-glow" aria-hidden="true"></div>
+
+          <div class="card-identity-header">
+            <!-- Profile Avatar with Camera Trigger (Admin Customizable) -->
+            <div class="profile-avatar-wrapper" id="profile-avatar-wrapper">
+              <div class="profile-avatar-frame">
+                <img
+                  id="hero-profile-avatar"
+                  src={profile.avatar || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80"}
+                  alt={profile.avatarAlt || profile.name}
+                  class="profile-avatar-img"
+                />
+                <div class="avatar-monogram" id="hero-avatar-fallback" style="display: none;">
+                  <span class="mono-initials">NN</span>
+                  <span class="orbit-mini-dot"></span>
+                </div>
+                <!-- Telemetry Status Beacon -->
+                <span class="avatar-orbit-beacon" aria-hidden="true"></span>
+              </div>
+
+              <!-- Camera Edit Trigger -->
+              <button
+                type="button"
+                class="avatar-camera-trigger"
+                id="avatar-camera-trigger"
+                title="Customize Profile Avatar (Admin)"
+                aria-label="Customize Profile Avatar"
+                data-admin-login-trigger="profile-avatar"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                  <circle cx="12" cy="13" r="4"></circle>
+                </svg>
+              </button>
+            </div>
+
+            <div class="identity-meta">
+              <h3 class="meta-name" id="hero-profile-name">{profile.name}</h3>
+              <p class="meta-title" id="hero-profile-title">{profile.title}</p>
+              <span class="meta-location">📍 {profile.location}</span>
+            </div>
+          </div>
+
+          <div class="card-divider"></div>
+
+          <!-- Highlight Key Stats (Live Dynamic Dashboard) -->
+          <div class="card-stats-grid dynamic-dashboard-stats" id="hero-dashboard-stats">
+            <div class="stat-mini-box">
+              <span class="stat-mini-val glow-text" id="hero-stat-blogs">{profile.telemetryStats?.[0]?.value || "4"}</span>
+              <span class="stat-mini-label">Blogs Published</span>
+              <span class="stat-mini-unit">Articles</span>
+            </div>
+            <div class="stat-mini-box">
+              <span class="stat-mini-val glow-text" id="hero-stat-awards">{profile.telemetryStats?.[1]?.value || "6"}</span>
+              <span class="stat-mini-label">Honors & Awards</span>
+              <span class="stat-mini-unit">Distinctions</span>
+            </div>
+            <div class="stat-mini-box">
+              <span class="stat-mini-val glow-text" id="hero-stat-updates">{profile.telemetryStats?.[2]?.value || "24"}</span>
+              <span class="stat-mini-label">Site Updates</span>
+              <span class="stat-mini-unit">Revisions</span>
+            </div>
+          </div>
+
+          <div class="card-divider"></div>
+
+          <!-- Direct Verified Channels -->
+          <div class="card-channels">
+            <span class="channels-title">VERIFIED COMMUNICATION CHANNELS</span>
+            <div class="channels-list">
+              {profile.social.email && (
+                <a href={`mailto:${profile.social.email}`} class="channel-pill" title="Email Võ Quang Nhật Nguyên">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                  <span>{profile.social.email}</span>
+                </a>
+              )}
+              {profile.social.github && (
+                <a href={profile.social.github} target="_blank" rel="noopener noreferrer" class="channel-pill" title="GitHub Profile">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                  </svg>
+                  <span>GitHub</span>
+                </a>
+              )}
+              {profile.social.linkedin && (
+                <a href={profile.social.linkedin} target="_blank" rel="noopener noreferrer" class="channel-pill" title="LinkedIn Profile">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+                  </svg>
+                  <span>LinkedIn</span>
+                </a>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ============================================================
+     APPLE-STYLE EXECUTIVE HERO
+     Warm neutral, minimalist, focused on the person
+     ============================================================ */
+  .hero {
+    padding-top: 3.5rem;
+    padding-bottom: 4rem;
+    position: relative;
+  }
+
+  .hero-grid {
+    display: grid;
+    grid-template-columns: 1.15fr 0.85fr;
+    gap: 3.5rem;
+    align-items: center;
+  }
+
+  @media (max-width: 960px) {
+    .hero-grid {
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+    }
+  }
+
+  .executive-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.35rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(229, 169, 106, 0.08);
+    border: 1px solid rgba(229, 169, 106, 0.22);
+    margin-bottom: 1.25rem;
+  }
+
+  .beacon-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #e5a96a;
+    box-shadow: 0 0 8px rgba(229, 169, 106, 0.6);
+  }
+
+  .pill-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #e5a96a;
+    letter-spacing: 0.02em;
+  }
+
+  .hero-name {
+    font-size: clamp(2.25rem, 4.5vw, 3.5rem);
+    font-weight: 700;
+    letter-spacing: -0.025em;
+    line-height: 1.1;
+    color: #f3f4f6;
+    margin-bottom: 0.5rem;
+  }
+
+  .hero-title-wrapper {
+    margin-bottom: 1.25rem;
+  }
+
+  .hero-title {
+    font-size: clamp(1.15rem, 2vw, 1.35rem);
+    font-weight: 500;
+    color: #c5c9d4;
+  }
+
+  .hero-tagline {
+    font-size: 1.05rem;
+    line-height: 1.6;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+    max-width: 580px;
+  }
+
+  .hero-bio {
+    font-size: 0.9375rem;
+    line-height: 1.65;
+    color: #838a98;
+    margin-bottom: 1.75rem;
+    max-width: 580px;
+  }
+
+  /* Academic & Flight Pedigree */
+  .hero-credentials {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+    margin-bottom: 2rem;
+    padding: 1rem 1.25rem;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    max-width: 560px;
+  }
+
+  .cred-item {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+  }
+
+  .cred-icon {
+    font-size: 1.2rem;
+    flex-shrink: 0;
+  }
+
+  .cred-text {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cred-label {
+    font-size: 0.6875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #6b7280;
+  }
+
+  .cred-val {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #e5e7eb;
+  }
+
+  /* CTA Buttons */
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.85rem;
+  }
+
+  /* Apple-Style Executive Card */
+  .hero-card-wrapper {
+    position: relative;
+  }
+
+  .executive-card {
+    position: relative;
+    padding: 2rem;
+    border-radius: 20px;
+    background: rgba(18, 21, 29, 0.75);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    overflow: hidden;
+  }
+
+  .card-ambient-glow {
+    position: absolute;
+    top: -80px;
+    right: -80px;
+    width: 220px;
+    height: 220px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(229, 169, 106, 0.12) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .card-identity-header {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Profile Avatar Frame with Apple-Grade Precision */
+  .profile-avatar-wrapper {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    flex-shrink: 0;
+  }
+
+  .profile-avatar-frame {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    border-radius: 18px;
+    background: #141722;
+  }
+
+  .profile-avatar-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 18px;
+    border: 1.5px solid rgba(229, 169, 106, 0.45);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 14px rgba(229, 169, 106, 0.2);
+    display: block;
+    transition: transform 0.2s ease, border-color 0.2s ease;
+  }
+
+  .profile-avatar-frame:hover .profile-avatar-img {
+    transform: scale(1.02);
+    border-color: #E5A96A;
+  }
+
+  .avatar-orbit-beacon {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 8px #10B981, 0 0 14px rgba(16, 185, 129, 0.6);
+    z-index: 2;
+  }
+
+  /* Camera Edit Trigger Button */
+  .avatar-camera-trigger {
+    position: absolute;
+    bottom: -4px;
+    right: -4px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #12151E;
+    border: 1px solid rgba(229, 169, 106, 0.6);
+    color: #E5A96A;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6), 0 0 8px rgba(229, 169, 106, 0.25);
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    z-index: 4;
+    padding: 0;
+  }
+
+  .avatar-camera-trigger:hover {
+    background: #E5A96A;
+    color: #0B0D13;
+    transform: scale(1.15);
+    box-shadow: 0 4px 16px rgba(229, 169, 106, 0.6);
+  }
+
+  .avatar-monogram {
+    position: relative;
+    width: 68px;
+    height: 68px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, rgba(229, 169, 106, 0.2), rgba(212, 175, 55, 0.08));
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .mono-initials {
+    font-size: 1.35rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #e5a96a;
+  }
+
+  .orbit-mini-dot {
+    position: absolute;
+    top: -3px;
+    right: -3px;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5a96a;
+    box-shadow: 0 0 10px #e5a96a;
+  }
+
+  .identity-meta {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .meta-name {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: #f3f4f6;
+    margin: 0;
+  }
+
+  .meta-title {
+    font-size: 0.8125rem;
+    color: #9ca3af;
+    margin: 0.15rem 0 0.35rem 0;
+  }
+
+  .meta-location {
+    font-size: 0.75rem;
+    color: #6b7280;
+  }
+
+  .card-divider {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 1.5rem 0;
+  }
+
+  /* Stats Grid */
+  .card-stats-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    position: relative;
+    z-index: 1;
+  }
+
+  .stat-mini-box {
+    padding: 0.85rem;
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.04);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stat-mini-val {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #e5a96a;
+    line-height: 1.2;
+  }
+
+  .stat-mini-label {
+    font-size: 0.6875rem;
+    color: #9ca3af;
+    font-weight: 500;
+    margin-top: 0.2rem;
+  }
+
+  .stat-mini-unit {
+    font-size: 0.625rem;
+    color: #6b7280;
+    margin-top: 0.15rem;
+  }
+
+  /* Channels */
+  .card-channels {
+    position: relative;
+    z-index: 1;
+  }
+
+  .channels-title {
+    display: block;
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: #6b7280;
+    margin-bottom: 0.75rem;
+  }
+
+  .channels-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .channel-pill {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    padding: 0.5rem 0.85rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: #d1d5db;
+    font-size: 0.78125rem;
+    text-decoration: none;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .channel-pill:hover {
+    background: rgba(229, 169, 106, 0.1);
+    border-color: rgba(229, 169, 106, 0.3);
+    color: #e5a96a;
+    transform: translateX(3px);
+  }
+</style>
+
+<script>
+  import { getProfileAvatar, getDashboardStats } from '../scripts/store.js';
+
+  // Reactive Avatar & Live Dashboard Stats Sync
+  function initHeroTelemetrySync() {
+    const avatarImg = document.getElementById('hero-profile-avatar') as HTMLImageElement;
+    const fallback = document.getElementById('hero-avatar-fallback');
+    const cameraBtn = document.getElementById('avatar-camera-trigger');
+    const blogsEl = document.getElementById('hero-stat-blogs');
+    const awardsEl = document.getElementById('hero-stat-awards');
+    const updatesEl = document.getElementById('hero-stat-updates');
+
+    function syncAvatar() {
+      try {
+        let avatarUrl = '';
+        if (typeof getProfileAvatar === 'function') {
+          avatarUrl = getProfileAvatar();
+        } else if ((window as any).store?.getProfileAvatar) {
+          avatarUrl = (window as any).store.getProfileAvatar();
+        } else {
+          const stored = localStorage.getItem('space_portfolio_data_v1') || localStorage.getItem('astro_portfolio_data');
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            avatarUrl = parsed?.profile?.avatar || '';
+          }
+        }
+
+        if (avatarUrl && avatarImg) {
+          avatarImg.src = avatarUrl;
+          avatarImg.style.display = 'block';
+          if (fallback) fallback.style.display = 'none';
+        }
+      } catch (err) {
+        // quiet fallback
+      }
+    }
+
+    function syncDashboardStats() {
+      try {
+        let stats: { blogsCount?: number; achievementsCount?: number; updatesCount?: number } | null = null;
+        if (typeof getDashboardStats === 'function') {
+          stats = getDashboardStats();
+        } else if ((window as any).store?.getDashboardStats) {
+          stats = (window as any).store.getDashboardStats();
+        }
+
+        if (stats) {
+          if (blogsEl && typeof stats.blogsCount !== 'undefined') {
+            blogsEl.textContent = String(stats.blogsCount);
+          }
+          if (awardsEl && typeof stats.achievementsCount !== 'undefined') {
+            awardsEl.textContent = String(stats.achievementsCount);
+          }
+          if (updatesEl && typeof stats.updatesCount !== 'undefined') {
+            updatesEl.textContent = String(stats.updatesCount);
+          }
+        }
+      } catch (err) {
+        // quiet fallback
+      }
+    }
+
+    function syncAll() {
+      syncAvatar();
+      syncDashboardStats();
+    }
+
+    syncAll();
+    window.addEventListener('portfolio-data-updated', syncAll);
+    window.addEventListener('profile-avatar-updated', syncAvatar);
+    window.addEventListener('storage', syncAll);
+
+    if (cameraBtn) {
+      cameraBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        // 1. Dispatch custom event for admin modal/dock
+        window.dispatchEvent(new CustomEvent('open-avatar-editor'));
+        window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'profile' } }));
+
+        // 2. Open Admin Editor Modal directly if present
+        const editorModal = document.getElementById('admin-editor-modal');
+        if (editorModal) {
+          editorModal.classList.add('is-open');
+          // Switch to profile or avatar tab if present
+          const profileTabBtn = editorModal.querySelector('[data-tab="profile"], [data-tab="avatar"]') as HTMLButtonElement;
+          if (profileTabBtn) profileTabBtn.click();
+        } else {
+          // If not authenticated, open login modal
+          const loginModal = document.getElementById('admin-login-modal');
+          if (loginModal) {
+            loginModal.classList.add('is-open');
+          } else {
+            window.location.href = '/admin#profile';
+          }
+        }
+      });
+    }
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeroTelemetrySync);
+  } else {
+    initHeroTelemetrySync();
+  }
+</script>

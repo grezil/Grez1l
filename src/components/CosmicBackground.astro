@@ -1,0 +1,565 @@
+---
+// Space Systems Engineer - Cosmic Background with Canvas Starfield & Vector Orbiting Satellite
+---
+
+<div class="cosmic-environment" aria-hidden="true">
+  <!-- Deep Space Ambient Nebulae -->
+  <div class="nebula-layer nebula-1"></div>
+  <div class="nebula-layer nebula-2"></div>
+  <div class="nebula-layer nebula-3"></div>
+
+  <!-- Cosmic Celestial Starfield Canvas -->
+  <canvas id="cosmic-starfield" class="starfield-canvas"></canvas>
+
+  <!-- Orbital Trajectory & Vector Satellite -->
+  <div class="orbital-system" id="orbital-system">
+    <!-- Orbital Path SVG Curve -->
+    <svg class="orbital-track-svg" viewBox="0 0 1600 600" preserveAspectRatio="none">
+      <defs>
+        <!-- Trajectory Gradient -->
+        <linearGradient id="orbitalPathGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="rgba(142, 149, 165, 0.04)" />
+          <stop offset="45%" stop-color="rgba(229, 169, 106, 0.22)" />
+          <stop offset="65%" stop-color="rgba(142, 149, 165, 0.18)" />
+          <stop offset="100%" stop-color="rgba(142, 149, 165, 0.04)" />
+        </linearGradient>
+
+        <!-- Solar Panel Cell Shimmer Gradient -->
+        <linearGradient id="panelShimmer" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="rgba(255, 255, 255, 0)" />
+          <stop offset="50%" stop-color="rgba(255, 255, 255, 0.45)" />
+          <stop offset="100%" stop-color="rgba(255, 255, 255, 0)" />
+        </linearGradient>
+
+        <!-- Gold Foil Thermal Blanket Gradient -->
+        <linearGradient id="goldMliGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#E5A96A" />
+          <stop offset="50%" stop-color="#D4AF37" />
+          <stop offset="100%" stop-color="#996E2E" />
+        </linearGradient>
+
+        <!-- Titanium Frame Gradient -->
+        <linearGradient id="titaniumGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" stop-color="#B6BAC6" />
+          <stop offset="50%" stop-color="#8E95A5" />
+          <stop offset="100%" stop-color="#4B5263" />
+        </linearGradient>
+
+        <!-- Solar Array Blue Cell Pattern Gradient -->
+        <linearGradient id="solarCellGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="#1E2A44" />
+          <stop offset="50%" stop-color="#141E33" />
+          <stop offset="100%" stop-color="#0E1626" />
+        </linearGradient>
+      </defs>
+
+      <!-- Elliptical Orbital Trajectory Line -->
+      <path
+        id="satellite-orbit-path"
+        d="M -100,480 Q 550,110 1700,240"
+        fill="none"
+        stroke="url(#orbitalPathGrad)"
+        stroke-width="1.25"
+        stroke-dasharray="6 7"
+      />
+
+      <!-- Orbit Telemetry Waypoint Markers -->
+      <circle cx="450" cy="188" r="2.5" fill="#E5A96A" opacity="0.4" />
+      <text x="460" y="185" fill="#8E95A5" font-size="9" font-family="'SF Mono', monospace" opacity="0.65">APOGEE 550KM</text>
+
+      <circle cx="1150" cy="186" r="2" fill="#8E95A5" opacity="0.3" />
+      <text x="1160" y="183" fill="#8E95A5" font-size="9" font-family="'SF Mono', monospace" opacity="0.5">ASCENDING NODE</text>
+    </svg>
+
+    <!-- Orbiting Satellite Vessel Assembly -->
+    <div class="satellite-tracker" id="satellite-tracker">
+      <div class="satellite-vessel" title="LEO Smallsat 01 // Subsystems Nominal">
+        <!-- Telemetry Beacon Glow & Pulse -->
+        <div class="satellite-beacon" aria-hidden="true"></div>
+
+        <!-- Satellite Vector Artwork -->
+        <svg class="satellite-svg" viewBox="0 0 160 90" width="130" height="74" fill="none">
+          <!-- Port Solar Panel Wing -->
+          <g class="solar-panel solar-panel-port">
+            <!-- Panel Frame -->
+            <rect x="6" y="24" width="46" height="38" rx="2" fill="url(#solarCellGrad)" stroke="url(#titaniumGrad)" stroke-width="1.2" />
+            <!-- Solar Cell Grid Lines -->
+            <line x1="6" y1="36" x2="52" y2="36" stroke="rgba(229, 169, 106, 0.4)" stroke-width="0.8" />
+            <line x1="6" y1="48" x2="52" y2="48" stroke="rgba(229, 169, 106, 0.4)" stroke-width="0.8" />
+            <line x1="21" y1="24" x2="21" y2="62" stroke="rgba(142, 149, 165, 0.3)" stroke-width="0.8" />
+            <line x1="37" y1="24" x2="37" y2="62" stroke="rgba(142, 149, 165, 0.3)" stroke-width="0.8" />
+            <!-- Specular Solar Glint -->
+            <rect class="solar-glint" x="6" y="24" width="46" height="38" rx="2" fill="url(#panelShimmer)" />
+            <!-- Hinge Truss -->
+            <rect x="52" y="41" width="10" height="4" fill="url(#titaniumGrad)" />
+          </g>
+
+          <!-- Starboard Solar Panel Wing -->
+          <g class="solar-panel solar-panel-starboard">
+            <!-- Hinge Truss -->
+            <rect x="98" y="41" width="10" height="4" fill="url(#titaniumGrad)" />
+            <!-- Panel Frame -->
+            <rect x="108" y="24" width="46" height="38" rx="2" fill="url(#solarCellGrad)" stroke="url(#titaniumGrad)" stroke-width="1.2" />
+            <!-- Solar Cell Grid Lines -->
+            <line x1="108" y1="36" x2="154" y2="36" stroke="rgba(229, 169, 106, 0.4)" stroke-width="0.8" />
+            <line x1="108" y1="48" x2="154" y2="48" stroke="rgba(229, 169, 106, 0.4)" stroke-width="0.8" />
+            <line x1="123" y1="24" x2="123" y2="62" stroke="rgba(142, 149, 165, 0.3)" stroke-width="0.8" />
+            <line x1="139" y1="24" x2="139" y2="62" stroke="rgba(142, 149, 165, 0.3)" stroke-width="0.8" />
+            <!-- Specular Solar Glint -->
+            <rect class="solar-glint" x="108" y="24" width="46" height="38" rx="2" fill="url(#panelShimmer)" />
+          </g>
+
+          <!-- Central Main Chassis Bus (Gold MLI Thermal Blanket) -->
+          <g class="satellite-chassis">
+            <rect x="62" y="28" width="36" height="30" rx="3" fill="url(#goldMliGrad)" stroke="rgba(243, 199, 142, 0.6)" stroke-width="1.2" />
+            <!-- MLI Quilting Texture -->
+            <line x1="62" y1="38" x2="98" y2="38" stroke="rgba(153, 110, 46, 0.5)" stroke-width="0.8" />
+            <line x1="62" y1="48" x2="98" y2="48" stroke="rgba(153, 110, 46, 0.5)" stroke-width="0.8" />
+            <line x1="74" y1="28" x2="74" y2="58" stroke="rgba(153, 110, 46, 0.5)" stroke-width="0.8" />
+            <line x1="86" y1="28" x2="86" y2="58" stroke="rgba(153, 110, 46, 0.5)" stroke-width="0.8" />
+            <!-- Payload Star Tracker Baffle -->
+            <circle cx="80" cy="43" r="5" fill="#0B0D13" stroke="url(#titaniumGrad)" stroke-width="1.2" />
+            <circle cx="80" cy="43" r="2.2" fill="#E5A96A" />
+          </g>
+
+          <!-- High-Gain Communication Parabolic Dish -->
+          <g class="comm-antenna">
+            <path d="M 72,28 C 72,16 88,16 88,28" stroke="url(#titaniumGrad)" stroke-width="1.5" fill="none" />
+            <line x1="80" y1="18" x2="80" y2="10" stroke="url(#titaniumGrad)" stroke-width="1.2" />
+            <circle cx="80" cy="9" r="1.8" fill="#E5A96A" />
+          </g>
+
+          <!-- Telemetry S-Band Dipole Boom -->
+          <g class="telemetry-boom">
+            <line x1="80" y1="58" x2="80" y2="76" stroke="url(#titaniumGrad)" stroke-width="1" />
+            <circle cx="80" cy="76" r="2" fill="#E5A96A" />
+            <line x1="74" y1="72" x2="86" y2="72" stroke="#8E95A5" stroke-width="0.8" />
+          </g>
+
+          <!-- RCS Attitude Thruster Nozzles -->
+          <polygon points="62,31 59,29 59,33" fill="#8E95A5" />
+          <polygon points="62,55 59,53 59,57" fill="#8E95A5" />
+          <polygon points="98,31 101,29 101,33" fill="#8E95A5" />
+          <polygon points="98,55 101,53 101,57" fill="#8E95A5" />
+        </svg>
+
+        <!-- Micro Telemetry Tag -->
+        <div class="satellite-pill-telemetry">
+          <span class="pill-dot"></span>
+          <span class="pill-text">SAT-01 // 550KM LEO</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ============================================================
+     COSMIC ENVIRONMENT & PERFORMANCE OPTIMIZATIONS
+     ============================================================ */
+  .cosmic-environment {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 0;
+    overflow: hidden;
+    background-color: #0B0D13;
+  }
+
+  /* Deep Space Ambient Nebulae (Pure GPU Composite) */
+  .nebula-layer {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+    will-change: transform, opacity;
+  }
+
+  .nebula-1 {
+    top: -15%;
+    left: 55%;
+    width: 60vw;
+    height: 55vh;
+    background: radial-gradient(ellipse at center, rgba(229, 169, 106, 0.055) 0%, rgba(212, 175, 55, 0.02) 45%, transparent 70%);
+  }
+
+  .nebula-2 {
+    bottom: -10%;
+    left: -10%;
+    width: 50vw;
+    height: 60vh;
+    background: radial-gradient(ellipse at center, rgba(26, 36, 62, 0.45) 0%, rgba(14, 20, 36, 0.2) 50%, transparent 75%);
+  }
+
+  .nebula-3 {
+    top: 35%;
+    right: -10%;
+    width: 45vw;
+    height: 45vh;
+    background: radial-gradient(circle at center, rgba(142, 149, 165, 0.04) 0%, transparent 65%);
+  }
+
+  /* Starfield Canvas */
+  .starfield-canvas {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: block;
+    pointer-events: none;
+  }
+
+  /* Orbital System */
+  .orbital-system {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+  }
+
+  .orbital-track-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 550px;
+    pointer-events: none;
+    opacity: 0.75;
+  }
+
+  /* Orbiting Satellite Tracker Along Elliptical Path */
+  .satellite-tracker {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 130px;
+    height: 74px;
+    will-change: transform;
+    animation: satellite-orbit 42s linear infinite;
+    transform-origin: center center;
+  }
+
+  /* Satellite Body Vessel */
+  .satellite-vessel {
+    position: relative;
+    width: 130px;
+    height: 74px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .satellite-svg {
+    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
+  }
+
+  /* Solar Specular Reflection Animation */
+  .solar-glint {
+    animation: glint-sweep 7s ease-in-out infinite;
+    opacity: 0.7;
+  }
+
+  @keyframes glint-sweep {
+    0%, 65% {
+      transform: translateX(-40px);
+      opacity: 0;
+    }
+    75% {
+      opacity: 0.85;
+    }
+    90%, 100% {
+      transform: translateX(45px);
+      opacity: 0;
+    }
+  }
+
+  /* Telemetry Beacon Blinking LED */
+  .satellite-beacon {
+    position: absolute;
+    top: 15px;
+    left: 65px;
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #E5A96A;
+    box-shadow: 0 0 10px #E5A96A, 0 0 20px rgba(229, 169, 106, 0.7);
+    animation: beacon-flash 1.6s ease-in-out infinite;
+  }
+
+  @keyframes beacon-flash {
+    0%, 100% {
+      opacity: 0.2;
+      transform: scale(0.85);
+    }
+    50% {
+      opacity: 1;
+      transform: scale(1.4);
+      box-shadow: 0 0 14px #E5A96A, 0 0 28px rgba(229, 169, 106, 0.9);
+    }
+  }
+
+  /* Small Micro Telemetry Readout Below Satellite */
+  .satellite-pill-telemetry {
+    position: absolute;
+    bottom: -18px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 2px 7px;
+    background: rgba(14, 18, 27, 0.85);
+    border: 1px solid rgba(142, 149, 165, 0.2);
+    border-radius: 9999px;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    white-space: nowrap;
+    opacity: 0.7;
+    transition: opacity 0.2s ease;
+  }
+
+  .pill-dot {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 4px #10B981;
+  }
+
+  .pill-text {
+    font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+    font-size: 8px;
+    letter-spacing: 0.06em;
+    color: #8E95A5;
+  }
+
+  /* Satellite Orbit Keyframes across viewport */
+  @keyframes satellite-orbit {
+    0% {
+      transform: translate(-120px, 460px) rotate(-16deg) scale(0.88);
+      opacity: 0;
+    }
+    3% {
+      opacity: 1;
+    }
+    25% {
+      transform: translate(25vw, 240px) rotate(-12deg) scale(0.94);
+    }
+    50% {
+      transform: translate(52vw, 150px) rotate(-4deg) scale(1);
+    }
+    75% {
+      transform: translate(78vw, 180px) rotate(6deg) scale(0.96);
+    }
+    97% {
+      opacity: 1;
+    }
+    100% {
+      transform: translate(105vw, 250px) rotate(14deg) scale(0.9);
+      opacity: 0;
+    }
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .satellite-tracker {
+      transform: scale(0.75);
+    }
+    .satellite-pill-telemetry {
+      display: none;
+    }
+  }
+
+  /* Respect Reduced Motion */
+  @media (prefers-reduced-motion: reduce) {
+    .satellite-tracker {
+      animation: none;
+      transform: translate(70vw, 170px) rotate(4deg) scale(0.95);
+      opacity: 0.85;
+    }
+    .solar-glint {
+      animation: none;
+      opacity: 0.4;
+    }
+    .satellite-beacon {
+      animation: none;
+      opacity: 0.8;
+    }
+  }
+</style>
+
+<script>
+  // High-Performance 60FPS Ambient Starfield with Visibility Throttling
+  (function initCosmicStarfield() {
+    const canvas = document.getElementById('cosmic-starfield') as HTMLCanvasElement;
+    if (!canvas) return;
+
+    const ctx = canvas.getContext('2d', { alpha: true });
+    if (!ctx) return;
+
+    interface Star {
+      x: number;
+      y: number;
+      baseRadius: number;
+      alpha: number;
+      targetAlpha: number;
+      twinkleSpeed: number;
+      phase: number;
+      tint: 'ivory' | 'amber' | 'titanium';
+      isBright: boolean;
+    }
+
+    let stars: Star[] = [];
+    let width = 0;
+    let height = 0;
+    let animId = 0;
+    let isVisible = true;
+
+    // Check prefers-reduced-motion
+    const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    function resize() {
+      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      width = window.innerWidth;
+      height = window.innerHeight;
+
+      canvas.width = Math.floor(width * dpr);
+      canvas.height = Math.floor(height * dpr);
+      ctx.scale(dpr, dpr);
+
+      initStars();
+      if (prefersReducedMotion) {
+        renderStatic();
+      }
+    }
+
+    function initStars() {
+      // Density: ~1 star per 3200 sq pixels, bounded between 160 and 380
+      const starCount = Math.floor(Math.min(Math.max((width * height) / 3400, 160), 380));
+      stars = [];
+
+      for (let i = 0; i < starCount; i++) {
+        const rand = Math.random();
+        let tint: 'ivory' | 'amber' | 'titanium' = 'ivory';
+        let isBright = false;
+        let baseRadius = 0.65;
+        let baseAlpha = 0.35 + Math.random() * 0.4;
+
+        if (rand > 0.94) {
+          // Bright navigation stars with diffraction spike
+          tint = Math.random() > 0.5 ? 'amber' : 'ivory';
+          isBright = true;
+          baseRadius = 1.6 + Math.random() * 0.6;
+          baseAlpha = 0.8 + Math.random() * 0.2;
+        } else if (rand > 0.70) {
+          // Mid-range stars
+          tint = rand > 0.85 ? 'amber' : 'titanium';
+          baseRadius = 1.0 + Math.random() * 0.4;
+          baseAlpha = 0.5 + Math.random() * 0.35;
+        } else {
+          // Distant micro stars
+          baseRadius = 0.5 + Math.random() * 0.4;
+          baseAlpha = 0.25 + Math.random() * 0.3;
+        }
+
+        stars.push({
+          x: Math.random() * width,
+          y: Math.random() * height,
+          baseRadius,
+          alpha: baseAlpha,
+          targetAlpha: baseAlpha,
+          twinkleSpeed: 0.015 + Math.random() * 0.025,
+          phase: Math.random() * Math.PI * 2,
+          tint,
+          isBright
+        });
+      }
+    }
+
+    function renderStatic() {
+      ctx.clearRect(0, 0, width, height);
+      for (let i = 0; i < stars.length; i++) {
+        drawStar(stars[i], stars[i].alpha);
+      }
+    }
+
+    function drawStar(star: Star, currentAlpha: number) {
+      ctx.save();
+      ctx.globalAlpha = Math.max(0.1, Math.min(currentAlpha, 1));
+
+      let fillStyle = '#F3F4F6';
+      if (star.tint === 'amber') fillStyle = '#E5A96A';
+      else if (star.tint === 'titanium') fillStyle = '#B6BAC6';
+
+      ctx.fillStyle = fillStyle;
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.baseRadius, 0, Math.PI * 2);
+      ctx.fill();
+
+      // Subtle 4-point cross diffraction flare on bright navigation stars
+      if (star.isBright) {
+        ctx.strokeStyle = fillStyle;
+        ctx.lineWidth = 0.6;
+        ctx.globalAlpha = currentAlpha * 0.45;
+
+        const spikeLen = star.baseRadius * 3.8;
+        ctx.beginPath();
+        ctx.moveTo(star.x - spikeLen, star.y);
+        ctx.lineTo(star.x + spikeLen, star.y);
+        ctx.moveTo(star.x, star.y - spikeLen);
+        ctx.lineTo(star.x, star.y + spikeLen);
+        ctx.stroke();
+      }
+
+      ctx.restore();
+    }
+
+    function render() {
+      if (!isVisible) return;
+
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < stars.length; i++) {
+        const star = stars[i];
+        star.phase += star.twinkleSpeed;
+        // Smooth sine wave twinkling modulation
+        const mod = (Math.sin(star.phase) + 1) * 0.5; // 0 to 1
+        const currentAlpha = star.alpha * (0.65 + mod * 0.5);
+
+        drawStar(star, currentAlpha);
+      }
+
+      animId = requestAnimationFrame(render);
+    }
+
+    // Visibility change handler (save battery and CPU when tab hidden)
+    document.addEventListener('visibilitychange', () => {
+      isVisible = document.visibilityState === 'visible';
+      if (isVisible && !prefersReducedMotion) {
+        cancelAnimationFrame(animId);
+        render();
+      } else {
+        cancelAnimationFrame(animId);
+      }
+    });
+
+    // Resize handler with debounce
+    let resizeTimer: number;
+    window.addEventListener('resize', () => {
+      clearTimeout(resizeTimer);
+      resizeTimer = window.setTimeout(resize, 150);
+    }, { passive: true });
+
+    // Initial setup
+    resize();
+    if (!prefersReducedMotion) {
+      render();
+    }
+  })();
+</script>

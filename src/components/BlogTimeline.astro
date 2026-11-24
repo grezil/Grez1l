@@ -1,0 +1,739 @@
+---
+// BlogTimeline.astro - Chronological Timeline of Latest Uploaded Aerospace Dispatches
+import portfolioData from '../data/portfolio.json';
+import { DEFAULT_BLOGS } from '../data/defaultBlogs.js';
+
+export interface Props {
+  limit?: number;
+}
+
+const { limit = 4 } = Astro.props;
+
+const dataBlogs = (portfolioData as any).blogs;
+const allBlogs = (Array.isArray(dataBlogs) && dataBlogs.length > 0) ? dataBlogs : DEFAULT_BLOGS;
+
+// Sort latest first
+const sortedInitial = [...allBlogs].sort((a, b) => {
+  const dateA = a.date || '';
+  const dateB = b.date || '';
+  return dateB.localeCompare(dateA);
+}).slice(0, limit);
+
+// Category color class helper
+const getCategoryClass = (category = '') => {
+  const cat = category.toLowerCase();
+  if (cat.includes('flight') || cat.includes('software') || cat.includes('rust')) return 'cat-fsw';
+  if (cat.includes('orbit') || cat.includes('astrodynamics') || cat.includes('gnc') || cat.includes('dynamics')) return 'cat-orbit';
+  if (cat.includes('avionics') || cat.includes('fdir') || cat.includes('hardware')) return 'cat-avionics';
+  if (cat.includes('comms') || cat.includes('ground') || cat.includes('packet') || cat.includes('s-band')) return 'cat-comms';
+  return 'cat-fsw';
+};
+---
+
+<section id="blog-timeline" class="blog-timeline-section section" aria-label="Latest Mission Technical Dispatches">
+  <div class="container">
+    <!-- Header -->
+    <header class="section-header timeline-header">
+      <div class="header-left">
+        <div class="section-tag">// MISSION TECHNICAL LOG & DISPATCHES</div>
+        <h2 class="section-title">
+          Latest Flight Software & <span class="glow-warm">Orbital Dispatches</span>
+        </h2>
+        <p class="section-subtitle">
+          Real-time chronological timeline of technical articles, mission post-mortems, and flight-proven aerospace architectures.
+        </p>
+      </div>
+
+      <div class="header-right">
+        <a href="/blog" class="btn-all-dispatches">
+          <span>All Dispatches ({allBlogs.length})</span>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </a>
+      </div>
+    </header>
+
+    <!-- Interactive Chronological Timeline Stream -->
+    <div class="timeline-stream-container">
+      <!-- Live Sync Beacon -->
+      <div class="stream-telemetry-bar">
+        <div class="sync-indicator">
+          <span class="pulse-beacon"></span>
+          <span class="sync-text">LIVE DISPATCH FEED // SYNCHRONIZED</span>
+        </div>
+        <span class="stream-count-badge" id="stream-count-text">
+          Displaying Latest {sortedInitial.length} Entries
+        </span>
+      </div>
+
+      <!-- Vertical Timeline Track -->
+      <div class="timeline-track" id="blog-timeline-track">
+        {sortedInitial.map((post, idx) => {
+          const author = typeof post.author === 'object' && post.author !== null 
+            ? post.author 
+            : { name: post.author || 'Võ Quang Nhật Nguyên', role: 'Flight Software Lead', callsign: 'NHAT-NGUYEN' };
+
+          return (
+            <article 
+              class="timeline-dispatch-item"
+              data-slug={post.slug}
+              data-id={post.id}
+              data-index={idx}
+            >
+              <!-- Timeline Axis Node -->
+              <div class="timeline-axis">
+                <div class="axis-node">
+                  <span class="node-inner"></span>
+                </div>
+                <div class="axis-stem"></div>
+              </div>
+
+              <!-- Dispatch Card -->
+              <div class="dispatch-card card">
+                <!-- Meta Top Bar -->
+                <div class="dispatch-meta-row">
+                  <div class="meta-left">
+                    <span class={`cat-badge ${getCategoryClass(post.category)}`}>
+                      <span class="badge-dot"></span>
+                      {post.category || 'Flight Software'}
+                    </span>
+                    <span class="dispatch-epoch">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      {post.date}
+                    </span>
+                  </div>
+
+                  <div class="meta-right">
+                    <span class="read-estimate">{post.readTime}</span>
+                    <span class="order-tag">#{String(idx + 1).padStart(2, '0')}</span>
+                  </div>
+                </div>
+
+                <!-- Title -->
+                <h3 class="dispatch-title">
+                  <a href={`/blog/${post.slug}`} class="dispatch-title-link">
+                    {post.title}
+                  </a>
+                </h3>
+
+                <!-- Excerpt -->
+                <p class="dispatch-summary">
+                  {post.summary}
+                </p>
+
+                <!-- Tags Row -->
+                {post.tags && post.tags.length > 0 && (
+                  <div class="dispatch-tags">
+                    {post.tags.slice(0, 4).map((tag: string) => (
+                      <span class="dispatch-mini-tag">#{tag}</span>
+                    ))}
+                  </div>
+                )}
+
+                <!-- Card Footer -->
+                <div class="dispatch-footer">
+                  <div class="author-micro">
+                    <span class="author-badge-icon">NN</span>
+                    <span class="author-label">{author.name} • {author.callsign || 'NHAT-NGUYEN'}</span>
+                  </div>
+
+                  <a href={`/blog/${post.slug}`} class="dispatch-link-btn">
+                    <span>Read Dispatch</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+
+      <!-- Timeline Footer Link -->
+      <div class="timeline-footer-row">
+        <a href="/blog" class="btn btn-secondary btn-sm full-archive-btn">
+          <span>Access Full Aerospace Dispatch Archive →</span>
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  import { getBlogs } from '../scripts/store.js';
+
+  (function initBlogTimelineSync() {
+    const track = document.getElementById('blog-timeline-track');
+    const countBadge = document.getElementById('stream-count-text');
+    const LIMIT = 4;
+
+    function getCategoryClass(category = '') {
+      const cat = category.toLowerCase();
+      if (cat.includes('flight') || cat.includes('software') || cat.includes('rust')) return 'cat-fsw';
+      if (cat.includes('orbit') || cat.includes('astrodynamics') || cat.includes('gnc') || cat.includes('dynamics')) return 'cat-orbit';
+      if (cat.includes('avionics') || cat.includes('fdir') || cat.includes('hardware')) return 'cat-avionics';
+      if (cat.includes('comms') || cat.includes('ground') || cat.includes('packet') || cat.includes('s-band')) return 'cat-comms';
+      return 'cat-fsw';
+    }
+
+    function renderTimelinePosts() {
+      if (!track) return;
+
+      try {
+        let blogs: any[] = [];
+        if (typeof getBlogs === 'function') {
+          blogs = getBlogs();
+        } else {
+          const store = (window as any).PortfolioStore;
+          if (store && typeof store.getBlogs === 'function') {
+            blogs = store.getBlogs();
+          } else {
+            const raw = localStorage.getItem('space_portfolio_data_v1') || localStorage.getItem('space_portfolio_data');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              if (parsed && Array.isArray(parsed.blogs)) blogs = parsed.blogs;
+            }
+          }
+        }
+
+        if (!blogs || blogs.length === 0) return;
+
+        // Sort latest first
+        const sorted = [...blogs].sort((a, b) => {
+          const dateA = a.date || '';
+          const dateB = b.date || '';
+          return dateB.localeCompare(dateA);
+        }).slice(0, LIMIT);
+
+        if (countBadge) {
+          countBadge.textContent = `Displaying Latest ${sorted.length} Entries (${blogs.length} Total)`;
+        }
+
+        track.innerHTML = sorted.map((post, idx) => {
+          const catClass = getCategoryClass(post.category);
+          const author = typeof post.author === 'object' && post.author !== null 
+            ? post.author 
+            : { name: post.author || 'Võ Quang Nhật Nguyên', callsign: 'NHAT-NGUYEN' };
+
+          const tagsHtml = (post.tags || []).slice(0, 4).map((t: string) => `<span class="dispatch-mini-tag">#${t}</span>`).join('');
+
+          return `
+            <article 
+              class="timeline-dispatch-item"
+              data-slug="${post.slug}"
+              data-id="${post.id}"
+              data-index="${idx}"
+            >
+              <div class="timeline-axis">
+                <div class="axis-node">
+                  <span class="node-inner"></span>
+                </div>
+                <div class="axis-stem"></div>
+              </div>
+
+              <div class="dispatch-card card">
+                <div class="dispatch-meta-row">
+                  <div class="meta-left">
+                    <span class="cat-badge ${catClass}">
+                      <span class="badge-dot"></span>
+                      ${post.category || 'Flight Software'}
+                    </span>
+                    <span class="dispatch-epoch">
+                      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <polyline points="12 6 12 12 16 14"></polyline>
+                      </svg>
+                      ${post.date || 'Mission Epoch'}
+                    </span>
+                  </div>
+
+                  <div class="meta-right">
+                    <span class="read-estimate">${post.readTime || '5 min read'}</span>
+                    <span class="order-tag">#${String(idx + 1).padStart(2, '0')}</span>
+                  </div>
+                </div>
+
+                <h3 class="dispatch-title">
+                  <a href="/blog/${post.slug}" class="dispatch-title-link">
+                    ${post.title}
+                  </a>
+                </h3>
+
+                <p class="dispatch-summary">
+                  ${post.summary || ''}
+                </p>
+
+                <div class="dispatch-tags">
+                  ${tagsHtml}
+                </div>
+
+                <div class="dispatch-footer">
+                  <div class="author-micro">
+                    <span class="author-badge-icon">NN</span>
+                    <span class="author-label">${author.name || 'Võ Quang Nhật Nguyên'} • ${author.callsign || 'NHAT-NGUYEN'}</span>
+                  </div>
+
+                  <a href="/blog/${post.slug}" class="dispatch-link-btn">
+                    <span>Read Dispatch</span>
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <line x1="5" y1="12" x2="19" y2="12"></line>
+                      <polyline points="12 5 19 12 12 19"></polyline>
+                    </svg>
+                  </a>
+                </div>
+              </div>
+            </article>
+          `;
+        }).join('');
+      } catch (e) {
+        console.warn('Error refreshing blog timeline:', e);
+      }
+    }
+
+    // Reactive sync
+    window.addEventListener('portfolio-data-updated', renderTimelinePosts);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'space_portfolio_data_v1') renderTimelinePosts();
+    });
+
+    // Check after brief delay for store hydration
+    setTimeout(renderTimelinePosts, 100);
+  })();
+</script>
+
+<style>
+  /* ============================================================
+     BLOG TIMELINE STYLES - Space Engineering Monospace Apple Aesthetic
+     ============================================================ */
+  .blog-timeline-section {
+    position: relative;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    font-family: var(--font-mono, 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, monospace);
+  }
+
+  .timeline-header {
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    margin-bottom: 2.5rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+
+  .header-left {
+    max-width: 680px;
+  }
+
+  .section-tag {
+    font-family: var(--font-mono, 'SF Mono', monospace);
+    font-size: 0.8125rem;
+    letter-spacing: 0.1em;
+    color: #e5a96a;
+    margin-bottom: 0.65rem;
+  }
+
+  .section-title {
+    font-family: var(--font-mono, 'SF Mono', monospace);
+    font-size: clamp(1.75rem, 3.5vw, 2.35rem);
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+    color: #f3f4f6;
+    margin-bottom: 0.65rem;
+  }
+
+  .glow-warm {
+    background: linear-gradient(135deg, #e5a96a 0%, #fef3c7 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
+  .section-subtitle {
+    font-family: var(--font-mono, 'SF Mono', monospace);
+    font-size: 0.925rem;
+    color: #8e95a5;
+    line-height: 1.6;
+  }
+
+  .btn-all-dispatches {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.55rem 1.15rem;
+    border-radius: 8px;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #e5a96a;
+    background: rgba(229, 169, 106, 0.08);
+    border: 1px solid rgba(229, 169, 106, 0.25);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    font-family: var(--font-mono, 'SF Mono', monospace);
+  }
+
+  .btn-all-dispatches:hover {
+    background: rgba(229, 169, 106, 0.18);
+    border-color: rgba(229, 169, 106, 0.45);
+    transform: translateX(3px);
+  }
+
+  /* Timeline Stream Container */
+  .timeline-stream-container {
+    background: rgba(15, 18, 30, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 18px;
+    padding: 2rem 2.25rem;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
+  }
+
+  .stream-telemetry-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-bottom: 1.5rem;
+    margin-bottom: 2rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.07);
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .sync-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .pulse-beacon {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    box-shadow: 0 0 8px #10b981;
+    animation: beacon-pulse 2s infinite;
+  }
+
+  @keyframes beacon-pulse {
+    0% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.9); opacity: 0.8; }
+  }
+
+  .sync-text {
+    font-size: 0.75rem;
+    color: #10b981;
+    letter-spacing: 0.06em;
+    font-weight: 600;
+  }
+
+  .stream-count-badge {
+    font-size: 0.75rem;
+    color: #8e95a5;
+  }
+
+  /* Vertical Timeline */
+  .timeline-track {
+    display: flex;
+    flex-direction: column;
+    position: relative;
+  }
+
+  .timeline-dispatch-item {
+    display: grid;
+    grid-template-columns: 40px 1fr;
+    gap: 1.5rem;
+    position: relative;
+    padding-bottom: 2rem;
+  }
+
+  .timeline-dispatch-item:last-child {
+    padding-bottom: 0.5rem;
+  }
+
+  /* Axis Node & Stem */
+  .timeline-axis {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+
+  .axis-node {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #0f121e;
+    border: 2px solid #e5a96a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 10px rgba(229, 169, 106, 0.4);
+    z-index: 2;
+    flex-shrink: 0;
+    margin-top: 0.75rem;
+  }
+
+  .node-inner {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: #e5a96a;
+  }
+
+  .axis-stem {
+    width: 2px;
+    flex-grow: 1;
+    background: linear-gradient(180deg, rgba(229, 169, 106, 0.4) 0%, rgba(255, 255, 255, 0.08) 100%);
+    margin-top: 4px;
+  }
+
+  .timeline-dispatch-item:last-child .axis-stem {
+    display: none;
+  }
+
+  /* Dispatch Card */
+  .dispatch-card {
+    background: rgba(22, 27, 44, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    padding: 1.5rem 1.75rem;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .dispatch-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(229, 169, 106, 0.35);
+    box-shadow: 0 12px 28px -6px rgba(0, 0, 0, 0.6), 0 0 16px rgba(229, 169, 106, 0.1);
+  }
+
+  .dispatch-meta-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.85rem;
+    flex-wrap: wrap;
+    gap: 0.65rem;
+  }
+
+  .meta-left {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  .cat-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+  }
+
+  .badge-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+  }
+
+  .cat-fsw {
+    background: rgba(229, 169, 106, 0.12);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    color: #f3c28c;
+  }
+  .cat-fsw .badge-dot { background: #e5a96a; box-shadow: 0 0 6px #e5a96a; }
+
+  .cat-orbit {
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid rgba(0, 242, 254, 0.28);
+    color: #4facfe;
+  }
+  .cat-orbit .badge-dot { background: #00f2fe; box-shadow: 0 0 6px #00f2fe; }
+
+  .cat-avionics {
+    background: rgba(167, 139, 250, 0.12);
+    border: 1px solid rgba(167, 139, 250, 0.28);
+    color: #c4b5fd;
+  }
+  .cat-avionics .badge-dot { background: #a78bfa; box-shadow: 0 0 6px #a78bfa; }
+
+  .cat-comms {
+    background: rgba(52, 211, 153, 0.12);
+    border: 1px solid rgba(52, 211, 153, 0.28);
+    color: #6ee7b7;
+  }
+  .cat-comms .badge-dot { background: #34d399; box-shadow: 0 0 6px #34d399; }
+
+  .dispatch-epoch {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.75rem;
+    color: #8e95a5;
+  }
+
+  .meta-right {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .read-estimate {
+    font-size: 0.75rem;
+    color: #d1d5db;
+  }
+
+  .order-tag {
+    font-size: 0.7rem;
+    color: #6b7280;
+    padding: 0.1rem 0.35rem;
+    background: rgba(255, 255, 255, 0.04);
+    border-radius: 4px;
+  }
+
+  .dispatch-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    margin-bottom: 0.65rem;
+    color: #f3f4f6;
+  }
+
+  .dispatch-title-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .dispatch-title-link:hover {
+    color: #e5a96a;
+  }
+
+  .dispatch-summary {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: #9ca3af;
+    margin-bottom: 1rem;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .dispatch-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .dispatch-mini-tag {
+    font-size: 0.7rem;
+    color: #8e95a5;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    padding: 0.15rem 0.45rem;
+    border-radius: 4px;
+  }
+
+  .dispatch-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .author-micro {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .author-badge-icon {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: #1a2234;
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #e5a96a;
+  }
+
+  .author-label {
+    font-size: 0.75rem;
+    color: #8e95a5;
+  }
+
+  .dispatch-link-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.775rem;
+    font-weight: 600;
+    color: #e5a96a;
+    text-decoration: none;
+    padding: 0.3rem 0.7rem;
+    border-radius: 6px;
+    background: rgba(229, 169, 106, 0.08);
+    border: 1px solid rgba(229, 169, 106, 0.2);
+    transition: all 0.2s ease;
+  }
+
+  .dispatch-link-btn:hover {
+    background: rgba(229, 169, 106, 0.16);
+    color: #fce7cf;
+    transform: translateX(2px);
+  }
+
+  .timeline-footer-row {
+    display: flex;
+    justify-content: center;
+    padding-top: 1.5rem;
+    margin-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .full-archive-btn {
+    font-family: var(--font-mono, 'SF Mono', monospace);
+    font-size: 0.8125rem;
+  }
+
+  @media (max-width: 680px) {
+    .timeline-stream-container {
+      padding: 1.25rem;
+    }
+    .timeline-dispatch-item {
+      grid-template-columns: 24px 1fr;
+      gap: 0.85rem;
+    }
+    .dispatch-card {
+      padding: 1.15rem;
+    }
+    .dispatch-title {
+      font-size: 1.05rem;
+    }
+    .timeline-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  }
+</style>

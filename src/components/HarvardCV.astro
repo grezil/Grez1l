@@ -1,0 +1,1773 @@
+---
+/**
+ * HarvardCV.astro - Authentic Harvard Academic & Technical Curriculum Vitae
+ *
+ * Implements:
+ * 1. Monospace Typography throughout (SF Mono / JetBrains Mono / Fira Code / monospace).
+ * 2. Profile Avatar displayed beside header information with live customizer (upload file / URL) trigger.
+ * 3. Word-Style Rich Document Editor support: renders rich HTML content, formatted text, and document canvas.
+ * 4. Classic Harvard Academic & Technical CV structure:
+ *    - Professional Header (Name, Callsign, Affiliations, Clearance, Contact)
+ *    - Education (Caltech Ph.D., MIT M.S., Berkeley B.S., Thesis, Advisors, Honors, GPA, Coursework)
+ *    - Professional Appointments & Flight Software Experience (Action verbs, metrics, orbital systems)
+ *    - Flight Heritage & Space Missions (CubeSats, Orbits, Subsystems, Flight stats)
+ *    - Publications & Conference Proceedings (AIAA, IEEE format with DOIs)
+ *    - Honors, Grants & Distinctions (Chronological with exact dates)
+ *    - Technical Skills & Flight Standards (CCSDS, MISRA C, DO-178C, RTOS, Astrodynamics)
+ * 5. 1-Click 'Print / Save as PDF' with tailored @media print CSS for authentic letter printout.
+ * 6. Dual preview themes: 'Academic Paper Mode' vs 'Cosmic Dark Mode'.
+ * 7. Reactive store integration with store.js for instant updates without page reload.
+ */
+import defaultData from '../data/portfolio.json';
+
+export interface Props {
+  initialTheme?: 'paper' | 'dark';
+  hideControls?: boolean;
+}
+
+const {
+  initialTheme = 'paper',
+  hideControls = false
+} = Astro.props;
+
+const profile = defaultData.profile || {};
+const education = defaultData.education || [];
+const experience = defaultData.experience || [];
+const missions = defaultData.missions || [];
+const publications = defaultData.publications || [];
+const achievements = defaultData.achievements || [];
+const skills = defaultData.skills || [];
+const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80";
+---
+
+<div class="harvard-cv-wrapper" id="harvard-cv-root" data-theme={initialTheme}>
+  {/* Action Controls Bar (Hidden during print) */}
+  {!hideControls && (
+    <div class="cv-action-bar no-print" aria-label="Harvard CV Document Actions">
+      <div class="action-bar-left">
+        <div class="document-badge">
+          <span class="doc-icon">🏛️</span>
+          <span class="doc-label">HARVARD FORMAT CV</span>
+          <span class="doc-sublabel">// MONOSPACE FLIGHT DOSSIER</span>
+        </div>
+        <div class="live-sync-indicator" id="cv-sync-pill" title="Synchronized with local mission data store">
+          <span class="pulse-dot"></span>
+          <span class="sync-text">STORE: ACTIVE</span>
+        </div>
+      </div>
+
+      <div class="action-bar-right">
+        {/* Word Document Editor Trigger Button */}
+        <button
+          type="button"
+          class="btn-word-editor-trigger"
+          id="btn-open-word-editor"
+          title="Open Word-style Document Editor (Rich formatting studio)"
+          aria-label="Open Word-style CV Editor"
+        >
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span>Word Editor</span>
+        </button>
+
+        {/* Apple-style segmented theme preview selector */}
+        <div class="segmented-theme-toggle" role="group" aria-label="CV Display Mode">
+          <button
+            type="button"
+            class="theme-toggle-btn active"
+            id="theme-paper-btn"
+            title="Preview authentic Harvard ivory paper styling in monospace"
+            aria-pressed="true"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+              <polyline points="14 2 14 8 20 8"></polyline>
+              <line x1="16" y1="13" x2="8" y2="13"></line>
+              <line x1="16" y1="17" x2="8" y2="17"></line>
+            </svg>
+            <span>Paper</span>
+          </button>
+          <button
+            type="button"
+            class="theme-toggle-btn"
+            id="theme-dark-btn"
+            title="Preview cosmic aerospace onyx dark styling"
+            aria-pressed="false"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path>
+            </svg>
+            <span>Cosmic</span>
+          </button>
+        </div>
+
+        {/* 1-Click Print / Save PDF Button */}
+        <button
+          type="button"
+          class="btn-cv-print"
+          id="cv-print-btn"
+          title="Print or Save as authentic PDF (Cmd+P / Ctrl+P)"
+          aria-label="Print Harvard CV as PDF"
+        >
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="6 9 6 2 18 2 18 9"></polyline>
+            <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+            <rect x="6" y="14" width="12" height="8"></rect>
+          </svg>
+          <span class="print-label">Print PDF</span>
+          <kbd class="kbd-badge">⌘P</kbd>
+        </button>
+      </div>
+    </div>
+  )}
+
+  {/* Authentic Harvard Document Canvas (Pure Monospace Architecture) */}
+  <article class="harvard-sheet monospace-dossier" id="harvard-document-sheet" itemscope itemtype="https://schema.org/Person">
+    
+    {/* SECTION 1: PROFESSIONAL HEADER WITH PROFILE AVATAR BESIDE INFO */}
+    <header class="cv-header" id="cv-header-container">
+      <div class="cv-header-grid">
+        {/* Profile Avatar Column beside personal info */}
+        <div class="cv-avatar-column" id="cv-avatar-wrapper">
+          <div class="cv-avatar-frame">
+            <img
+              src={avatarSrc}
+              alt={profile.avatarAlt || profile.name}
+              class="cv-avatar-photo"
+              id="cv-avatar-img"
+              loading="eager"
+            />
+            {/* Fallback Monogram */}
+            <div class="cv-avatar-monogram" id="cv-avatar-monogram" aria-hidden="true">
+              {profile.monogram || "NN"}
+            </div>
+            {/* Quick edit overlay for admin photo customizer */}
+            <button
+              type="button"
+              class="cv-avatar-edit-overlay no-print"
+              id="cv-avatar-edit-trigger"
+              title="Customize profile photo (Upload file or enter URL via Admin)"
+              aria-label="Customize profile photo"
+            >
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
+                <circle cx="12" cy="13" r="4"></circle>
+              </svg>
+              <span class="avatar-edit-badge">EDIT</span>
+            </button>
+          </div>
+          <span class="cv-crew-badge telemetry-mono no-print">CREW: {profile.monogram || "NN"} // {profile.callsign || "NHAT-NGUYEN"}</span>
+        </div>
+
+        {/* Header Text & Identity Info */}
+        <div class="cv-header-info">
+          <div class="cv-header-primary">
+            <h1 class="cv-full-name" id="cv-name" itemprop="name">
+              {profile.name} <span class="cv-alt-name">({profile.englishName || "Nhat Nguyen Vo"})</span>
+            </h1>
+            <div class="cv-callsign-tag no-print">
+              <span>CALLSIGN: {profile.callsign || "NHAT-NGUYEN"}</span>
+            </div>
+          </div>
+
+          <div class="cv-title-line" id="cv-title" itemprop="jobTitle">
+            {profile.title}
+          </div>
+
+          <div class="cv-affiliations" id="cv-affiliations">
+            <span class="affil-item">{profile.academicAffiliation || "Caltech Space Radiation Lab • AIAA Associate Fellow"}</span>
+            <span class="affil-sep">•</span>
+            <span class="affil-clearance">{profile.clearance || "Public Trust / NASA Heritage Clearance"}</span>
+          </div>
+
+          <div class="cv-contact-bar" id="cv-contact-bar">
+            <span class="contact-item" id="cv-location" itemprop="address">
+              {profile.location}
+            </span>
+            <span class="contact-sep">•</span>
+            <a href={`mailto:${profile.social?.email || "nhatnguyen@orbital-flight.dev"}`} class="contact-item contact-link" id="cv-email" itemprop="email">
+              {profile.social?.email || "nhatnguyen@orbital-flight.dev"}
+            </a>
+            <span class="contact-sep">•</span>
+            <a href={profile.social?.github || "https://github.com/nhatnguyen"} target="_blank" rel="noopener noreferrer" class="contact-item contact-link" id="cv-github">
+              {profile.social?.github ? profile.social.github.replace(/^https?:\/\//, '') : 'github.com/nhatnguyen'}
+            </a>
+            <span class="contact-sep">•</span>
+            <a href={profile.social?.linkedin || "https://linkedin.com/in/nhatnguyen-vo"} target="_blank" rel="noopener noreferrer" class="contact-item contact-link" id="cv-linkedin">
+              {profile.social?.linkedin ? profile.social.linkedin.replace(/^https?:\/\//, '') : 'linkedin.com/in/nhatnguyen-vo'}
+            </a>
+            <span class="contact-sep">•</span>
+            <span class="contact-item" id="cv-citizenship">
+              {profile.citizenship || "United States"}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cv-divider"></div>
+    </header>
+
+    {/* WORD-STYLE RICH DOCUMENT SECTION (Renders formatted HTML from Word Editor if provided) */}
+    <div
+      class="cv-rich-word-section"
+      id="cv-rich-word-section"
+      style={profile.cvDocumentHtml && profile.cvDocumentHtml.trim() ? 'display: block;' : 'display: none;'}
+    >
+      <div class="word-section-header no-print">
+        <div class="word-doc-badge">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+          </svg>
+          <span>WORD DOCUMENT EXECUTIVE DOSSIER</span>
+        </div>
+      </div>
+      <div class="word-rich-canvas" id="cv-word-rich-canvas" set:html={profile.cvDocumentHtml || ''}></div>
+      <div class="cv-section-divider"></div>
+    </div>
+
+    {/* SECTION 2: EDUCATION */}
+    <section class="cv-section" id="cv-section-education" aria-labelledby="heading-education">
+      <h2 class="cv-section-title" id="heading-education">EDUCATION</h2>
+      <div class="cv-entries-list" id="cv-education-list">
+        {education.map((edu) => (
+          <div class="cv-entry edu-entry" data-id={edu.id}>
+            <div class="cv-entry-row">
+              <span class="cv-entry-org">{edu.institution}</span>
+              <span class="cv-entry-right cv-entry-location">{edu.location}</span>
+            </div>
+            <div class="cv-entry-row sub-row">
+              <span class="cv-entry-role italic">{edu.degree}</span>
+              <span class="cv-entry-right cv-entry-date">{edu.period}</span>
+            </div>
+            
+            {edu.thesis && (
+              <div class="cv-entry-detail">
+                <span class="detail-label">Dissertation/Thesis:</span> <em set:html={`"${edu.thesis}"`}></em>
+                {edu.advisor && <span class="detail-advisor" set:html={` (Advisor: ${edu.advisor})`}></span>}
+              </div>
+            )}
+            
+            {edu.honors && (
+              <div class="cv-entry-detail">
+                <span class="detail-label">Honors:</span> <span set:html={edu.honors}></span>
+                {edu.gpa && <span class="detail-gpa"> • Cumulative G.P.A.: {edu.gpa}</span>}
+              </div>
+            )}
+
+            {edu.relevantCourses && edu.relevantCourses.length > 0 && (
+              <div class="cv-entry-detail courses-detail">
+                <span class="detail-label">Selected Coursework:</span> {edu.relevantCourses.join(" • ")}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* SECTION 3: PROFESSIONAL APPOINTMENTS & FLIGHT SOFTWARE EXPERIENCE */}
+    <section class="cv-section" id="cv-section-experience" aria-labelledby="heading-experience">
+      <h2 class="cv-section-title" id="heading-experience">PROFESSIONAL APPOINTMENTS & FLIGHT SOFTWARE EXPERIENCE</h2>
+      <div class="cv-entries-list" id="cv-experience-list">
+        {experience.map((exp) => (
+          <div class="cv-entry exp-entry" data-id={exp.id}>
+            <div class="cv-entry-row">
+              <span class="cv-entry-org">{exp.organization}</span>
+              <span class="cv-entry-right cv-entry-location">{exp.location}</span>
+            </div>
+            <div class="cv-entry-row sub-row">
+              <span class="cv-entry-role italic">
+                {exp.role} {exp.department ? `(${exp.department})` : ''}
+              </span>
+              <span class="cv-entry-right cv-entry-date">{exp.period}</span>
+            </div>
+
+            {exp.summary && (
+              <p class="cv-entry-summary" set:html={exp.summary}></p>
+            )}
+
+            {exp.highlights && exp.highlights.length > 0 && (
+              <ul class="cv-bullet-list">
+                {exp.highlights.map((highlight) => (
+                  <li class="cv-bullet-item" set:html={highlight}></li>
+                ))}
+              </ul>
+            )}
+
+            {exp.tags && exp.tags.length > 0 && (
+              <div class="cv-entry-tags no-print">
+                <span class="tags-label">Systems:</span>
+                {exp.tags.map((t) => (
+                  <span class="cv-mini-pill">{t}</span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* SECTION 4: FLIGHT HERITAGE & SPACE MISSIONS */}
+    <section class="cv-section" id="cv-section-missions" aria-labelledby="heading-missions">
+      <h2 class="cv-section-title" id="heading-missions">FLIGHT HERITAGE & SPACE MISSIONS</h2>
+      <div class="cv-entries-list" id="cv-missions-list">
+        {missions.map((m) => (
+          <div class="cv-entry mission-entry" data-id={m.id}>
+            <div class="cv-entry-row">
+              <span class="cv-entry-org">
+                {m.name} <span class="mission-code">[{m.codeName}]</span>
+              </span>
+              <span class="cv-entry-right cv-entry-date">{m.launchDate}</span>
+            </div>
+            <div class="cv-entry-row sub-row">
+              <span class="cv-entry-role italic">
+                Role: {m.role} • Vehicle: {m.launchVehicle} • Orbit: {m.orbit}
+              </span>
+              <span class="cv-entry-right status-badge-inline">{m.status}</span>
+            </div>
+
+            <p class="cv-entry-summary" set:html={m.missionHighlights}></p>
+
+            {m.subsystems && m.subsystems.length > 0 && (
+              <div class="cv-entry-detail">
+                <span class="detail-label">Flight Subsystems Owned:</span> {m.subsystems.join(" • ")}
+              </div>
+            )}
+
+            {m.metrics && m.metrics.length > 0 && (
+              <div class="cv-entry-metrics">
+                {m.metrics.map((met) => (
+                  <span class="cv-metric-chip">
+                    <strong>{met.label}:</strong> {met.value}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* SECTION 5: PUBLICATIONS & CONFERENCE PROCEEDINGS */}
+    <section class="cv-section" id="cv-section-publications" aria-labelledby="heading-publications">
+      <h2 class="cv-section-title" id="heading-publications">PUBLICATIONS & PEER-REVIEWED PROCEEDINGS</h2>
+      <div class="cv-entries-list" id="cv-publications-list">
+        {publications.map((pub, idx) => (
+          <div class="cv-entry pub-entry" data-id={pub.id}>
+            <div class="pub-citation">
+              <span class="pub-index">[{idx + 1}]</span>
+              <span class="pub-authors">{pub.authors}</span>
+              <span class="pub-year">({pub.year}).</span>
+              <span class="pub-title">"{pub.title}."</span>
+              <span class="pub-venue"><em>{pub.venue}</em>.</span>
+              {pub.doi && (
+                <a href={pub.url || `https://doi.org/${pub.doi}`} target="_blank" rel="noopener noreferrer" class="pub-doi contact-link">
+                  DOI: {pub.doi}
+                </a>
+              )}
+            </div>
+            {pub.abstract && (
+              <p class="pub-abstract no-print-optional" set:html={pub.abstract}></p>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* SECTION 6: HONORS, GRANTS & DISTINCTIONS */}
+    <section class="cv-section" id="cv-section-achievements" aria-labelledby="heading-achievements">
+      <h2 class="cv-section-title" id="heading-achievements">HONORS, GRANTS & DISTINCTIONS</h2>
+      <div class="cv-entries-list" id="cv-achievements-list">
+        {achievements.map((ach) => (
+          <div class="cv-entry ach-entry" data-id={ach.id}>
+            <div class="cv-entry-row">
+              <span class="cv-entry-org">{ach.title}</span>
+              <span class="cv-entry-right cv-entry-date">{ach.date || ach.timeline}</span>
+            </div>
+            <div class="cv-entry-row sub-row">
+              <span class="cv-entry-role italic">
+                {ach.organization} {ach.metrics ? `• [${ach.metrics}]` : ''}
+              </span>
+              <span class="cv-entry-right ach-category-tag">{ach.category}</span>
+            </div>
+            {ach.description && (
+              <p class="cv-entry-summary" set:html={ach.description}></p>
+            )}
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* SECTION 7: TECHNICAL SKILLS & FLIGHT STANDARDS */}
+    <section class="cv-section" id="cv-section-skills" aria-labelledby="heading-skills">
+      <h2 class="cv-section-title" id="heading-skills">TECHNICAL SKILLS & FLIGHT STANDARDS</h2>
+      <div class="cv-skills-grid" id="cv-skills-list">
+        {skills.map((cat) => (
+          <div class="cv-skill-group">
+            <span class="skill-category-name">{cat.category}:</span>
+            <span class="skill-tags-string">
+              {cat.items ? cat.items.map((i: any) => i.name).join(", ") : (cat.tags ? cat.tags.join(", ") : "")}
+            </span>
+            {cat.summary && <div class="skill-group-summary" set:html={cat.summary}></div>}
+          </div>
+        ))}
+      </div>
+    </section>
+
+    {/* Authentic Harvard CV Sign-off Footer */}
+    <footer class="cv-sheet-footer">
+      <div class="footer-signoff">
+        <span>Curriculum Vitae • {profile.name} • Space Systems & Flight Software Engineering</span>
+        <span class="footer-date">Verified Academic Record • Monospace Flight Dossier • {new Date().getFullYear()}</span>
+      </div>
+    </footer>
+  </article>
+</div>
+
+<script>
+  import { getCVData, subscribe } from '../scripts/store.js';
+
+  function setupHarvardCV() {
+    const root = document.getElementById('harvard-cv-root');
+    const sheet = document.getElementById('harvard-document-sheet');
+    const printBtn = document.getElementById('cv-print-btn');
+    const paperBtn = document.getElementById('theme-paper-btn');
+    const darkBtn = document.getElementById('theme-dark-btn');
+    const syncPill = document.getElementById('cv-sync-pill');
+    const avatarEditBtn = document.getElementById('cv-avatar-edit-trigger');
+    const wordEditBtn = document.getElementById('btn-open-word-editor');
+
+    if (!root || !sheet) return;
+
+    // 1. Theme toggle handlers
+    function setTheme(mode: 'paper' | 'dark') {
+      root?.setAttribute('data-theme', mode);
+      if (mode === 'paper') {
+        paperBtn?.classList.add('active');
+        paperBtn?.setAttribute('aria-pressed', 'true');
+        darkBtn?.classList.remove('active');
+        darkBtn?.setAttribute('aria-pressed', 'false');
+      } else {
+        darkBtn?.classList.add('active');
+        darkBtn?.setAttribute('aria-pressed', 'true');
+        paperBtn?.classList.remove('active');
+        paperBtn?.setAttribute('aria-pressed', 'false');
+      }
+    }
+
+    paperBtn?.addEventListener('click', () => setTheme('paper'));
+    darkBtn?.addEventListener('click', () => setTheme('dark'));
+
+    // 2. 1-Click Print / Save PDF Handler
+    printBtn?.addEventListener('click', () => {
+      window.print();
+    });
+
+    // 3. Avatar customization & Word editor click handlers
+    avatarEditBtn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'profile' } }));
+      window.dispatchEvent(new CustomEvent('open-admin-login'));
+    });
+
+    wordEditBtn?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'cv' } }));
+      window.dispatchEvent(new CustomEvent('open-admin-login'));
+    });
+
+    // 4. Reactive Store Synchronization
+    function updateDOMFromStore(cvData: any) {
+      if (!cvData) return;
+
+      // Update Profile Header & Avatar
+      const profile = cvData.profile || {};
+      const nameEl = document.getElementById('cv-name');
+      if (nameEl && profile.name) {
+        nameEl.innerHTML = `${profile.name} <span class="cv-alt-name">(${profile.englishName || 'Nhat Nguyen Vo'})</span>`;
+      }
+
+      const crewBadge = document.querySelector('.cv-crew-badge');
+      if (crewBadge) {
+        crewBadge.textContent = `CREW: ${profile.monogram || 'NN'} // ${profile.callsign || 'NHAT-NGUYEN'}`;
+      }
+
+      const monogramEl = document.getElementById('cv-avatar-monogram');
+      if (monogramEl && profile.monogram) {
+        monogramEl.textContent = profile.monogram;
+      }
+
+      const callsignEl = document.querySelector('.cv-callsign-tag span');
+      if (callsignEl && profile.callsign) {
+        callsignEl.textContent = `CALLSIGN: ${profile.callsign}`;
+      }
+
+      const titleEl = document.getElementById('cv-title');
+      if (titleEl && profile.title) titleEl.textContent = profile.title;
+
+      // Update Profile Avatar
+      const avatarImg = document.getElementById('cv-avatar-img') as HTMLImageElement;
+      if (avatarImg && profile.avatar) {
+        avatarImg.src = profile.avatar;
+      }
+
+      // Update Word-style Rich Document Canvas
+      const wordCanvas = document.getElementById('cv-word-rich-canvas');
+      const wordSection = document.getElementById('cv-rich-word-section');
+      if (wordCanvas && wordSection) {
+        if (profile.cvDocumentHtml && profile.cvDocumentHtml.trim()) {
+          wordCanvas.innerHTML = profile.cvDocumentHtml;
+          wordSection.style.display = 'block';
+        } else {
+          wordSection.style.display = 'none';
+        }
+      }
+
+      const affilEl = document.getElementById('cv-affiliations');
+      if (affilEl) {
+        affilEl.innerHTML = `
+          <span class="affil-item">${profile.academicAffiliation || "Caltech Space Radiation Lab • AIAA Associate Fellow"}</span>
+          <span class="affil-sep">•</span>
+          <span class="affil-clearance">${profile.clearance || "Public Trust / NASA Heritage Clearance"}</span>
+        `;
+      }
+
+      const emailEl = document.getElementById('cv-email');
+      if (emailEl && profile.social?.email) {
+        emailEl.textContent = profile.social.email;
+        emailEl.setAttribute('href', `mailto:${profile.social.email}`);
+      }
+
+      const githubEl = document.getElementById('cv-github');
+      if (githubEl && profile.social?.github) {
+        githubEl.textContent = profile.social.github.replace(/^https?:\/\//, '');
+        githubEl.setAttribute('href', profile.social.github);
+      }
+
+      const linkedinEl = document.getElementById('cv-linkedin');
+      if (linkedinEl && profile.social?.linkedin) {
+        linkedinEl.textContent = profile.social.linkedin.replace(/^https?:\/\//, '');
+        linkedinEl.setAttribute('href', profile.social.linkedin);
+      }
+
+      const citizenshipEl = document.getElementById('cv-citizenship');
+      if (citizenshipEl && profile.citizenship) {
+        citizenshipEl.textContent = profile.citizenship;
+      }
+
+      const signoffEl = document.querySelector('.footer-signoff span:first-child');
+      if (signoffEl && profile.name) {
+        signoffEl.textContent = `Curriculum Vitae • ${profile.name} (${profile.englishName || 'Nhat Nguyen Vo'}) • Space Systems & Flight Software Engineering`;
+      }
+
+      const locationEl = document.getElementById('cv-location');
+      if (locationEl && profile.location) locationEl.textContent = profile.location;
+
+      // Update Education Section
+      const eduListEl = document.getElementById('cv-education-list');
+      if (eduListEl && Array.isArray(cvData.education)) {
+        eduListEl.innerHTML = cvData.education.map((edu: any) => `
+          <div class="cv-entry edu-entry" data-id="${edu.id || ''}">
+            <div class="cv-entry-row">
+              <span class="cv-entry-org">${edu.institution || ''}</span>
+              <span class="cv-entry-right cv-entry-location">${edu.location || ''}</span>
+            </div>
+            <div class="cv-entry-row sub-row">
+              <span class="cv-entry-role italic">${edu.degree || ''}</span>
+              <span class="cv-entry-right cv-entry-date">${edu.period || ''}</span>
+            </div>
+            ${edu.thesis ? `
+              <div class="cv-entry-detail">
+                <span class="detail-label">Dissertation/Thesis:</span> <em>"${edu.thesis}"</em>
+                ${edu.advisor ? `<span class="detail-advisor"> (Advisor: ${edu.advisor})</span>` : ''}
+              </div>
+            ` : ''}
+            ${edu.honors ? `
+              <div class="cv-entry-detail">
+                <span class="detail-label">Honors:</span> ${edu.honors}
+                ${edu.gpa ? `<span class="detail-gpa"> • Cumulative G.P.A.: ${edu.gpa}</span>` : ''}
+              </div>
+            ` : ''}
+            ${edu.relevantCourses && edu.relevantCourses.length > 0 ? `
+              <div class="cv-entry-detail courses-detail">
+                <span class="detail-label">Selected Coursework:</span> ${edu.relevantCourses.join(' • ')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+      }
+
+      // Update Experience Section (Preserves rich formatting from Word editor)
+      const expListEl = document.getElementById('cv-experience-list');
+      if (expListEl && Array.isArray(cvData.experience)) {
+        expListEl.innerHTML = cvData.experience.map((exp: any) => `
+          <div class="cv-entry exp-entry" data-id="${exp.id || ''}">
+            <div class="cv-entry-row">
+              <span class="cv-entry-org">${exp.organization || ''}</span>
+              <span class="cv-entry-right cv-entry-location">${exp.location || ''}</span>
+            </div>
+            <div class="cv-entry-row sub-row">
+              <span class="cv-entry-role italic">
+                ${exp.role || ''} ${exp.department ? `(${exp.department})` : ''}
+              </span>
+              <span class="cv-entry-right cv-entry-date">${exp.period || ''}</span>
+            </div>
+            ${exp.summary ? `<p class="cv-entry-summary">${exp.summary}</p>` : ''}
+            ${exp.highlights && exp.highlights.length > 0 ? `
+              <ul class="cv-bullet-list">
+                ${exp.highlights.map((h: string) => `<li class="cv-bullet-item">${h}</li>`).join('')}
+              </ul>
+            ` : ''}
+          </div>
+        `).join('');
+      }
+
+      // Update Missions Section
+      const misListEl = document.getElementById('cv-missions-list');
+      if (misListEl && Array.isArray(cvData.missions)) {
+        misListEl.innerHTML = cvData.missions.map((m: any) => `
+          <div class="cv-entry mission-entry" data-id="${m.id || ''}">
+            <div class="cv-entry-row">
+              <span class="cv-entry-org">
+                ${m.name || ''} <span class="mission-code">[${m.codeName || ''}]</span>
+              </span>
+              <span class="cv-entry-right cv-entry-date">${m.launchDate || ''}</span>
+            </div>
+            <div class="cv-entry-row sub-row">
+              <span class="cv-entry-role italic">
+                Role: ${m.role || ''} • Vehicle: ${m.launchVehicle || ''} • Orbit: ${m.orbit || ''}
+              </span>
+              <span class="cv-entry-right status-badge-inline">${m.status || ''}</span>
+            </div>
+            <p class="cv-entry-summary">${m.missionHighlights || ''}</p>
+            ${m.subsystems && m.subsystems.length > 0 ? `
+              <div class="cv-entry-detail">
+                <span class="detail-label">Flight Subsystems Owned:</span> ${m.subsystems.join(' • ')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+      }
+
+      // Update Achievements Section
+      const achListEl = document.getElementById('cv-achievements-list');
+      if (achListEl && Array.isArray(cvData.achievements)) {
+        achListEl.innerHTML = cvData.achievements.map((ach: any) => `
+          <div class="cv-entry ach-entry" data-id="${ach.id || ''}">
+            <div class="cv-entry-row">
+              <span class="cv-entry-org">${ach.title || ''}</span>
+              <span class="cv-entry-right cv-entry-date">${ach.date || ach.timeline || ''}</span>
+            </div>
+            <div class="cv-entry-row sub-row">
+              <span class="cv-entry-role italic">
+                ${ach.organization || ''} ${ach.metrics ? `• [${ach.metrics}]` : ''}
+              </span>
+              <span class="cv-entry-right ach-category-tag">${ach.category || ''}</span>
+            </div>
+            ${ach.description ? `<p class="cv-entry-summary">${ach.description}</p>` : ''}
+          </div>
+        `).join('');
+      }
+
+      // Visual flash indicator on pill
+      if (syncPill) {
+        syncPill.classList.add('flash-sync');
+        setTimeout(() => syncPill.classList.remove('flash-sync'), 1200);
+      }
+    }
+
+    // Initialize from client store if localStorage contains custom edits
+    try {
+      const initialStoreData = getCVData();
+      if (initialStoreData) {
+        updateDOMFromStore(initialStoreData);
+      }
+    } catch (e) {
+      console.warn('Initial store sync skipped:', e);
+    }
+
+    // Subscribe to reactive store changes (dispatched by admin operations)
+    subscribe((latestData: any) => {
+      updateDOMFromStore(latestData);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupHarvardCV);
+  } else {
+    setupHarvardCV();
+  }
+</script>
+
+<style>
+  /* ==========================================================================
+     HARVARD ACADEMIC & TECHNICAL CV STYLES (MONOSPACE FLIGHT DOSSIER)
+     Pure monospace architecture using SF Mono / JetBrains Mono / Fira Code.
+     ========================================================================== */
+
+  .harvard-cv-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 1.5rem 0 4rem;
+    position: relative;
+    font-family: var(--font-mono, "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Monaco, Consolas, monospace) !important;
+  }
+
+  /* --------------------------------------------------------------------------
+     Action Controls Bar (Screen-only)
+     -------------------------------------------------------------------------- */
+  .cv-action-bar {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.75rem;
+    padding: 0.85rem 1.25rem;
+    background: rgba(18, 22, 32, 0.88);
+    border: 1px solid rgba(142, 149, 165, 0.22);
+    border-radius: 12px;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    z-index: 10;
+    font-family: var(--font-mono, monospace) !important;
+  }
+
+  .action-bar-left {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .document-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono, monospace);
+  }
+
+  .doc-icon {
+    font-size: 1rem;
+  }
+
+  .doc-label {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--amber, #E5A96A);
+  }
+
+  .doc-sublabel {
+    font-size: 0.6875rem;
+    color: var(--titanium, #8E95A5);
+    display: none;
+  }
+
+  @media (min-width: 640px) {
+    .doc-sublabel {
+      display: inline;
+    }
+  }
+
+  .live-sync-indicator {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    background: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+    font-size: 0.6875rem;
+    font-family: var(--font-mono, monospace);
+    color: #10B981;
+    transition: background 0.3s ease, border-color 0.3s ease;
+  }
+
+  .live-sync-indicator.flash-sync {
+    background: rgba(16, 185, 129, 0.35);
+    border-color: #10B981;
+  }
+
+  .pulse-dot {
+    width: 6px;
+    height: 6px;
+    background: #10B981;
+    border-radius: 50%;
+    box-shadow: 0 0 6px #10B981;
+    animation: pulse-ring 2s infinite;
+  }
+
+  @keyframes pulse-ring {
+    0% { transform: scale(0.95); opacity: 0.8; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.8; }
+  }
+
+  .action-bar-right {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+
+  /* Word Document Editor Trigger Button */
+  .btn-word-editor-trigger {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: rgba(229, 169, 106, 0.12);
+    border: 1px solid rgba(229, 169, 106, 0.32);
+    color: var(--amber, #E5A96A);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.78rem;
+    font-weight: 600;
+    padding: 0.4rem 0.85rem;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .btn-word-editor-trigger:hover {
+    background: rgba(229, 169, 106, 0.24);
+    border-color: var(--amber, #E5A96A);
+    transform: translateY(-1px);
+  }
+
+  /* Segmented Theme Switcher */
+  .segmented-theme-toggle {
+    display: inline-flex;
+    background: rgba(11, 13, 19, 0.7);
+    border: 1px solid rgba(142, 149, 165, 0.18);
+    border-radius: 8px;
+    padding: 3px;
+    gap: 2px;
+  }
+
+  .theme-toggle-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    background: transparent;
+    border: none;
+    color: var(--titanium, #8E95A5);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.35rem 0.65rem;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .theme-toggle-btn:hover {
+    color: var(--text-ivory, #F3F4F6);
+  }
+
+  .theme-toggle-btn.active {
+    background: rgba(229, 169, 106, 0.16);
+    color: var(--amber, #E5A96A);
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    font-weight: 600;
+  }
+
+  /* 1-Click Print / Save PDF Button */
+  .btn-cv-print {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    background: linear-gradient(135deg, #E5A96A 0%, #D4AF37 100%);
+    color: #0B0D13;
+    border: none;
+    border-radius: 8px;
+    padding: 0.42rem 0.85rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(229, 169, 106, 0.3);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .btn-cv-print:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px rgba(229, 169, 106, 0.45);
+  }
+
+  .kbd-badge {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(0, 0, 0, 0.15);
+    border-radius: 4px;
+    padding: 0.05rem 0.3rem;
+    font-size: 0.62rem;
+    font-family: var(--font-mono, monospace);
+  }
+
+  /* --------------------------------------------------------------------------
+     Authentic Harvard Document Sheet Canvas (Pure Monospace Architecture)
+     -------------------------------------------------------------------------- */
+  .harvard-sheet {
+    width: 100%;
+    max-width: 960px;
+    min-height: 1050px;
+    padding: 3.5rem 4rem;
+    border-radius: 6px;
+    font-family: var(--font-mono, "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Monaco, Consolas, monospace) !important;
+    line-height: 1.5;
+    transition: background-color 0.3s ease, color 0.3s ease, box-shadow 0.3s ease;
+    box-sizing: border-box;
+    position: relative;
+    letter-spacing: -0.015em;
+  }
+
+  .harvard-sheet * {
+    font-family: inherit;
+  }
+
+  /* THEME 1: Academic Paper Mode (Default screen preview) */
+  .harvard-cv-wrapper[data-theme="paper"] .harvard-sheet {
+    background-color: #FCFCFA;
+    color: #111418;
+    box-shadow: 
+      0 0 0 1px rgba(0, 0, 0, 0.08),
+      0 20px 50px -10px rgba(0, 0, 0, 0.4),
+      0 0 80px rgba(229, 169, 106, 0.08);
+    border: 1px solid rgba(210, 205, 195, 0.6);
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-full-name {
+    color: #0A0D14;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-section-title {
+    color: #0A0D14;
+    border-bottom: 1.5px solid #1A1E26;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-entry-org {
+    color: #0A0D14;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-entry-right {
+    color: #2D333F;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .contact-link {
+    color: #1F2937;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .contact-link:hover {
+    color: #B45309;
+    text-decoration: underline;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-bullet-item {
+    color: #1A1F2C;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-entry-summary {
+    color: #374151;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .detail-label {
+    color: #111827;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-mini-pill {
+    background: #EEF0F4;
+    border-color: #D1D5DB;
+    color: #374151;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-metric-chip {
+    background: #F3F4F6;
+    border-color: #E5E7EB;
+    color: #1F2937;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-divider,
+  .harvard-cv-wrapper[data-theme="paper"] .cv-section-divider {
+    border-bottom: 1.5px solid #1A1E26;
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .cv-avatar-frame {
+    border-color: #D1D5DB;
+    background: #FFFFFF;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+  }
+
+  .harvard-cv-wrapper[data-theme="paper"] .word-rich-canvas {
+    background: #F8F9FA;
+    border: 1px dashed #CBD5E1;
+    color: #1E293B;
+  }
+
+  /* THEME 2: Cosmic Dark Mode */
+  .harvard-cv-wrapper[data-theme="dark"] .harvard-sheet {
+    background-color: #0E121C;
+    color: #D6DAE4;
+    box-shadow: 
+      0 0 0 1px rgba(229, 169, 106, 0.25),
+      0 24px 60px rgba(0, 0, 0, 0.7);
+    border: 1px solid rgba(229, 169, 106, 0.2);
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-full-name {
+    color: #F8FAFC;
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-section-title {
+    color: var(--amber, #E5A96A);
+    border-bottom: 1.5px solid rgba(229, 169, 106, 0.4);
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-entry-org {
+    color: #F3F4F6;
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-entry-right {
+    color: #94A3B8;
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .contact-link {
+    color: #E2E8F0;
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .contact-link:hover {
+    color: var(--amber, #E5A96A);
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-bullet-item {
+    color: #CBD5E1;
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-entry-summary {
+    color: #94A3B8;
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .detail-label {
+    color: #F1F5F9;
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-mini-pill {
+    background: rgba(229, 169, 106, 0.1);
+    border-color: rgba(229, 169, 106, 0.25);
+    color: var(--amber, #E5A96A);
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-metric-chip {
+    background: rgba(30, 41, 59, 0.7);
+    border-color: rgba(142, 149, 165, 0.2);
+    color: #E2E8F0;
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-divider,
+  .harvard-cv-wrapper[data-theme="dark"] .cv-section-divider {
+    border-bottom: 1.5px solid rgba(229, 169, 106, 0.4);
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .cv-avatar-frame {
+    border-color: rgba(229, 169, 106, 0.35);
+    background: #141926;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), 0 0 16px rgba(229, 169, 106, 0.15);
+  }
+
+  .harvard-cv-wrapper[data-theme="dark"] .word-rich-canvas {
+    background: rgba(18, 24, 38, 0.7);
+    border: 1px dashed rgba(229, 169, 106, 0.3);
+    color: #E2E8F0;
+  }
+
+  /* --------------------------------------------------------------------------
+     HEADER WITH PROFILE AVATAR BESIDE INFO
+     -------------------------------------------------------------------------- */
+  .cv-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .cv-header-grid {
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+  }
+
+  /* Profile Avatar Frame */
+  .cv-avatar-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    flex-shrink: 0;
+  }
+
+  .cv-avatar-frame {
+    position: relative;
+    width: 110px;
+    height: 110px;
+    border-radius: 12px;
+    border: 2px solid;
+    overflow: hidden;
+    transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .cv-avatar-photo {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    position: relative;
+    z-index: 1;
+  }
+
+  .cv-avatar-monogram {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--font-mono, monospace);
+    font-weight: 700;
+    font-size: 1.85rem;
+    color: var(--amber, #E5A96A);
+    background: #141926;
+    z-index: 0;
+  }
+
+  .cv-avatar-edit-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(11, 13, 19, 0.85);
+    color: var(--amber, #E5A96A);
+    border: none;
+    padding: 0.3rem 0.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.65rem;
+    font-weight: 700;
+    cursor: pointer;
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    transition: background-color 0.2s ease, opacity 0.2s ease;
+    opacity: 0.9;
+  }
+
+  .cv-avatar-edit-overlay:hover {
+    background: rgba(229, 169, 106, 0.95);
+    color: #0B0D13;
+  }
+
+  .cv-crew-badge {
+    font-size: 0.65rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--titanium, #8E95A5);
+  }
+
+  /* Header Text Info */
+  .cv-header-info {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cv-header-primary {
+    display: flex;
+    align-items: baseline;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .cv-full-name {
+    font-size: clamp(1.5rem, 2.8vw, 2.1rem);
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    line-height: 1.15;
+    margin: 0;
+  }
+
+  .cv-alt-name {
+    font-size: 0.95rem;
+    font-weight: 500;
+    letter-spacing: 0;
+    text-transform: none;
+    color: var(--titanium, #8E95A5);
+    margin-left: 0.35rem;
+  }
+
+  .cv-callsign-tag {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    background: rgba(229, 169, 106, 0.12);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    color: var(--amber, #E5A96A);
+    white-space: nowrap;
+  }
+
+  .cv-title-line {
+    font-size: 0.95rem;
+    font-weight: 600;
+    font-style: italic;
+    margin-bottom: 0.35rem;
+  }
+
+  .cv-affiliations {
+    font-size: 0.85rem;
+    margin-bottom: 0.45rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+  }
+
+  .affil-clearance {
+    font-weight: 600;
+  }
+
+  .cv-contact-bar {
+    font-size: 0.82rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .contact-sep, .affil-sep {
+    user-select: none;
+    opacity: 0.6;
+  }
+
+  .contact-link {
+    text-decoration: none;
+    transition: color 0.15s ease;
+  }
+
+  .cv-divider {
+    width: 100%;
+    margin-top: 1rem;
+  }
+
+  /* --------------------------------------------------------------------------
+     WORD-STYLE RICH DOCUMENT CANVAS
+     -------------------------------------------------------------------------- */
+  .cv-rich-word-section {
+    margin-bottom: 1.75rem;
+  }
+
+  .word-section-header {
+    margin-bottom: 0.65rem;
+  }
+
+  .word-doc-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    color: var(--amber, #E5A96A);
+  }
+
+  .word-rich-canvas {
+    padding: 1.25rem 1.5rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .word-rich-canvas p {
+    margin-bottom: 0.75rem;
+  }
+
+  .word-rich-canvas p:last-child {
+    margin-bottom: 0;
+  }
+
+  .word-rich-canvas strong, .word-rich-canvas b {
+    font-weight: 700;
+  }
+
+  .word-rich-canvas em, .word-rich-canvas i {
+    font-style: italic;
+  }
+
+  .word-rich-canvas u {
+    text-decoration: underline;
+  }
+
+  .word-rich-canvas ul, .word-rich-canvas ol {
+    margin: 0.5rem 0 0.5rem 1.5rem;
+  }
+
+  .cv-section-divider {
+    width: 100%;
+    margin: 1.5rem 0;
+  }
+
+  /* --------------------------------------------------------------------------
+     SECTION & ENTRY FORMATTING (Classic Harvard Hierarchy in Monospace)
+     -------------------------------------------------------------------------- */
+  .cv-section {
+    margin-bottom: 1.5rem;
+  }
+
+  .cv-section-title {
+    font-size: 1rem;
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding-bottom: 0.25rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .cv-entries-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.15rem;
+  }
+
+  .cv-entry {
+    position: relative;
+  }
+
+  .cv-entry-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 1rem;
+  }
+
+  .cv-entry-row.sub-row {
+    margin-top: 0.15rem;
+    margin-bottom: 0.35rem;
+  }
+
+  .cv-entry-org {
+    font-weight: 700;
+    font-size: 0.94rem;
+  }
+
+  .cv-entry-role {
+    font-size: 0.88rem;
+  }
+
+  .italic {
+    font-style: italic;
+  }
+
+  .cv-entry-right {
+    font-size: 0.84rem;
+    white-space: nowrap;
+    text-align: right;
+  }
+
+  .cv-entry-location {
+    font-style: normal;
+  }
+
+  .cv-entry-date {
+    font-weight: 600;
+  }
+
+  .cv-entry-summary {
+    font-size: 0.86rem;
+    margin-bottom: 0.4rem;
+    line-height: 1.5;
+  }
+
+  .cv-entry-detail {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    margin-top: 0.2rem;
+  }
+
+  .detail-label {
+    font-weight: 700;
+  }
+
+  .courses-detail {
+    font-size: 0.8rem;
+    opacity: 0.95;
+    margin-top: 0.25rem;
+  }
+
+  /* Harvard Action Verbs Bullets */
+  .cv-bullet-list {
+    margin: 0.35rem 0 0.45rem 1.35rem;
+    padding: 0;
+    list-style-type: square;
+  }
+
+  .cv-bullet-item {
+    font-size: 0.86rem;
+    line-height: 1.5;
+    margin-bottom: 0.35rem;
+  }
+
+  .cv-entry-tags {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    margin-top: 0.4rem;
+  }
+
+  .tags-label {
+    font-size: 0.72rem;
+    font-weight: 600;
+    opacity: 0.7;
+    margin-right: 0.2rem;
+  }
+
+  .cv-mini-pill {
+    font-size: 0.68rem;
+    padding: 0.1rem 0.45rem;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+
+  /* Missions Specific */
+  .mission-code {
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+
+  .status-badge-inline {
+    font-size: 0.76rem;
+    font-weight: 600;
+  }
+
+  .cv-entry-metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.4rem;
+  }
+
+  .cv-metric-chip {
+    font-size: 0.76rem;
+    padding: 0.2rem 0.55rem;
+    border-radius: 4px;
+    border: 1px solid;
+  }
+
+  /* Publications Specific (AIAA / IEEE Format) */
+  .pub-citation {
+    font-size: 0.86rem;
+    line-height: 1.55;
+  }
+
+  .pub-index {
+    font-weight: 700;
+    margin-right: 0.35rem;
+  }
+
+  .pub-authors {
+    font-weight: 700;
+  }
+
+  .pub-title {
+    font-weight: 500;
+  }
+
+  .pub-venue em {
+    font-style: italic;
+  }
+
+  .pub-doi {
+    display: inline-block;
+    margin-left: 0.35rem;
+    font-size: 0.8rem;
+  }
+
+  .pub-abstract {
+    font-size: 0.8rem;
+    font-style: italic;
+    opacity: 0.85;
+    margin-top: 0.25rem;
+    line-height: 1.45;
+  }
+
+  /* Achievements Specific */
+  .ach-category-tag {
+    font-size: 0.76rem;
+    opacity: 0.85;
+  }
+
+  /* Skills Specific */
+  .cv-skills-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0.7rem;
+  }
+
+  .cv-skill-group {
+    font-size: 0.86rem;
+    line-height: 1.5;
+  }
+
+  .skill-category-name {
+    font-weight: 700;
+    margin-right: 0.35rem;
+  }
+
+  .skill-tags-string {
+    font-weight: 400;
+  }
+
+  .skill-group-summary {
+    font-size: 0.78rem;
+    opacity: 0.8;
+    margin-top: 0.15rem;
+  }
+
+  /* Footer Sign-off */
+  .cv-sheet-footer {
+    margin-top: 2.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(142, 149, 165, 0.25);
+    font-size: 0.72rem;
+    opacity: 0.75;
+  }
+
+  .footer-signoff {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .harvard-sheet {
+      padding: 2rem 1.25rem;
+    }
+
+    .cv-header-grid {
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 1.25rem;
+    }
+
+    .cv-header-primary {
+      justify-content: center;
+    }
+
+    .cv-affiliations, .cv-contact-bar {
+      justify-content: center;
+    }
+
+    .cv-entry-row {
+      flex-direction: column;
+      gap: 0.15rem;
+    }
+
+    .cv-entry-right {
+      text-align: left;
+    }
+  }
+
+  /* ==========================================================================
+     AUTHENTIC HARVARD MONOSPACE PRINT SPECIFICATION (@media print)
+     ========================================================================== */
+  @media print {
+    .no-print,
+    .cv-action-bar,
+    .cv-callsign-tag,
+    .cv-entry-tags,
+    .cv-crew-badge,
+    .cv-avatar-edit-overlay,
+    .no-print-optional,
+    header.site-header,
+    footer.site-footer,
+    #cosmic-bg-canvas,
+    .cosmic-background-root,
+    .satellite-orbit-container,
+    .admin-floating-dock,
+    .admin-modal,
+    button,
+    nav {
+      display: none !important;
+    }
+
+    @page {
+      size: letter;
+      margin: 0.55in 0.6in 0.55in 0.6in;
+    }
+
+    html, body {
+      background: #FFFFFF !important;
+      background-image: none !important;
+      color: #000000 !important;
+      font-size: 9.5pt !important;
+      line-height: 1.38 !important;
+      font-family: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace !important;
+      -webkit-print-color-adjust: exact !important;
+      print-color-adjust: exact !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      width: 100% !important;
+      min-height: auto !important;
+    }
+
+    .harvard-cv-wrapper {
+      padding: 0 !important;
+      margin: 0 !important;
+      width: 100% !important;
+    }
+
+    .harvard-sheet {
+      box-shadow: none !important;
+      border: none !important;
+      background: #FFFFFF !important;
+      color: #000000 !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      max-width: 100% !important;
+      width: 100% !important;
+      font-family: "SF Mono", "JetBrains Mono", "Fira Code", ui-monospace, Menlo, Monaco, Consolas, "Courier New", monospace !important;
+    }
+
+    .cv-header-grid {
+      display: flex !important;
+      flex-direction: row !important;
+      align-items: center !important;
+      gap: 1.5rem !important;
+    }
+
+    .cv-avatar-frame {
+      width: 85px !important;
+      height: 85px !important;
+      border: 1pt solid #000000 !important;
+      border-radius: 4px !important;
+      box-shadow: none !important;
+    }
+
+    .cv-full-name {
+      font-size: 18pt !important;
+      color: #000000 !important;
+      letter-spacing: 0.05em !important;
+    }
+
+    .cv-title-line {
+      font-size: 10pt !important;
+      color: #000000 !important;
+    }
+
+    .cv-affiliations, .cv-contact-bar {
+      font-size: 8.5pt !important;
+      color: #000000 !important;
+    }
+
+    .cv-section {
+      margin-bottom: 11pt !important;
+    }
+
+    .cv-section-title {
+      font-size: 10.5pt !important;
+      font-weight: bold !important;
+      color: #000000 !important;
+      border-bottom: 1.25pt solid #000000 !important;
+      padding-bottom: 2pt !important;
+      margin-top: 13pt !important;
+      margin-bottom: 5pt !important;
+      page-break-after: avoid !important;
+      break-after: avoid !important;
+    }
+
+    .cv-entry {
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+      margin-bottom: 7pt !important;
+    }
+
+    .cv-entry-org {
+      font-size: 9.5pt !important;
+      font-weight: bold !important;
+      color: #000000 !important;
+    }
+
+    .cv-entry-role {
+      font-size: 9pt !important;
+      color: #000000 !important;
+    }
+
+    .cv-entry-right {
+      font-size: 8.5pt !important;
+      color: #000000 !important;
+    }
+
+    .cv-bullet-item {
+      font-size: 8.5pt !important;
+      line-height: 1.35 !important;
+      color: #000000 !important;
+      margin-bottom: 2pt !important;
+    }
+
+    .cv-entry-summary {
+      font-size: 8.5pt !important;
+      color: #000000 !important;
+    }
+
+    .cv-entry-detail {
+      font-size: 8.5pt !important;
+      color: #000000 !important;
+    }
+
+    .pub-citation {
+      font-size: 8.5pt !important;
+      color: #000000 !important;
+    }
+
+    .cv-skill-group {
+      font-size: 8.5pt !important;
+      color: #000000 !important;
+    }
+
+    .cv-divider, .cv-section-divider {
+      border-bottom: 1.25pt solid #000000 !important;
+    }
+
+    .word-rich-canvas {
+      border: 1pt solid #000000 !important;
+      background: #FFFFFF !important;
+      color: #000000 !important;
+      padding: 8pt !important;
+      font-size: 8.5pt !important;
+    }
+
+    .cv-sheet-footer {
+      border-top: 0.75pt solid #000000 !important;
+      font-size: 7.5pt !important;
+      color: #222222 !important;
+      margin-top: 15pt !important;
+      padding-top: 5pt !important;
+      page-break-inside: avoid !important;
+      break-inside: avoid !important;
+    }
+
+    a {
+      color: #000000 !important;
+      text-decoration: none !important;
+    }
+  }
+</style>

@@ -1,0 +1,471 @@
+---
+// BlogCard.astro - Apple-style telemetry blog card for Space Engineering Journal
+export interface BlogPost {
+  id: string;
+  slug: string;
+  title: string;
+  date: string;
+  readTime: string;
+  category?: string;
+  tags?: string[];
+  summary: string;
+  author?: {
+    name: string;
+    title?: string;
+    callsign?: string;
+  } | string;
+  content?: string;
+  featured?: boolean;
+  missionBadge?: string;
+}
+
+export interface Props {
+  post: BlogPost;
+  featured?: boolean;
+}
+
+const { post, featured = false } = Astro.props;
+
+// Determine category fallback from tags if not explicitly provided
+const primaryCategory = post.category || (post.tags && post.tags.length > 0 ? post.tags[0] : 'Flight Software');
+
+// Category-based color accents
+const getCategoryBadgeClass = (category: string) => {
+  const cat = (category || '').toLowerCase();
+  if (cat.includes('flight') || cat.includes('software') || cat.includes('rust')) return 'badge-cat-fsw';
+  if (cat.includes('orbit') || cat.includes('astrodynamics') || cat.includes('dynamics') || cat.includes('gnc')) return 'badge-cat-orbit';
+  if (cat.includes('avionics') || cat.includes('fdir') || cat.includes('hardware')) return 'badge-cat-avionics';
+  if (cat.includes('comms') || cat.includes('ground') || cat.includes('optical') || cat.includes('sdr') || cat.includes('packet')) return 'badge-cat-comms';
+  return 'badge-cat-fsw';
+};
+
+const authorName = typeof post.author === 'object' && post.author !== null 
+  ? post.author.name 
+  : (typeof post.author === 'string' ? post.author : 'Võ Quang Nhật Nguyên');
+
+const authorRole = typeof post.author === 'object' && post.author !== null 
+  ? (post.author.title || post.author.callsign || 'Flight Software Lead')
+  : 'Lead Flight Software Engineer';
+---
+
+<article 
+  class={`blog-card card ${featured ? 'featured-card' : ''}`}
+  data-slug={post.slug}
+  data-id={post.id}
+  data-category={primaryCategory}
+  data-tags={post.tags ? post.tags.join(',') : ''}
+  data-title={post.title.toLowerCase()}
+  data-summary={post.summary.toLowerCase()}
+>
+  <!-- Card Header with Telemetry Metadata -->
+  <div class="card-meta-top">
+    <div class="category-wrapper">
+      <span class={`cat-pill ${getCategoryBadgeClass(primaryCategory)}`}>
+        <span class="pill-dot"></span>
+        {primaryCategory}
+      </span>
+      {featured && <span class="featured-badge">Featured Dispatch</span>}
+    </div>
+
+    <div class="time-meta">
+      <span class="meta-date" title="Dispatch Timestamp">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        {post.date}
+      </span>
+      <span class="meta-divider">•</span>
+      <span class="meta-readtime" title="Estimated Reading Time">{post.readTime}</span>
+    </div>
+  </div>
+
+  <!-- Title -->
+  <h3 class="blog-title">
+    <a href={`/blog/${post.slug}`} class="title-link">
+      {post.title}
+    </a>
+  </h3>
+
+  <!-- Excerpt / Summary -->
+  <p class="blog-summary">
+    {post.summary}
+  </p>
+
+  <!-- Tags Row -->
+  {post.tags && post.tags.length > 0 && (
+    <div class="blog-tags">
+      {post.tags.map((tag) => (
+        <span class="mini-tag">#{tag}</span>
+      ))}
+    </div>
+  )}
+
+  <!-- Card Footer: Author & Action Link -->
+  <div class="card-footer">
+    <div class="author-meta">
+      <div class="author-avatar" aria-hidden="true">
+        <span class="avatar-beacon"></span>
+        <span class="avatar-letter">NN</span>
+      </div>
+      <div class="author-info">
+        <span class="author-name">{authorName}</span>
+        <span class="author-role">{authorRole}</span>
+      </div>
+    </div>
+
+    <div class="action-buttons">
+      <button 
+        type="button" 
+        class="quick-read-btn btn-sm" 
+        data-action="quick-read" 
+        data-post-slug={post.slug}
+        aria-label={`Quick read ${post.title}`}
+      >
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
+          <circle cx="12" cy="12" r="3"></circle>
+        </svg>
+        Quick View
+      </button>
+
+      <a href={`/blog/${post.slug}`} class="read-article-link">
+        <span>Full Article</span>
+        <svg class="arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="5" y1="12" x2="19" y2="12"></line>
+          <polyline points="12 5 19 12 12 19"></polyline>
+        </svg>
+      </a>
+    </div>
+  </div>
+</article>
+
+<style>
+  .blog-card {
+    display: flex;
+    flex-direction: column;
+    background: rgba(18, 22, 36, 0.75);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 16px;
+    padding: 1.75rem;
+    position: relative;
+    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+    height: 100%;
+  }
+
+  .blog-card:hover {
+    transform: translateY(-4px);
+    border-color: rgba(229, 169, 106, 0.35);
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.6), 0 0 20px rgba(229, 169, 106, 0.1);
+  }
+
+  .blog-card.featured-card {
+    border-color: rgba(229, 169, 106, 0.25);
+    background: linear-gradient(135deg, rgba(28, 34, 56, 0.85) 0%, rgba(18, 22, 36, 0.85) 100%);
+  }
+
+  .card-meta-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+  }
+
+  .category-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .cat-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.25rem 0.7rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .pill-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+  }
+
+  /* Category colors */
+  .badge-cat-fsw {
+    background: rgba(229, 169, 106, 0.12);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    color: #f3c28c;
+  }
+  .badge-cat-fsw .pill-dot {
+    background: #e5a96a;
+    box-shadow: 0 0 6px #e5a96a;
+  }
+
+  .badge-cat-orbit {
+    background: rgba(0, 242, 254, 0.1);
+    border: 1px solid rgba(0, 242, 254, 0.28);
+    color: #4facfe;
+  }
+  .badge-cat-orbit .pill-dot {
+    background: #00f2fe;
+    box-shadow: 0 0 6px #00f2fe;
+  }
+
+  .badge-cat-avionics {
+    background: rgba(167, 139, 250, 0.12);
+    border: 1px solid rgba(167, 139, 250, 0.28);
+    color: #c4b5fd;
+  }
+  .badge-cat-avionics .pill-dot {
+    background: #a78bfa;
+    box-shadow: 0 0 6px #a78bfa;
+  }
+
+  .badge-cat-comms {
+    background: rgba(52, 211, 153, 0.12);
+    border: 1px solid rgba(52, 211, 153, 0.28);
+    color: #6ee7b7;
+  }
+  .badge-cat-comms .pill-dot {
+    background: #34d399;
+    box-shadow: 0 0 6px #34d399;
+  }
+
+  .featured-badge {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    padding: 0.2rem 0.55rem;
+    background: rgba(245, 158, 11, 0.15);
+    border: 1px solid rgba(245, 158, 11, 0.35);
+    color: #fbbf24;
+    border-radius: 4px;
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+
+  .time-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.8125rem;
+    color: #8e95a5;
+    font-family: var(--font-mono, ui-monospace, monospace);
+  }
+
+  .meta-date {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
+  .meta-divider {
+    color: rgba(255, 255, 255, 0.2);
+  }
+
+  .meta-readtime {
+    color: #d1d5db;
+  }
+
+  /* Title */
+  .blog-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    line-height: 1.35;
+    letter-spacing: -0.015em;
+    margin-bottom: 0.75rem;
+    color: #f3f4f6;
+  }
+
+  .title-link {
+    color: inherit;
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .title-link:hover {
+    color: #e5a96a;
+  }
+
+  /* Summary */
+  .blog-summary {
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    color: #9ca3af;
+    margin-bottom: 1.25rem;
+    flex-grow: 1;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* Tags */
+  .blog-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .mini-tag {
+    font-size: 0.75rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    color: #8e95a5;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 0.15rem 0.5rem;
+    border-radius: 6px;
+    transition: all 0.2s ease;
+  }
+
+  .mini-tag:hover {
+    border-color: rgba(229, 169, 106, 0.3);
+    color: #f3c28c;
+  }
+
+  /* Footer */
+  .card-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 1.25rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.07);
+    margin-top: auto;
+    gap: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .author-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+  }
+
+  .author-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1f293d 0%, #111827 100%);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #e5a96a;
+  }
+
+  .avatar-beacon {
+    position: absolute;
+    top: -1px;
+    right: -1px;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10b981;
+    border: 1px solid #0b0d13;
+  }
+
+  .author-info {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.25;
+  }
+
+  .author-name {
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #f3f4f6;
+  }
+
+  .author-role {
+    font-size: 0.6875rem;
+    color: #8e95a5;
+  }
+
+  .action-buttons {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .quick-read-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.38rem 0.75rem;
+    border-radius: 8px;
+    font-size: 0.775rem;
+    font-weight: 500;
+    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.09);
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .quick-read-btn:hover {
+    color: #f3f4f6;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .read-article-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: #e5a96a;
+    text-decoration: none;
+    padding: 0.38rem 0.85rem;
+    border-radius: 8px;
+    background: rgba(229, 169, 106, 0.08);
+    border: 1px solid rgba(229, 169, 106, 0.22);
+    transition: all 0.2s ease;
+  }
+
+  .read-article-link:hover {
+    background: rgba(229, 169, 106, 0.18);
+    border-color: rgba(229, 169, 106, 0.45);
+    color: #fce7cf;
+    transform: translateX(2px);
+  }
+
+  .arrow-icon {
+    transition: transform 0.2s ease;
+  }
+
+  .read-article-link:hover .arrow-icon {
+    transform: translateX(3px);
+  }
+
+  @media (max-width: 600px) {
+    .blog-card {
+      padding: 1.35rem;
+    }
+    .card-footer {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 0.85rem;
+    }
+    .action-buttons {
+      width: 100%;
+      justify-content: space-between;
+    }
+  }
+</style>

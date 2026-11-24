@@ -1,0 +1,367 @@
+---
+// ponytail: pure Astro Skills component with zero external dependencies, scoped CSS, and semantic HTML5
+export interface SkillItem {
+  name: string;
+  level: string;
+  highlight: string;
+}
+
+export interface SkillCategory {
+  category: string;
+  icon: string;
+  summary: string;
+  tags: string[];
+  items: SkillItem[];
+}
+
+export interface Props {
+  skills: SkillCategory[];
+}
+
+const { skills } = Astro.props;
+
+// ponytail: helper map for icon emojis to avoid raster image assets
+const iconMap: Record<string, string> = {
+  satellite: "🛰️",
+  orbit: "🪐",
+  radar: "📡"
+};
+---
+
+<section id="skills" class="skills-section section" aria-label="Subsystem Competencies">
+  <div class="container">
+    <header class="section-header">
+      <div class="section-tag">SUBSYSTEM COMPETENCIES</div>
+      <h2 class="section-title">
+        Mission-Critical <span class="glow-text">Engineering Capabilities</span>
+      </h2>
+      <p class="section-subtitle">
+        Bridging bare-metal flight hardware with high-fidelity orbital mathematics and high-throughput real-time telemetry processing.
+      </p>
+    </header>
+
+    <!-- ponytail: client-side filter tab controls using pure vanilla JS -->
+    <div class="skills-filter-nav" role="tablist" aria-label="Skill Domain Filters">
+      <button class="filter-btn active" data-filter="all" role="tab" aria-selected="true">
+        All Domains
+      </button>
+      {skills.map((cat, idx) => (
+        <button class="filter-btn" data-filter={`cat-${idx}`} role="tab" aria-selected="false">
+          <span class="btn-icon">{iconMap[cat.icon] || "🚀"}</span>
+          <span>{cat.category}</span>
+        </button>
+      ))}
+    </div>
+
+    <!-- Skills Category Grid -->
+    <div class="skills-grid">
+      {skills.map((cat, idx) => (
+        <article class="skill-category-card card" data-cat={`cat-${idx}`}>
+          <div class="card-glow-edge"></div>
+          
+          <header class="category-header">
+            <div class="category-icon-wrapper">
+              <span class="category-icon">{iconMap[cat.icon] || "🚀"}</span>
+            </div>
+            <div class="category-title-wrap">
+              <div class="telemetry-mono text-cyan category-seq">DOM // 0{idx + 1}</div>
+              <h3 class="category-title">{cat.category}</h3>
+            </div>
+          </header>
+
+          <p class="category-summary">
+            {cat.summary}
+          </p>
+
+          <!-- Category Top Tags -->
+          <div class="category-tags" aria-label="Primary Core Standards">
+            {cat.tags.map((tag) => (
+              <span class="badge badge-cyan">{tag}</span>
+            ))}
+          </div>
+
+          <div class="card-divider"></div>
+
+          <!-- Detailed Items List -->
+          <div class="skill-items-list">
+            <h4 class="items-heading telemetry-mono">// DETAILED SPECIFICATIONS</h4>
+            {cat.items.map((item) => (
+              <div class="skill-item">
+                <div class="item-header">
+                  <span class="item-name">{item.name}</span>
+                  <span class={`badge ${item.level === 'Expert' ? 'badge-amber' : 'badge-blue'}`}>
+                    {item.level}
+                  </span>
+                </div>
+                <p class="item-highlight">
+                  {item.highlight}
+                </p>
+                <div class="item-bar-track" aria-hidden="true">
+                  <div 
+                    class={`item-bar-fill ${item.level === 'Expert' ? 'fill-expert' : 'fill-advanced'}`} 
+                    style={`width: ${item.level === 'Expert' ? '96%' : '84%'};`}
+                  ></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- ponytail: minimal vanilla script for domain tab switching -->
+<script>
+  function setupSkillsFilter() {
+    const filterButtons = document.querySelectorAll('.skills-filter-nav .filter-btn');
+    const cards = document.querySelectorAll('.skill-category-card');
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        // Update active button state
+        filterButtons.forEach(b => {
+          b.classList.remove('active');
+          b.setAttribute('aria-selected', 'false');
+        });
+        btn.classList.add('active');
+        btn.setAttribute('aria-selected', 'true');
+
+        const filter = btn.getAttribute('data-filter');
+
+        // Filter cards visibility
+        cards.forEach(card => {
+          const cardCat = card.getAttribute('data-cat');
+          if (filter === 'all' || cardCat === filter) {
+            (card as HTMLElement).style.display = 'block';
+          } else {
+            (card as HTMLElement).style.display = 'none';
+          }
+        });
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', setupSkillsFilter);
+  } else {
+    setupSkillsFilter();
+  }
+</script>
+
+<style>
+  /* ============================================================
+     SKILLS COMPONENT SCOPED STYLES
+     Ponytail mode: Scoped CSS, dark telemetry card styling
+     ============================================================ */
+  .skills-section {
+    position: relative;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  /* Filter Navigation Tabs */
+  .skills-filter-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 2.5rem;
+  }
+
+  .filter-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: rgba(21, 25, 50, 0.6);
+    border: 1px solid var(--border-subtle);
+    color: var(--text-secondary);
+    padding: 0.6rem 1.15rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-family: var(--font-sans);
+  }
+
+  .filter-btn:hover {
+    color: var(--cyan);
+    border-color: var(--border-active);
+    background: rgba(21, 25, 50, 0.9);
+  }
+
+  .filter-btn.active {
+    background: rgba(0, 242, 254, 0.1);
+    color: var(--cyan);
+    border-color: var(--cyan);
+    box-shadow: 0 0 15px rgba(0, 242, 254, 0.15);
+  }
+
+  .btn-icon {
+    font-size: 1rem;
+  }
+
+  /* Skills Grid */
+  .skills-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.75rem;
+  }
+
+  @media (max-width: 1024px) {
+    .skills-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  @media (max-width: 700px) {
+    .skills-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .skill-category-card {
+    display: flex;
+    flex-direction: column;
+    padding: 2rem 1.75rem;
+    position: relative;
+    background: rgba(21, 25, 50, 0.75);
+    border: 1px solid var(--border-subtle);
+    transition: border-color var(--transition-smooth), transform var(--transition-smooth), box-shadow var(--transition-smooth);
+  }
+
+  .skill-category-card:hover {
+    border-color: var(--border-active);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 36px -12px rgba(0, 242, 254, 0.15);
+  }
+
+  .card-glow-edge {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, var(--cyan), transparent);
+    opacity: 0.6;
+  }
+
+  /* Category Header */
+  .category-header {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .category-icon-wrapper {
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    background: rgba(0, 242, 254, 0.08);
+    border: 1px solid rgba(0, 242, 254, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .category-icon {
+    font-size: 1.5rem;
+  }
+
+  .category-seq {
+    font-size: 0.6875rem;
+    letter-spacing: 0.1em;
+    margin-bottom: 0.2rem;
+  }
+
+  .category-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
+  }
+
+  .category-summary {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+    flex-grow: 0;
+  }
+
+  .category-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .card-divider {
+    height: 1px;
+    background: var(--border-subtle);
+    margin-bottom: 1.5rem;
+  }
+
+  /* Items List */
+  .skill-items-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+    flex-grow: 1;
+  }
+
+  .items-heading {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .skill-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .item-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .item-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .item-highlight {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+  }
+
+  .item-bar-track {
+    width: 100%;
+    height: 3px;
+    background: rgba(79, 172, 254, 0.1);
+    border-radius: 2px;
+    overflow: hidden;
+    margin-top: 0.25rem;
+  }
+
+  .item-bar-fill {
+    height: 100%;
+    border-radius: 2px;
+  }
+
+  .fill-expert {
+    background: linear-gradient(90deg, var(--orbital-blue), var(--cyan));
+    box-shadow: 0 0 6px rgba(0, 242, 254, 0.5);
+  }
+
+  .fill-advanced {
+    background: linear-gradient(90deg, rgba(79, 172, 254, 0.7), var(--orbital-blue));
+  }
+</style>

@@ -1,0 +1,316 @@
+---
+// ponytail: pure Astro Timeline component with zero external dependencies, scoped CSS, and semantic HTML5
+export interface TimelineEntry {
+  period: string;
+  role: string;
+  organization: string;
+  location: string;
+  badge: string;
+  summary: string;
+  highlights: string[];
+  tags: string[];
+}
+
+export interface Props {
+  timeline: TimelineEntry[];
+}
+
+const { timeline } = Astro.props;
+---
+
+<section id="timeline" class="timeline-section section" aria-label="Mission Log and Career Trajectory">
+  <div class="container">
+    <header class="section-header">
+      <div class="section-tag">MISSION LOG & CAREER TRAJECTORY</div>
+      <h2 class="section-title">
+        Aerospace & Software <span class="glow-text">Flight Heritage</span>
+      </h2>
+      <p class="section-subtitle">
+        A progressive track of qualifying spaceflight software, operating orbital constellations, and building deterministic mission ground segments.
+      </p>
+    </header>
+
+    <!-- Orbital Trajectory Timeline -->
+    <div class="timeline-container">
+      <div class="timeline-spine" aria-hidden="true"></div>
+
+      <div class="timeline-entries">
+        {timeline.map((entry, idx) => {
+          const isCurrent = entry.period.includes("Present");
+          return (
+            <article class={`timeline-item ${isCurrent ? 'is-active' : ''}`}>
+              <!-- Orbital Node Beacon -->
+              <div class="timeline-node" aria-hidden="true">
+                <div class={`node-core ${isCurrent ? 'node-pulse' : ''}`}></div>
+                <div class="node-ring"></div>
+              </div>
+
+              <!-- Content Card -->
+              <div class="timeline-card card">
+                <div class="card-meta">
+                  <div class="period-pill telemetry-mono">
+                    {isCurrent && <span class="active-beacon"></span>}
+                    <span>{entry.period}</span>
+                  </div>
+                  <span class={`badge ${isCurrent ? 'badge-amber' : 'badge-cyan'}`}>
+                    {entry.badge}
+                  </span>
+                </div>
+
+                <h3 class="role-title">{entry.role}</h3>
+                
+                <div class="org-location">
+                  <span class="org-name">{entry.organization}</span>
+                  <span class="meta-dot">•</span>
+                  <span class="location-text telemetry-mono text-muted">{entry.location}</span>
+                </div>
+
+                <p class="timeline-summary">
+                  {entry.summary}
+                </p>
+
+                <!-- Technical Highlights Collapsible / Detail List -->
+                <div class="timeline-highlights">
+                  <h4 class="highlights-heading telemetry-mono">// MISSION ACCOMPLISHMENTS</h4>
+                  <ul class="highlights-list">
+                    {entry.highlights.map((item) => (
+                      <li class="highlight-item">
+                        <span class="highlight-bullet">›</span>
+                        <span>{item}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <!-- Tags -->
+                <div class="timeline-tags" aria-label="Key technologies">
+                  {entry.tags.map((tag) => (
+                    <span class="badge">{tag}</span>
+                  ))}
+                </div>
+              </div>
+            </article>
+          );
+        })}
+      </div>
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ============================================================
+     TIMELINE COMPONENT SCOPED STYLES
+     Ponytail mode: Scoped CSS, orbital mission log aesthetic
+     ============================================================ */
+  .timeline-section {
+    position: relative;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .timeline-container {
+    position: relative;
+    max-width: 960px;
+    margin: 0 auto;
+    padding-left: 2rem;
+  }
+
+  @media (max-width: 640px) {
+    .timeline-container {
+      padding-left: 1.5rem;
+    }
+  }
+
+  /* Vertical Orbital Spine */
+  .timeline-spine {
+    position: absolute;
+    top: 1.5rem;
+    bottom: 2rem;
+    left: 8px;
+    width: 2px;
+    background: linear-gradient(180deg, var(--cyan) 0%, var(--orbital-blue) 60%, rgba(79, 172, 254, 0.2) 100%);
+  }
+
+  .timeline-entries {
+    display: flex;
+    flex-direction: column;
+    gap: 2.5rem;
+  }
+
+  .timeline-item {
+    position: relative;
+  }
+
+  /* Node Beacon on Spine */
+  .timeline-node {
+    position: absolute;
+    left: -2rem;
+    top: 1.6rem;
+    width: 18px;
+    height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transform: translateX(-50%);
+    z-index: 2;
+  }
+
+  @media (max-width: 640px) {
+    .timeline-node {
+      left: -1.5rem;
+    }
+  }
+
+  .node-core {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 10px var(--cyan);
+  }
+
+  .node-ring {
+    position: absolute;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 1px solid rgba(0, 242, 254, 0.4);
+  }
+
+  .node-pulse {
+    background: var(--amber);
+    box-shadow: 0 0 12px var(--amber);
+    animation: node-pulse-anim 2s infinite;
+  }
+
+  @keyframes node-pulse-anim {
+    0%, 100% { transform: scale(1); opacity: 0.9; }
+    50% { transform: scale(1.35); opacity: 1; }
+  }
+
+  /* Timeline Card */
+  .timeline-card {
+    padding: 2rem;
+    background: rgba(21, 25, 50, 0.75);
+    border: 1px solid var(--border-subtle);
+    border-radius: 12px;
+    transition: transform var(--transition-smooth), border-color var(--transition-smooth);
+  }
+
+  .timeline-item.is-active .timeline-card {
+    border-color: rgba(245, 158, 11, 0.4);
+    box-shadow: 0 8px 30px -10px rgba(245, 158, 11, 0.15);
+  }
+
+  .timeline-card:hover {
+    transform: translateX(4px);
+    border-color: var(--border-active);
+  }
+
+  .card-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.85rem;
+    flex-wrap: wrap;
+  }
+
+  .period-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+
+  .active-beacon {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--amber);
+    box-shadow: 0 0 8px var(--amber);
+    animation: node-pulse-anim 1.5s infinite;
+  }
+
+  .role-title {
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    margin-bottom: 0.35rem;
+  }
+
+  .org-location {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    margin-bottom: 1.25rem;
+    flex-wrap: wrap;
+  }
+
+  .org-name {
+    color: var(--orbital-blue);
+    font-weight: 600;
+  }
+
+  .meta-dot {
+    color: var(--text-muted);
+  }
+
+  .location-text {
+    font-size: 0.8125rem;
+  }
+
+  .timeline-summary {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .timeline-highlights {
+    background: rgba(11, 13, 23, 0.6);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 1.15rem;
+    margin-bottom: 1.25rem;
+  }
+
+  .highlights-heading {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.65rem;
+  }
+
+  .highlights-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.55rem;
+  }
+
+  .highlight-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+  }
+
+  .highlight-bullet {
+    color: var(--amber);
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  .timeline-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+  }
+</style>

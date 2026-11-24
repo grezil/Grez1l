@@ -1,0 +1,298 @@
+---
+// ponytail: pure Astro Projects component with zero external dependencies, scoped CSS, and semantic HTML5
+export interface ProjectMetric {
+  label: string;
+  value: string;
+}
+
+export interface Project {
+  id: string;
+  title: string;
+  subtitle: string;
+  description: string;
+  architecture: string[];
+  metrics: ProjectMetric[];
+  tags: string[];
+  github?: string;
+  demo?: string;
+  badge: string;
+  featured?: boolean;
+}
+
+export interface Props {
+  projects: Project[];
+}
+
+const { projects } = Astro.props;
+---
+
+<section id="projects" class="projects-section section" aria-label="Flight Missions and Systems">
+  <div class="container">
+    <header class="section-header">
+      <div class="section-tag">FLIGHT MISSIONS & SYSTEMS</div>
+      <h2 class="section-title">
+        Engineered for Orbit: <span class="glow-text">Mission Architecture</span>
+      </h2>
+      <p class="section-subtitle">
+        Flight software executives, high-throughput ground telemetry pipelines, 6-DOF orbital propagation kernels, and DSP radio processors.
+      </p>
+    </header>
+
+    <!-- Projects Grid -->
+    <div class="projects-grid">
+      {projects.map((project, idx) => (
+        <article class="project-card card" id={project.id}>
+          <!-- Card Header & Badge -->
+          <div class="project-meta-bar">
+            <div class="mission-callout telemetry-mono">
+              <span class="mission-dot"></span>
+              <span>MISSION // 0{idx + 1}</span>
+            </div>
+            <span class={`badge ${
+              project.badge === 'Flight Proven' ? 'badge-amber' : 
+              project.badge === 'Live Ops' ? 'badge-cyan' : 'badge-blue'
+            }`}>
+              {project.badge}
+            </span>
+          </div>
+
+          <h3 class="project-title">{project.title}</h3>
+          <h4 class="project-subtitle">{project.subtitle}</h4>
+
+          <p class="project-desc">{project.description}</p>
+
+          <!-- Key Telemetry Metrics -->
+          <div class="project-metrics" aria-label="Key Performance Telemetry">
+            {project.metrics.map((metric) => (
+              <div class="metric-box">
+                <span class="metric-val text-cyan">{metric.value}</span>
+                <span class="metric-label">{metric.label}</span>
+              </div>
+            ))}
+          </div>
+
+          <!-- Architecture Highlights -->
+          <div class="project-architecture">
+            <h5 class="arch-heading telemetry-mono">// SYSTEM ARCHITECTURE HIGHLIGHTS</h5>
+            <ul class="arch-list">
+              {project.architecture.map((item) => (
+                <li class="arch-item">
+                  <span class="arch-bullet">›</span>
+                  <span class="arch-text">{item}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <!-- Tags -->
+          <div class="project-tags" aria-label="Technologies used">
+            {project.tags.map((tag) => (
+              <span class="badge">{tag}</span>
+            ))}
+          </div>
+
+          <!-- Card Actions -->
+          <div class="project-actions">
+            {project.demo && (
+              <a href={project.demo} target="_blank" rel="noopener noreferrer" class="btn btn-primary btn-sm">
+                <span>Live System Demo</span>
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <line x1="10" y1="14" x2="21" y2="3"></line>
+                </svg>
+              </a>
+            )}
+            {project.github && (
+              <a href={project.github} target="_blank" rel="noopener noreferrer" class="btn btn-secondary btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+                </svg>
+                <span>FSW Source</span>
+              </a>
+            )}
+          </div>
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<style>
+  /* ============================================================
+     PROJECTS COMPONENT SCOPED STYLES
+     Ponytail mode: Scoped CSS, cosmic telemetry card layout
+     ============================================================ */
+  .projects-section {
+    position: relative;
+    border-top: 1px solid var(--border-subtle);
+  }
+
+  .projects-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 2rem;
+  }
+
+  @media (max-width: 900px) {
+    .projects-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .project-card {
+    display: flex;
+    flex-direction: column;
+    padding: 2.25rem;
+    background: rgba(21, 25, 50, 0.75);
+    border: 1px solid var(--border-subtle);
+    border-radius: 14px;
+    position: relative;
+    transition: transform var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+  }
+
+  .project-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--border-active);
+    box-shadow: 0 16px 36px -12px rgba(0, 242, 254, 0.2);
+  }
+
+  .project-meta-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1rem;
+  }
+
+  .mission-callout {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+  }
+
+  .mission-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--cyan);
+    box-shadow: 0 0 6px var(--cyan);
+  }
+
+  .project-title {
+    font-size: 1.45rem;
+    font-weight: 700;
+    color: var(--text-primary);
+    line-height: 1.25;
+    margin-bottom: 0.35rem;
+  }
+
+  .project-subtitle {
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--orbital-blue);
+    margin-bottom: 1rem;
+    line-height: 1.4;
+  }
+
+  .project-desc {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.6;
+    margin-bottom: 1.5rem;
+  }
+
+  /* Telemetry Metrics */
+  .project-metrics {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.75rem;
+    background: rgba(11, 13, 23, 0.7);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 0.85rem;
+    margin-bottom: 1.5rem;
+  }
+
+  @media (max-width: 480px) {
+    .project-metrics {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .metric-box {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .metric-val {
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: 0.875rem;
+  }
+
+  .metric-label {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    letter-spacing: 0.04em;
+    font-family: var(--font-mono);
+  }
+
+  /* Architecture Highlights */
+  .project-architecture {
+    margin-bottom: 1.5rem;
+  }
+
+  .arch-heading {
+    font-size: 0.6875rem;
+    color: var(--text-muted);
+    letter-spacing: 0.08em;
+    margin-bottom: 0.65rem;
+  }
+
+  .arch-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .arch-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.5rem;
+    font-size: 0.84rem;
+    color: var(--text-secondary);
+    line-height: 1.45;
+  }
+
+  .arch-bullet {
+    color: var(--cyan);
+    font-weight: 700;
+    font-size: 1.1rem;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+
+  /* Tags */
+  .project-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.45rem;
+    margin-bottom: 1.75rem;
+    margin-top: auto;
+  }
+
+  /* Actions */
+  .project-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex-wrap: wrap;
+    border-top: 1px solid var(--border-subtle);
+    padding-top: 1.25rem;
+  }
+</style>

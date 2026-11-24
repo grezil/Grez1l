@@ -1,0 +1,252 @@
+---
+// Apple-Style Honors, Awards & Flight Milestones Component
+export interface Achievement {
+  id?: string;
+  title: string;
+  date: string;
+  timeline?: string;
+  organization: string;
+  category: string;
+  metrics?: string;
+  description: string;
+}
+
+export interface Props {
+  achievements?: Achievement[];
+}
+
+const { achievements = [] } = Astro.props;
+---
+
+<section id="achievements" class="achievements-section section" aria-label="Honors and Key Milestones">
+  <div class="container">
+    <header class="section-header">
+      <div class="section-tag-apple">DISTINCTIONS & RECORD</div>
+      <h2 class="section-title">
+        Honors, Awards & <span class="glow-text">Flight Milestones</span>
+      </h2>
+      <p class="section-subtitle">
+        Recognized by NASA, AIAA, IEEE, and academic institutions for contributions to flight software and orbital dynamics.
+      </p>
+    </header>
+
+    <!-- Achievements Grid / Timeline List -->
+    <div class="achievements-list" id="achievements-rendered-list">
+      {achievements.map((item, index) => (
+        <article class="achievement-card glass-card" data-achievement-id={item.id}>
+          <div class="ach-header">
+            <div class="ach-date-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>{item.date}</span>
+            </div>
+            <span class="ach-category-pill">{item.category}</span>
+          </div>
+
+          <h3 class="ach-title">{item.title}</h3>
+          <p class="ach-org">{item.organization}</p>
+
+          <p class="ach-desc">{item.description}</p>
+
+          {item.metrics && (
+            <div class="ach-metric-pill">
+              <span class="metric-icon">✦</span>
+              <span class="metric-text">{item.metrics}</span>
+            </div>
+          )}
+        </article>
+      ))}
+    </div>
+  </div>
+</section>
+
+<!-- Client Script: Reactive Sync with store.js for live Admin updates -->
+<script>
+  function syncAchievementsFromStore() {
+    try {
+      const container = document.getElementById('achievements-rendered-list');
+      if (!container) return;
+
+      // Access store if present in window or localStorage
+      const rawStored = localStorage.getItem('space_portfolio_achievements');
+      if (!rawStored) return;
+
+      const items = JSON.parse(rawStored);
+      if (!Array.isArray(items) || items.length === 0) return;
+
+      container.innerHTML = items.map(item => `
+        <article class="achievement-card glass-card" data-achievement-id="${item.id || ''}">
+          <div class="ach-header">
+            <div class="ach-date-badge">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+                <line x1="16" y1="2" x2="16" y2="6"></line>
+                <line x1="8" y1="2" x2="8" y2="6"></line>
+                <line x1="3" y1="10" x2="21" y2="10"></line>
+              </svg>
+              <span>${item.date || ''}</span>
+            </div>
+            <span class="ach-category-pill">${item.category || 'Achievement'}</span>
+          </div>
+
+          <h3 class="ach-title">${item.title || ''}</h3>
+          <p class="ach-org">${item.organization || ''}</p>
+          <p class="ach-desc">${item.description || ''}</p>
+
+          ${item.metrics ? `
+            <div class="ach-metric-pill">
+              <span class="metric-icon">✦</span>
+              <span class="metric-text">${item.metrics}</span>
+            </div>
+          ` : ''}
+        </article>
+      `).join('');
+    } catch (err) {
+      console.warn('Could not sync achievements from store:', err);
+    }
+  }
+
+  window.addEventListener('portfolio-data-updated', syncAchievementsFromStore);
+  document.addEventListener('DOMContentLoaded', syncAchievementsFromStore);
+</script>
+
+<style>
+  .achievements-section {
+    padding: 3rem 0 4.5rem;
+    position: relative;
+  }
+
+  .section-header {
+    text-align: center;
+    max-width: 680px;
+    margin: 0 auto 3rem auto;
+  }
+
+  .section-tag-apple {
+    display: inline-block;
+    font-size: 0.6875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: #e5a96a;
+    margin-bottom: 0.5rem;
+  }
+
+  .section-title {
+    font-size: clamp(1.85rem, 3.5vw, 2.5rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: #f3f4f6;
+    margin-bottom: 0.75rem;
+  }
+
+  .section-subtitle {
+    font-size: 0.95rem;
+    line-height: 1.6;
+    color: #8b92a2;
+  }
+
+  .achievements-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+    gap: 1.5rem;
+  }
+
+  @media (max-width: 640px) {
+    .achievements-list {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .achievement-card {
+    padding: 1.75rem;
+    border-radius: 16px;
+    background: rgba(18, 21, 29, 0.65);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease;
+  }
+
+  .achievement-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(229, 169, 106, 0.3);
+  }
+
+  .ach-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .ach-date-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: #e5a96a;
+    background: rgba(229, 169, 106, 0.08);
+    padding: 0.25rem 0.65rem;
+    border-radius: 6px;
+    border: 1px solid rgba(229, 169, 106, 0.18);
+  }
+
+  .ach-category-pill {
+    font-size: 0.6875rem;
+    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.04);
+    padding: 0.2rem 0.6rem;
+    border-radius: 9999px;
+  }
+
+  .ach-title {
+    font-size: 1.1rem;
+    font-weight: 600;
+    line-height: 1.35;
+    color: #f3f4f6;
+    margin: 0 0 0.35rem 0;
+  }
+
+  .ach-org {
+    font-size: 0.8125rem;
+    color: #9ca3af;
+    margin: 0 0 1rem 0;
+    line-height: 1.4;
+  }
+
+  .ach-desc {
+    font-size: 0.875rem;
+    line-height: 1.6;
+    color: #838a98;
+    margin: 0 0 1.25rem 0;
+    flex-grow: 1;
+  }
+
+  .ach-metric-pill {
+    align-self: flex-start;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    font-size: 0.75rem;
+    color: #d1d5db;
+  }
+
+  .metric-icon {
+    color: #e5a96a;
+    font-size: 0.8rem;
+  }
+</style>
