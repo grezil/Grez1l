@@ -99,6 +99,12 @@ export function getData() {
       return memoryData;
     }
     const parsed = JSON.parse(raw);
+    if (parsed && parsed.profile && parsed.profile.name === 'Võ Quang Nhật Nguyên') {
+      parsed.profile.name = 'VO QUANG NHAT NGUYEN';
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      } catch (e) {}
+    }
     memoryData = parsed;
     return parsed;
   } catch (err) {
@@ -426,7 +432,7 @@ export function addBlog(blog) {
     category: blog.category || 'Flight Software',
     tags: Array.isArray(blog.tags) ? blog.tags : (blog.tags ? [blog.tags] : ['Aerospace', 'Flight Software']),
     author: blog.author || {
-      name: current.profile?.name || 'Võ Quang Nhật Nguyên',
+      name: current.profile?.name || 'VO QUANG NHAT NGUYEN',
       role: current.profile?.title || 'Flight Software Architect',
       callsign: current.profile?.callsign || 'NHAT-NGUYEN'
     },

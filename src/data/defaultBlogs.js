@@ -8,7 +8,7 @@ export const DEFAULT_BLOGS = [
     date: "Oct 18, 2024",
     readTime: "8 min read",
     author: {
-      name: "Võ Quang Nhật Nguyên",
+      name: "VO QUANG NHAT NGUYEN",
       title: "Lead Flight Software Engineer",
       callsign: "NHAT-NGUYEN"
     },
@@ -77,7 +77,7 @@ During the initial 90-day commissioning phase in a 550km Sun-Synchronous Orbit (
     date: "Sep 04, 2024",
     readTime: "11 min read",
     author: {
-      name: "Võ Quang Nhật Nguyên",
+      name: "VO QUANG NHAT NGUYEN",
       title: "Flight Software & Astrodynamics Lead",
       callsign: "NHAT-NGUYEN"
     },
@@ -133,7 +133,7 @@ Monte Carlo simulations over 10,000 perturbed orbital passes demonstrated 3-sigm
     date: "Jul 22, 2024",
     readTime: "9 min read",
     author: {
-      name: "Võ Quang Nhật Nguyên",
+      name: "VO QUANG NHAT NGUYEN",
       title: "Spacecraft Avionics Architect",
       callsign: "NHAT-NGUYEN"
     },
@@ -195,7 +195,7 @@ To minimize unnecessary safe mode entries, we designed a multi-tiered Fault Dete
     date: "May 15, 2024",
     readTime: "12 min read",
     author: {
-      name: "Võ Quang Nhật Nguyên",
+      name: "VO QUANG NHAT NGUYEN",
       title: "Space Telemetry & Comms Architect",
       callsign: "NHAT-NGUYEN"
     },

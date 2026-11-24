@@ -1,6 +1,6 @@
 {
   "profile": {
-    "name": "Võ Quang Nhật Nguyên",
+    "name": "VO QUANG NHAT NGUYEN",
     "englishName": "Nhat Nguyen Vo",
     "monogram": "NN",
     "callsign": "NHAT-NGUYEN",
@@ -13,8 +13,8 @@
     "status": "Flight Software Lead • Orbital Mission Architect",
     "clearance": "Public Trust / NASA Heritage Clearance",
     "avatar": "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80",
-    "avatarAlt": "Võ Quang Nhật Nguyên - Flight Software Architect",
-    "cvDocumentHtml": "<p><strong>Võ Quang Nhật Nguyên (Nhat Nguyen Vo)</strong> is a dual-specialist in aerospace systems and deterministic flight computing. Holding a Ph.D. from <em>Caltech</em> and M.S. from <em>MIT</em>, he has architected fault-tolerant flight software for multiple LEO/Deep-Space smallsat missions with 100% mission availability.</p>",
+    "avatarAlt": "VO QUANG NHAT NGUYEN - Flight Software Architect",
+    "cvDocumentHtml": "<p><strong>VO QUANG NHAT NGUYEN (Nhat Nguyen Vo)</strong> is a dual-specialist in aerospace systems and deterministic flight computing. Holding a Ph.D. from <em>Caltech</em> and M.S. from <em>MIT</em>, he has architected fault-tolerant flight software for multiple LEO/Deep-Space smallsat missions with 100% mission availability.</p>",
     "telemetryStats": [
       {
         "label": "Blogs Published",
@@ -668,7 +668,7 @@
       "category": "Flight Software",
       "tags": ["Flight Software", "Rust", "Embedded Systems", "FreeRTOS", "ARM Cortex-M7"],
       "author": {
-        "name": "Võ Quang Nhật Nguyên",
+        "name": "VO QUANG NHAT NGUYEN",
         "role": "Principal Flight Software Architect",
         "callsign": "NHAT-NGUYEN"
       },
@@ -684,7 +684,7 @@
       "category": "Astrodynamics",
       "tags": ["Astrodynamics", "Orbital Mechanics", "C++20", "NASA SPICE", "GNC"],
       "author": {
-        "name": "Võ Quang Nhật Nguyên",
+        "name": "VO QUANG NHAT NGUYEN",
         "role": "Lead GNC Engineer",
         "callsign": "NHAT-NGUYEN"
       },
@@ -700,7 +700,7 @@
       "category": "Avionics & Operations",
       "tags": ["FDIR", "Avionics", "Fault Tolerance", "CCSDS", "Mission Operations"],
       "author": {
-        "name": "Võ Quang Nhật Nguyên",
+        "name": "VO QUANG NHAT NGUYEN",
         "role": "Flight Software Lead",
         "callsign": "NHAT-NGUYEN"
       },
@@ -716,7 +716,7 @@
       "category": "Ground Segment",
       "tags": ["CCSDS", "Telemetry", "RF Comms", "DSP", "Ground Segment"],
       "author": {
-        "name": "Võ Quang Nhật Nguyên",
+        "name": "VO QUANG NHAT NGUYEN",
         "role": "Avionics Specialist",
         "callsign": "NHAT-NGUYEN"
       },
