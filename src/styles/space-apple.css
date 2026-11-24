@@ -834,6 +834,97 @@ code, pre, .mono {
 }
 
 /* ==========================================================================
+   TASTE-SKILL 2.5: ANTI-SLOP MOTION LAYER & HOUSE RULES
+   ========================================================================== */
+
+@keyframes tasteHeroEntrance {
+  0% {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+[data-enter] {
+  animation: tasteHeroEntrance 0.75s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+[data-enter="1"] {
+  animation-delay: 0.05s;
+}
+
+[data-enter="2"] {
+  animation-delay: 0.16s;
+}
+
+[data-enter="3"] {
+  animation-delay: 0.28s;
+}
+
+/* Rule 5: Buttons step on hover and press on click */
+.btn:active,
+.btn-apple-primary:active,
+.btn-apple-secondary:active,
+.btn-apple-amber:active,
+button:active {
+  transform: scale(0.985);
+  transition: transform 0.08s ease;
+}
+
+/* Rule 5: Photo zoom 1.02-1.03 inside its frame */
+.profile-avatar-frame {
+  overflow: hidden;
+}
+
+.profile-avatar-img {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.profile-avatar-wrapper:hover .profile-avatar-img {
+  transform: scale(1.025);
+}
+
+/* Rule 5: A linked card lifts 2px with subtle glow */
+.glass-card,
+.card,
+.achievement-card,
+.dispatch-card {
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 0.25s ease,
+              box-shadow 0.25s ease;
+}
+
+.glass-card:hover,
+.achievement-card:hover,
+.dispatch-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(229, 169, 106, 0.28);
+  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.5), 0 0 16px -2px rgba(229, 169, 106, 0.12);
+}
+
+/* Rule 3: One section per screen on desktop */
+@media (min-width: 1024px) {
+  .hero {
+    min-height: calc(100vh - var(--header-height));
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* Rule 4: Equal left and right content edges */
+.container {
+  width: 100%;
+  max-width: var(--container-max);
+  margin-left: auto;
+  margin-right: auto;
+  padding-left: clamp(1.25rem, 4vw, 2.5rem);
+  padding-right: clamp(1.25rem, 4vw, 2.5rem);
+}
+
+/* ==========================================================================
    PRINT STYLES (PHYSICAL HARVARD CV PRINT SUPPORT)
    ========================================================================== */
 
