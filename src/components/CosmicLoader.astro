@@ -1,0 +1,354 @@
+---
+// CosmicLoader.astro - Apple-Grade Cinematic Cosmic Space Loading Screen
+---
+
+<div id="cosmic-preloader" class="cosmic-loader-overlay" aria-label="System Preloader" role="status">
+  <div class="loader-backdrop-glow" aria-hidden="true"></div>
+
+  <!-- Cosmic Central Telemetry Console -->
+  <div class="loader-container">
+    <!-- Orbital Gyroscope Radar SVG -->
+    <div class="orbital-radar-wrapper" aria-hidden="true">
+      <svg class="orbital-radar-svg" viewBox="0 0 200 200" fill="none">
+        <defs>
+          <linearGradient id="loaderRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="rgba(142, 149, 165, 0.15)" />
+            <stop offset="50%" stop-color="rgba(229, 169, 106, 0.6)" />
+            <stop offset="100%" stop-color="rgba(212, 175, 55, 0.15)" />
+          </linearGradient>
+
+          <linearGradient id="loaderSatGlint" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#E5A96A" />
+            <stop offset="100%" stop-color="#D4AF37" />
+          </linearGradient>
+        </defs>
+
+        <!-- Outer Track Ring -->
+        <circle cx="100" cy="100" r="88" stroke="rgba(142, 149, 165, 0.14)" stroke-width="1.2" stroke-dasharray="4 6" />
+
+        <!-- Middle Elliptical Orbital Path with Glow -->
+        <ellipse cx="100" cy="100" rx="72" ry="42" stroke="url(#loaderRingGrad)" stroke-width="1.5" stroke-dasharray="6 4" transform="rotate(-24 100 100)" class="radar-ellipse-path" />
+
+        <!-- Inner Fixed Telemetry Reticle -->
+        <circle cx="100" cy="100" r="32" stroke="rgba(229, 169, 106, 0.25)" stroke-width="1" />
+        <line x1="100" y1="58" x2="100" y2="142" stroke="rgba(142, 149, 165, 0.2)" stroke-width="0.8" />
+        <line x1="58" y1="100" x2="142" y2="100" stroke="rgba(142, 149, 165, 0.2)" stroke-width="0.8" />
+
+        <!-- Orbiting Smallsat Vector Vessel -->
+        <g class="loader-orbiting-sat">
+          <!-- Solar wings -->
+          <rect x="-14" y="-3.5" width="8" height="7" rx="1" fill="#1E2A44" stroke="#8E95A5" stroke-width="0.6" />
+          <rect x="6" y="-3.5" width="8" height="7" rx="1" fill="#1E2A44" stroke="#8E95A5" stroke-width="0.6" />
+          <!-- Chassis -->
+          <rect x="-4" y="-4" width="8" height="8" rx="1.5" fill="url(#loaderSatGlint)" stroke="#F3C78E" stroke-width="0.8" />
+          <!-- Beacon dot -->
+          <circle cx="0" cy="0" r="1.5" fill="#10B981" />
+        </g>
+
+        <!-- Center Earth / Ground Station Beacon -->
+        <circle cx="100" cy="100" r="6" fill="#0B0D13" stroke="rgba(229, 169, 106, 0.6)" stroke-width="1.5" />
+        <circle cx="100" cy="100" r="2.5" fill="#E5A96A" class="beacon-pulse-dot" />
+      </svg>
+    </div>
+
+    <!-- Header Identification -->
+    <div class="loader-identity">
+      <span class="loader-callsign-tag">// GROUND-TO-ORBIT TELEMETRY LINK</span>
+      <h2 class="loader-title">VO QUANG NHAT NGUYEN</h2>
+      <p class="loader-subtitle">SPACE SYSTEMS & FLIGHT SOFTWARE ARCHITECTURE</p>
+    </div>
+
+    <!-- Step Log Readout Display -->
+    <div class="loader-log-box">
+      <span class="log-indicator"></span>
+      <span class="log-text" id="loader-log-text">INITIALIZING FLIGHT TELEMETRY BUS...</span>
+    </div>
+
+    <!-- Apple-Grade Frosted Progress Bar -->
+    <div class="loader-progress-track">
+      <div class="loader-progress-fill" id="loader-progress-fill"></div>
+    </div>
+
+    <!-- Status Strip: Percent & Coordinates -->
+    <div class="loader-status-strip">
+      <span class="loader-status-param">LEO 550KM // 51.6° INC</span>
+      <span class="loader-status-percent" id="loader-percent-text">00%</span>
+      <span class="loader-status-param">CCSDS S-BAND // NOMINAL</span>
+    </div>
+  </div>
+</div>
+
+<style>
+  /* ============================================================
+     COSMIC PRELOADER OVERLAY & STYLING
+     Aesthetic: Apple macOS / Space Systems telemetry boot screen
+     ============================================================ */
+  .cosmic-loader-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #0B0D13;
+    pointer-events: auto;
+    user-select: none;
+    font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace !important;
+    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.55s;
+    overflow: hidden;
+  }
+
+  .cosmic-loader-overlay.is-complete {
+    opacity: 0;
+    transform: scale(1.03);
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  /* Ambient Cosmos Glow Behind Radar */
+  .loader-backdrop-glow {
+    position: absolute;
+    width: 480px;
+    height: 480px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center, rgba(229, 169, 106, 0.08) 0%, rgba(212, 175, 55, 0.03) 45%, transparent 70%);
+    filter: blur(60px);
+    pointer-events: none;
+  }
+
+  .loader-container {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 460px;
+    width: 90vw;
+    padding: 2.25rem 2rem;
+    background: rgba(14, 18, 27, 0.75);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 24px;
+    box-shadow: 
+      0 24px 64px -12px rgba(0, 0, 0, 0.75),
+      0 0 0 1px rgba(229, 169, 106, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.12);
+    text-align: center;
+  }
+
+  /* Orbital Radar Gyro */
+  .orbital-radar-wrapper {
+    position: relative;
+    width: 130px;
+    height: 130px;
+    margin-bottom: 1.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .orbital-radar-svg {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 0 16px rgba(229, 169, 106, 0.25));
+  }
+
+  .radar-ellipse-path {
+    animation: ellipseSpin 12s linear infinite;
+    transform-origin: 100px 100px;
+  }
+
+  @keyframes ellipseSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  .loader-orbiting-sat {
+    animation: satOrbitLoop 4s linear infinite;
+    transform-origin: 100px 100px;
+  }
+
+  @keyframes satOrbitLoop {
+    0% {
+      transform: rotate(0deg) translate(72px, 0px) rotate(0deg);
+    }
+    100% {
+      transform: rotate(360deg) translate(72px, 0px) rotate(-360deg);
+    }
+  }
+
+  .beacon-pulse-dot {
+    animation: beaconCenterPulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes beaconCenterPulse {
+    0%, 100% { transform: scale(0.9); opacity: 0.8; }
+    50% { transform: scale(1.4); opacity: 1; filter: drop-shadow(0 0 6px #E5A96A); }
+  }
+
+  /* Identity Callout */
+  .loader-identity {
+    margin-bottom: 1.25rem;
+  }
+
+  .loader-callsign-tag {
+    display: block;
+    font-size: 0.65rem;
+    letter-spacing: 0.12em;
+    color: #E5A96A;
+    margin-bottom: 0.4rem;
+  }
+
+  .loader-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    color: #F3F4F6;
+    margin-bottom: 0.25rem;
+  }
+
+  .loader-subtitle {
+    font-size: 0.6875rem;
+    letter-spacing: 0.08em;
+    color: #8E95A5;
+  }
+
+  /* Log Box */
+  .loader-log-box {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.85rem;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    border-radius: 9999px;
+    margin-bottom: 1.5rem;
+    max-width: 100%;
+  }
+
+  .log-indicator {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 6px #10B981;
+    flex-shrink: 0;
+  }
+
+  .log-text {
+    font-size: 0.6875rem;
+    letter-spacing: 0.04em;
+    color: #B6BAC6;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Progress Track */
+  .loader-progress-track {
+    width: 100%;
+    height: 3px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    overflow: hidden;
+    position: relative;
+    margin-bottom: 0.85rem;
+  }
+
+  .loader-progress-fill {
+    width: 0%;
+    height: 100%;
+    background: linear-gradient(90deg, #E5A96A 0%, #D4AF37 50%, #F3C78E 100%);
+    box-shadow: 0 0 10px rgba(229, 169, 106, 0.6);
+    border-radius: 9999px;
+    transition: width 0.1s linear;
+  }
+
+  /* Status Strip */
+  .loader-status-strip {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 0.65rem;
+    color: #8E95A5;
+    letter-spacing: 0.04em;
+  }
+
+  .loader-status-percent {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #E5A96A;
+  }
+
+  /* Reduced Motion Mode */
+  @media (prefers-reduced-motion: reduce) {
+    .radar-ellipse-path,
+    .loader-orbiting-sat,
+    .beacon-pulse-dot {
+      animation: none !important;
+    }
+  }
+</style>
+
+<script>
+  // High-Performance Apple-Grade Preloader Sequence
+  (function initCosmicPreloader() {
+    const preloader = document.getElementById('cosmic-preloader');
+    if (!preloader) return;
+
+    const progressFill = document.getElementById('loader-progress-fill');
+    const logText = document.getElementById('loader-log-text');
+    const percentText = document.getElementById('loader-percent-text');
+
+    // Telemetry sequence phases
+    const steps = [
+      { progress: 18, log: "INITIALIZING CCSDS TELEMETRY BUS..." },
+      { progress: 42, log: "ACQUIRING ORBITAL TELEMETRY [LEO 550KM]..." },
+      { progress: 68, log: "CALIBRATING ADCS ATTITUDE SENSORS..." },
+      { progress: 88, log: "SYNCING FLIGHT EXECUTIVE ARCHITECTURE..." },
+      { progress: 100, log: "SYSTEMS NOMINAL • GROUND LINK ACTIVE" }
+    ];
+
+    let currentStep = 0;
+    let currentProgress = 0;
+    const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const duration = isReducedMotion ? 200 : 1350; // smooth 1.35s cinematic load
+
+    const startTime = performance.now();
+
+    function update() {
+      const now = performance.now();
+      const elapsed = now - startTime;
+      const progressFraction = Math.min(elapsed / duration, 1);
+
+      // Smooth cubic-out easing
+      const eased = 1 - Math.pow(1 - progressFraction, 3);
+      currentProgress = Math.floor(eased * 100);
+
+      if (progressFill) progressFill.style.width = `${currentProgress}%`;
+      if (percentText) percentText.textContent = `${currentProgress < 10 ? '0' + currentProgress : currentProgress}%`;
+
+      // Update log messages based on progress thresholds
+      if (currentStep < steps.length && currentProgress >= steps[currentStep].progress) {
+        if (logText) logText.textContent = steps[currentStep].log;
+        currentStep++;
+      }
+
+      if (progressFraction < 1) {
+        requestAnimationFrame(update);
+      } else {
+        // Complete & silky smooth exit transition
+        setTimeout(() => {
+          preloader.classList.add('is-complete');
+          setTimeout(() => {
+            preloader.style.display = 'none';
+          }, 650);
+        }, 140);
+      }
+    }
+
+    requestAnimationFrame(update);
+  })();
+</script>

@@ -48,6 +48,7 @@
     { "name": "Home", "href": "/" },
     { "name": "Harvard CV", "href": "/cv" },
     { "name": "Mission Blog", "href": "/blog" },
+    { "name": "Timeline", "href": "/#timeline" },
     { "name": "Admin Control", "href": "/admin" }
   ],
   "admin": {

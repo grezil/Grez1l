@@ -1,6 +1,7 @@
 ---
 // Space Systems Engineer - Apple Frosted Cosmic Layout
 import CosmicBackground from '../components/CosmicBackground.astro';
+import CosmicLoader from '../components/CosmicLoader.astro';
 import AdminLoginModal from '../components/AdminLoginModal.astro';
 import AdminDock from '../components/AdminDock.astro';
 import AdminEditorModal from '../components/AdminEditorModal.astro';
@@ -12,7 +13,7 @@ export interface Props {
 }
 
 const {
-  title = "VO QUANG NHAT NGUYEN (Nhat Nguyen Vo) | Space Systems & Flight Software Engineer | Harvard CV",
+  title = "Võ Quang Nhật Nguyên (Nhat Nguyen Vo) | Space Systems & Flight Software Engineer | Harvard CV",
   description = "Aerospace portfolio and Harvard-style Curriculum Vitae of a Flight Software & Space Systems Engineer specializing in CubeSats, avionics, real-time telemetry, and orbital mechanics."
 } = Astro.props;
 
@@ -46,63 +47,34 @@ const isBlog = pathname.startsWith('/blog');
     <title>{title}</title>
   </head>
   <body>
+    <!-- Apple-Grade Cosmic Space Loading Screen -->
+    <CosmicLoader />
+
     <!-- 60FPS Ambient Starfield & Orbiting Satellite -->
     <CosmicBackground />
 
-    <!-- Sleek Apple Frosted Glass Header -->
+    <!-- Sleek Apple Minimalist Header -->
     <header class="site-header" id="site-header">
       <div class="container header-inner">
-        <!-- Desktop Segmented Apple Navigation -->
-        <nav class="nav-menu" id="nav-menu" aria-label="Main Navigation">
-          <div class="segmented-control">
-            <a href="/" class={`segmented-item ${isHome ? 'active' : ''}`} aria-current={isHome ? 'page' : undefined}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-                <polyline points="9 22 9 12 15 12 15 22"></polyline>
-              </svg>
-              <span>Home</span>
-            </a>
+        <!-- Callsign Telemetry Indicator -->
+        <a href="/" class="header-callsign" title="Mission Home">
+          <span class="callsign-beacon"></span>
+          <span class="callsign-name">NHAT-NGUYEN</span>
+          <span class="callsign-sep">//</span>
+          <span class="callsign-telemetry">LEO 550KM • SYS NOMINAL</span>
+        </a>
 
-            <a href="/cv" class={`segmented-item ${isCV ? 'active-amber' : ''}`} aria-current={isCV ? 'page' : undefined}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
-                <polyline points="14 2 14 8 20 8"></polyline>
-                <line x1="16" y1="13" x2="8" y2="13"></line>
-                <line x1="16" y1="17" x2="8" y2="17"></line>
-                <polyline points="10 9 9 9 8 9"></polyline>
-              </svg>
-              <span>Harvard CV</span>
-              <span class="nav-mini-pill">PDF</span>
-            </a>
-
-            <a href="/blog" class={`segmented-item ${isBlog ? 'active' : ''}`} aria-current={isBlog ? 'page' : undefined}>
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
-                <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
-              </svg>
-              <span>Mission Blog</span>
-            </a>
-
-            {isHome && (
-              <a href="#timeline" class="segmented-item nav-anchor">
-                <span>Timeline</span>
-              </a>
-            )}
-          </div>
-
-          <!-- Direct Professional Contact Button -->
-          <a href="mailto:nhatnguyen@orbital-flight.dev" class="btn btn-apple-primary btn-sm header-comms-btn">
+        <!-- Top Right Actions -->
+        <div class="header-actions">
+          <a href="mailto:nhatnguyen@orbital-flight.dev" class="btn btn-outline-cyan btn-sm header-comms-btn">
             <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
               <rect width="20" height="16" x="2" y="4" rx="2"></rect>
               <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
             </svg>
-            <span>Contact</span>
+            <span>Uplink</span>
           </a>
-        </nav>
 
-        <!-- Header Actions: Admin Key Button & Mobile Hamburger -->
-        <div class="header-actions">
-          <!-- Admin Access Key Button -->
+          <!-- Admin Key Button -->
           <button
             id="admin-header-trigger"
             class="admin-access-btn"
@@ -111,21 +83,13 @@ const isBlog = pathname.startsWith('/blog');
             aria-label="Admin Control Center"
           >
             <span class="admin-key-icon">
-              <!-- Elegant Security Lock/Key SVG -->
-              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
                 <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
               </svg>
             </span>
             <span class="admin-btn-label">Admin</span>
             <span class="admin-status-indicator" id="admin-status-indicator"></span>
-          </button>
-
-          <!-- Mobile Hamburger Toggle -->
-          <button class="mobile-toggle" id="mobile-toggle" aria-label="Toggle navigation menu" aria-expanded="false">
-            <span class="hamburger-bar"></span>
-            <span class="hamburger-bar"></span>
-            <span class="hamburger-bar"></span>
           </button>
         </div>
       </div>
@@ -135,6 +99,66 @@ const isBlog = pathname.startsWith('/blog');
     <main class="main-content" id="main-content">
       <slot />
     </main>
+
+    <!-- Apple Floating Bottom Navigation Dock -->
+    <nav class="floating-bottom-dock" id="floating-bottom-dock" aria-label="Floating Navigation Dock">
+      <div class="floating-dock-pill">
+        <a href="/" class={`dock-nav-item ${isHome ? 'active' : ''}`} data-tooltip="Overview & Profile" aria-current={isHome ? 'page' : undefined}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
+            <polyline points="9 22 9 12 15 12 15 22"></polyline>
+          </svg>
+          <span class="dock-nav-label">Home</span>
+        </a>
+
+        <a href="/cv" class={`dock-nav-item ${isCV ? 'active' : ''}`} data-tooltip="Harvard Academic CV (PDF)" aria-current={isCV ? 'page' : undefined}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+            <polyline points="14 2 14 8 20 8"></polyline>
+            <line x1="16" y1="13" x2="8" y2="13"></line>
+            <line x1="16" y1="17" x2="8" y2="17"></line>
+            <polyline points="10 9 9 9 8 9"></polyline>
+          </svg>
+          <span class="dock-nav-label">Harvard CV</span>
+          <span class="dock-mini-badge">PDF</span>
+        </a>
+
+        <a href="/blog" class={`dock-nav-item ${isBlog ? 'active' : ''}`} data-tooltip="Flight Software & Astrodynamics Dispatches" aria-current={isBlog ? 'page' : undefined}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"></path>
+            <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"></path>
+          </svg>
+          <span class="dock-nav-label">Mission Blog</span>
+        </a>
+
+        <a href={isHome ? "#timeline" : "/#timeline"} class="dock-nav-item" data-tooltip="Orbital Heritage Timeline">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          <span class="dock-nav-label">Timeline</span>
+        </a>
+
+        <div class="dock-nav-separator" aria-hidden="true"></div>
+
+        <a href="mailto:nhatnguyen@orbital-flight.dev" class="dock-nav-item" data-tooltip="Transmit Direct Comms">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect width="20" height="16" x="2" y="4" rx="2"></rect>
+            <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+          </svg>
+          <span class="dock-nav-label">Contact</span>
+        </a>
+
+        <button type="button" class="dock-nav-item" id="dock-admin-trigger" title="Admin Control Center" aria-label="Admin Control Center">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+          </svg>
+          <span class="dock-nav-label">Admin</span>
+          <span class="dock-status-dot" id="dock-admin-status-dot"></span>
+        </button>
+      </div>
+    </nav>
 
     <!-- Space Systems Refined Engineering Footer -->
     <footer class="site-footer">
@@ -164,7 +188,7 @@ const isBlog = pathname.startsWith('/blog');
         <div class="footer-bottom">
           <div class="footer-brand-info">
             <p class="footer-copy">
-              © {new Date().getFullYear()} Flight Software & Space Systems Engineer. Designed with Apple precision.
+              © {new Date().getFullYear()} Võ Quang Nhật Nguyên. Designed with Apple precision.
             </p>
             <p class="footer-note">
               Mission-critical embedded software • Real-time telemetry • Astrodynamics
@@ -201,67 +225,76 @@ const isBlog = pathname.startsWith('/blog');
 
     <!-- Mobile Navigation Drawer Overlay Script & Global Toast System -->
     <script>
-      // Mobile Toggle Handling
-      const toggle = document.getElementById('mobile-toggle');
-      const menu = document.getElementById('nav-menu');
-      if (toggle && menu) {
-        toggle.addEventListener('click', () => {
-          const isOpen = menu.classList.toggle('is-open');
-          toggle.setAttribute('aria-expanded', String(isOpen));
-          toggle.classList.toggle('active', isOpen);
-        });
+      // Admin Trigger Logic (Header trigger & Floating Dock trigger)
+      function setupAdminTriggers() {
+        const triggers = [
+          document.getElementById('admin-header-trigger'),
+          document.getElementById('dock-admin-trigger')
+        ];
 
-        // Close menu on link click
-        menu.querySelectorAll('a').forEach(link => {
-          link.addEventListener('click', () => {
-            menu.classList.remove('is-open');
-            toggle.classList.remove('active');
-            toggle.setAttribute('aria-expanded', 'false');
+        triggers.forEach(btn => {
+          if (!btn) return;
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            
+            const modal = document.getElementById('admin-login-modal');
+            const editorModal = document.getElementById('admin-editor-modal');
+            const dock = document.getElementById('admin-floating-dock');
+            
+            // Dispatch custom event for reactive admin components
+            window.dispatchEvent(new CustomEvent('open-admin-login'));
+
+            try {
+              const auth = localStorage.getItem('space_portfolio_admin_auth') === 'true' ||
+                           localStorage.getItem('astro_admin_auth') === 'true' || 
+                           sessionStorage.getItem('astro_admin_auth') === 'true';
+
+              if (auth && editorModal) {
+                editorModal.classList.add('is-open');
+              } else if (modal) {
+                modal.classList.add('is-open');
+                const passInput = modal.querySelector('input[type="password"]') as HTMLInputElement;
+                if (passInput) setTimeout(() => passInput.focus(), 150);
+              } else if (window.location.pathname !== '/admin') {
+                window.location.href = '/admin';
+              }
+            } catch (err) {
+              if (modal) modal.classList.add('is-open');
+            }
           });
         });
       }
 
-      // Admin Access Button Handler
-      const adminTrigger = document.getElementById('admin-header-trigger');
-      if (adminTrigger) {
-        adminTrigger.addEventListener('click', (e) => {
-          e.preventDefault();
-          
-          // Check if admin modal or dock is present in the DOM
-          const modal = document.getElementById('admin-login-modal');
-          const dock = document.getElementById('admin-dock');
-          
-          // Dispatch custom event for reactive admin components
-          window.dispatchEvent(new CustomEvent('open-admin-login'));
-
-          if (modal) {
-            modal.classList.add('is-open');
-            const passInput = modal.querySelector('input[type="password"]') as HTMLInputElement;
-            if (passInput) setTimeout(() => passInput.focus(), 150);
-          } else if (!dock && window.location.pathname !== '/admin') {
-            // Smoothly navigate to dedicated /admin page if modal not in DOM
-            window.location.href = '/admin';
-          }
-        });
-      }
+      setupAdminTriggers();
 
       // Reactive Admin Status Indicator (from localStorage)
       function updateAdminStatusBadge() {
-        const indicator = document.getElementById('admin-status-indicator');
-        const trigger = document.getElementById('admin-header-trigger');
-        if (!indicator || !trigger) return;
+        const headerIndicator = document.getElementById('admin-status-indicator');
+        const headerTrigger = document.getElementById('admin-header-trigger');
+        const dockDot = document.getElementById('dock-admin-status-dot');
+        const dockBtn = document.getElementById('dock-admin-trigger');
 
         try {
-          const auth = localStorage.getItem('astro_admin_auth') === 'true' || 
+          const auth = localStorage.getItem('space_portfolio_admin_auth') === 'true' ||
+                       localStorage.getItem('astro_admin_auth') === 'true' || 
                        sessionStorage.getItem('astro_admin_auth') === 'true';
+
           if (auth) {
-            indicator.classList.add('is-authenticated');
-            trigger.classList.add('is-auth-active');
-            trigger.title = "Admin Active (Click for Control Center)";
+            if (headerIndicator) headerIndicator.classList.add('is-authenticated');
+            if (headerTrigger) {
+              headerTrigger.classList.add('is-auth-active');
+              headerTrigger.title = "Admin Active (Click for Control Center)";
+            }
+            if (dockDot) dockDot.classList.add('is-authenticated');
+            if (dockBtn) dockBtn.title = "Admin Active (Click to open studio)";
           } else {
-            indicator.classList.remove('is-authenticated');
-            trigger.classList.remove('is-auth-active');
-            trigger.title = "Admin Control Center (Passkey: apollo11)";
+            if (headerIndicator) headerIndicator.classList.remove('is-authenticated');
+            if (headerTrigger) {
+              headerTrigger.classList.remove('is-auth-active');
+              headerTrigger.title = "Admin Control Center (Passkey: apollo11)";
+            }
+            if (dockDot) dockDot.classList.remove('is-authenticated');
+            if (dockBtn) dockBtn.title = "Admin Control Center (Passkey: apollo11)";
           }
         } catch (e) {
           // ignore localStorage access issues
@@ -309,23 +342,24 @@ const isBlog = pathname.startsWith('/blog');
 
 <style>
   /* ============================================================
-     LAYOUT SPECIFIC STYLES & APPLE HEADER/FOOTER
+     LAYOUT SPECIFIC STYLES & APPLE TOP HEADER / MAIN PADDING
      ============================================================ */
 
   .main-content {
     flex: 1;
     position: relative;
     z-index: 1;
+    padding-bottom: 7rem; /* Clearance for floating bottom dock */
   }
 
-  /* Frosted Apple Header */
+  /* Frosted Apple Minimal Header */
   .site-header {
     position: sticky;
     top: 0;
     z-index: 100;
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
-    background-color: rgba(11, 13, 19, 0.76);
+    background-color: rgba(11, 13, 19, 0.78);
     border-bottom: 1px solid var(--border-subtle);
     transition: background-color var(--transition-smooth), border-color var(--transition-smooth);
   }
@@ -333,28 +367,55 @@ const isBlog = pathname.startsWith('/blog');
   .header-inner {
     display: flex;
     align-items: center;
-    justify-content: center;
-    position: relative;
-    height: var(--header-height);
+    justify-content: space-between;
+    height: 3.5rem;
+    gap: 1.5rem;
   }
 
-  /* Navigation Menu - Clean Centered Apple Bar */
-  .nav-menu {
+  /* Callsign Indicator */
+  .header-callsign {
     display: flex;
     align-items: center;
-    gap: 1rem;
-    margin: 0 auto;
+    gap: 0.6rem;
+    text-decoration: none;
+    font-size: 0.75rem;
+    letter-spacing: 0.06em;
+    user-select: none;
   }
 
-  .nav-mini-pill {
-    font-size: 0.625rem;
-    padding: 1px 5px;
-    border-radius: 9999px;
-    background: rgba(229, 169, 106, 0.2);
-    border: 1px solid rgba(229, 169, 106, 0.35);
-    color: var(--amber-light);
-    letter-spacing: 0.05em;
-    font-family: var(--font-mono);
+  .callsign-beacon {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 8px #10B981;
+    animation: beaconPulse 2s ease-in-out infinite;
+  }
+
+  @keyframes beaconPulse {
+    0%, 100% { transform: scale(0.9); opacity: 0.75; }
+    50% { transform: scale(1.25); opacity: 1; box-shadow: 0 0 10px #10B981; }
+  }
+
+  .callsign-name {
+    color: #F3F4F6;
+    font-weight: 700;
+  }
+
+  .callsign-sep {
+    color: #8E95A5;
+    opacity: 0.5;
+  }
+
+  .callsign-telemetry {
+    color: #8E95A5;
+    font-size: 0.6875rem;
+  }
+
+  @media (max-width: 640px) {
+    .callsign-telemetry {
+      display: none;
+    }
   }
 
   .header-comms-btn {
@@ -367,8 +428,6 @@ const isBlog = pathname.startsWith('/blog');
     display: flex;
     align-items: center;
     gap: 0.75rem;
-    position: absolute;
-    right: 1.5rem;
   }
 
   /* Admin Access Key Button */
@@ -428,96 +487,16 @@ const isBlog = pathname.startsWith('/blog');
     box-shadow: 0 0 6px var(--telemetry-green);
   }
 
-  /* Mobile Toggle */
-  .mobile-toggle {
-    display: none;
-    flex-direction: column;
-    justify-content: center;
-    gap: 5px;
-    width: 36px;
-    height: 36px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-sm);
-    cursor: pointer;
-    padding: 6px;
-    transition: background var(--transition-fast);
-  }
-
-  .hamburger-bar {
-    width: 100%;
-    height: 2px;
-    background-color: var(--text-ivory);
-    transition: transform var(--transition-fast), opacity var(--transition-fast);
-  }
-
-  @media (max-width: 920px) {
-    .header-inner {
-      justify-content: flex-end;
-    }
-
-    .header-actions {
-      position: static;
-    }
-
-    .mobile-toggle {
-      display: flex;
-    }
-
-    .nav-menu {
-      display: none;
-      position: absolute;
-      top: var(--header-height);
-      left: 0;
-      right: 0;
-      background-color: rgba(11, 13, 19, 0.96);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-bottom: 1px solid var(--border-subtle);
-      flex-direction: column;
-      padding: 1.5rem;
-      gap: 1rem;
-      align-items: stretch;
-      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
-    }
-
-    .nav-menu.is-open {
-      display: flex;
-    }
-
-    .nav-menu .segmented-control {
-      flex-direction: column;
-      width: 100%;
-      border-radius: var(--radius-md);
-    }
-
-    .nav-menu .segmented-item {
-      width: 100%;
-      justify-content: flex-start;
-      padding: 0.75rem 1rem;
-      border-radius: var(--radius-sm);
-    }
-
-    .mobile-toggle.active .hamburger-bar:nth-child(1) {
-      transform: translateY(7px) rotate(45deg);
-    }
-    .mobile-toggle.active .hamburger-bar:nth-child(2) {
-      opacity: 0;
-    }
-    .mobile-toggle.active .hamburger-bar:nth-child(3) {
-      transform: translateY(-7px) rotate(-45deg);
-    }
-  }
-
   /* Engineering Footer */
   .site-footer {
     border-top: 1px solid var(--border-subtle);
     background-color: rgba(11, 13, 19, 0.94);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    padding: 3.5rem 0 2.25rem;
+    padding: 3.5rem 0 3.5rem;
     position: relative;
     z-index: 1;
+    margin-bottom: 2rem;
   }
 
   .footer-telemetry {

@@ -2,7 +2,7 @@
 // AdminDock.astro - Apple-style floating Control Center Dock when logged in as admin
 ---
 
-<div id="admin-floating-dock" class="admin-dock-container" aria-label="Admin Control Dock" style="display: none;">
+<div id="admin-floating-dock" class="admin-dock-container admin-left-dock no-print" aria-label="Admin Control Dock" style="display: none;">
   <div class="dock-pill">
     <!-- Active Status Beacon -->
     <div class="dock-item status-indicator" title="Admin Mode Active (Read/Write Telemetry)">
@@ -98,47 +98,49 @@
 <style>
   .admin-dock-container {
     position: fixed;
-    bottom: 1.5rem;
-    left: 50%;
-    transform: translateX(-50%) translateY(0);
+    top: 50%;
+    left: 1.25rem;
+    transform: translateY(-50%);
     z-index: 9000;
     pointer-events: auto;
     font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace !important;
-    animation: dockFloatIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    animation: dockFloatInLeft 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
-  @keyframes dockFloatIn {
+  @keyframes dockFloatInLeft {
     from {
       opacity: 0;
-      transform: translateX(-50%) translateY(20px);
+      transform: translateY(-50%) translateX(-24px);
     }
     to {
       opacity: 1;
-      transform: translateX(-50%) translateY(0);
+      transform: translateY(-50%) translateX(0);
     }
   }
 
   .dock-pill {
     display: flex;
+    flex-direction: column;
     align-items: center;
     gap: 0.35rem;
-    padding: 0.4rem 0.65rem;
-    background: rgba(14, 18, 27, 0.88);
-    backdrop-filter: blur(24px) saturate(180%);
-    -webkit-backdrop-filter: blur(24px) saturate(180%);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    padding: 0.65rem 0.45rem;
+    background: rgba(14, 18, 27, 0.92);
+    backdrop-filter: blur(28px) saturate(180%);
+    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 9999px;
     box-shadow: 
-      0 12px 36px -4px rgba(0, 0, 0, 0.7),
-      0 0 0 1px rgba(229, 169, 106, 0.15),
-      inset 0 1px 0 rgba(255, 255, 255, 0.15);
+      0 12px 36px -4px rgba(0, 0, 0, 0.75),
+      0 0 0 1px rgba(229, 169, 106, 0.18),
+      inset 0 1px 0 rgba(255, 255, 255, 0.18);
   }
 
   .status-indicator {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
-    padding: 0.45rem 0.75rem;
+    gap: 0.25rem;
+    padding: 0.45rem 0.35rem;
     border-radius: 9999px;
     background: rgba(16, 185, 129, 0.1);
     border: 1px solid rgba(16, 185, 129, 0.2);
@@ -183,18 +185,18 @@
   }
 
   .status-text {
-    font-size: 0.7rem;
+    font-size: 0.58rem;
     font-weight: 700;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.05em;
     color: #6EE7B7;
     font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   }
 
   .dock-divider {
-    width: 1px;
-    height: 22px;
-    background: rgba(255, 255, 255, 0.1);
-    margin: 0 0.15rem;
+    width: 22px;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.12);
+    margin: 0.15rem 0;
   }
 
   .dock-btn {
@@ -203,8 +205,9 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.2rem;
-    padding: 0.35rem 0.65rem;
+    gap: 0.18rem;
+    padding: 0.4rem 0.45rem;
+    width: 48px;
     background: transparent;
     border: 1px solid transparent;
     border-radius: 12px;
@@ -218,25 +221,25 @@
     background: rgba(255, 255, 255, 0.08);
     border-color: rgba(255, 255, 255, 0.15);
     color: #FFFFFF;
-    transform: translateY(-2px);
+    transform: translateX(3px);
   }
 
   .dock-btn:active {
-    transform: translateY(0) scale(0.95);
+    transform: translateX(0) scale(0.95);
   }
 
   .dock-icon-wrapper {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     color: #E5A96A;
     transition: transform 0.2s ease;
   }
 
   .dock-btn:hover .dock-icon-wrapper {
-    transform: scale(1.1);
+    transform: scale(1.12);
   }
 
   .dock-btn-danger .icon-danger {
@@ -244,41 +247,45 @@
   }
 
   .dock-label {
-    font-size: 0.64rem;
+    font-size: 0.58rem;
     font-weight: 500;
-    letter-spacing: 0.02em;
+    letter-spacing: 0.01em;
     color: #9CA3AF;
     transition: color 0.2s;
+    text-align: center;
+    line-height: 1.1;
   }
 
   .dock-btn:hover .dock-label {
     color: #E5E7EB;
   }
 
-  /* Tooltip via data-tooltip */
+  /* Tooltip on the RIGHT side for left-dock */
   .dock-btn[data-tooltip]::after {
     content: attr(data-tooltip);
     position: absolute;
-    bottom: calc(100% + 10px);
-    left: 50%;
-    transform: translateX(-50%) translateY(4px);
+    left: calc(100% + 12px);
+    top: 50%;
+    bottom: auto;
+    transform: translateY(-50%) translateX(-4px);
     background: rgba(15, 18, 26, 0.95);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    border: 1px solid rgba(255, 255, 255, 0.14);
     color: #F3F4F6;
-    padding: 0.3rem 0.6rem;
+    padding: 0.35rem 0.65rem;
     border-radius: 6px;
     font-size: 0.72rem;
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
     transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
+    z-index: 9999;
   }
 
   .dock-btn[data-tooltip]:hover::after {
     opacity: 1;
-    transform: translateX(-50%) translateY(0);
+    transform: translateY(-50%) translateX(0);
   }
 
   /* Toast notification styles */
@@ -333,9 +340,16 @@
   }
 
   @media (max-width: 640px) {
+    .admin-dock-container {
+      left: 0.4rem;
+    }
     .dock-pill {
-      padding: 0.3rem 0.45rem;
+      padding: 0.45rem 0.25rem;
       gap: 0.2rem;
+    }
+    .dock-btn {
+      width: 40px;
+      padding: 0.35rem 0.2rem;
     }
     .dock-label {
       display: none;
@@ -344,7 +358,7 @@
       display: none;
     }
     .status-indicator {
-      padding: 0.45rem;
+      padding: 0.35rem;
     }
   }
 </style>

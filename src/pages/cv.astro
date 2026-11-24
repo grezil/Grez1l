@@ -90,7 +90,7 @@ const description = `Official Harvard-style Academic and Technical Curriculum Vi
   .cv-page-container {
     min-height: 100vh;
     padding-top: 1.5rem;
-    padding-bottom: 5rem;
+    padding-bottom: 8rem;
     position: relative;
   }
 
@@ -163,7 +163,7 @@ const description = `Official Harvard-style Academic and Technical Curriculum Vi
   /* Floating Print Dock for Quick Access */
   .floating-print-dock {
     position: fixed;
-    bottom: 2rem;
+    bottom: 5.5rem;
     right: 2rem;
     z-index: 90;
     display: none;
@@ -201,6 +201,12 @@ const description = `Official Harvard-style Academic and Technical Curriculum Vi
   }
 
   @media print {
+    .floating-print-dock,
+    .cv-page-nav,
+    .no-print {
+      display: none !important;
+    }
+
     .cv-page-container {
       padding: 0 !important;
       margin: 0 !important;
