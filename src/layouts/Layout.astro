@@ -84,12 +84,6 @@ const isBlog = pathname.startsWith('/blog');
             </a>
 
             {isHome && (
-              <a href="#achievements" class="segmented-item nav-anchor">
-                <span>Distinctions</span>
-              </a>
-            )}
-
-            {isHome && (
               <a href="#timeline" class="segmented-item nav-anchor">
                 <span>Timeline</span>
               </a>
@@ -181,7 +175,6 @@ const isBlog = pathname.startsWith('/blog');
             <a href="/">Home</a>
             <a href="/cv">Harvard CV</a>
             <a href="/blog">Technical Blog</a>
-            {isHome && <a href="#achievements">Distinctions</a>}
             {isHome && <a href="#timeline">Timeline</a>}
             <a href="/admin" class="footer-admin-link">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

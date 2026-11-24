@@ -2,14 +2,12 @@
 // Streamlined Apple-Grade Space Engineer Portfolio
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
-import Achievements from '../components/Achievements.astro';
 import Timeline from '../components/Timeline.astro';
-import BlogTimeline from '../components/BlogTimeline.astro';
 import HarvardCV from '../components/HarvardCV.astro';
 
 import portfolioData from '../data/portfolio.json';
 
-const { profile, timeline, achievements = [] } = portfolioData;
+const { profile, timeline } = portfolioData;
 ---
 
 <Layout 
@@ -69,18 +67,8 @@ const { profile, timeline, achievements = [] } = portfolioData;
 
   <!-- Primary Presentation Panel 1: Executive Profile & Highlights -->
   <div id="panel-telemetry-view" class="presentation-panel active-panel" role="tabpanel" aria-labelledby="btn-telemetry-mode">
-    <!-- Executive Hero: Highlights Võ Quang Nhật Nguyên, Caltech/MIT credentials, flight record, verified contacts -->
+    <!-- Executive Hero: Highlights VO QUANG NHAT NGUYEN, Caltech/MIT credentials, flight record, verified contacts -->
     <Hero profile={profile} />
-
-    <div class="section-divider" aria-hidden="true"></div>
-
-    <!-- Honors, Distinctions & Flight Milestones (Upload thành tích + thời gian) -->
-    <Achievements achievements={achievements} />
-
-    <div class="section-divider" aria-hidden="true"></div>
-
-    <!-- Latest Orbital Engineering Dispatches & Blog Timeline (Latest uploaded blog posts chronologically) -->
-    <BlogTimeline limit={4} />
 
     <div class="section-divider" aria-hidden="true"></div>
 
