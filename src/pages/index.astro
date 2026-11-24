@@ -72,11 +72,17 @@ const { profile, timeline, achievements = [] } = portfolioData;
     <!-- Executive Hero: Highlights Võ Quang Nhật Nguyên, Caltech/MIT credentials, flight record, verified contacts -->
     <Hero profile={profile} />
 
+    <div class="section-divider" aria-hidden="true"></div>
+
     <!-- Honors, Distinctions & Flight Milestones (Upload thành tích + thời gian) -->
     <Achievements achievements={achievements} />
 
+    <div class="section-divider" aria-hidden="true"></div>
+
     <!-- Latest Orbital Engineering Dispatches & Blog Timeline (Latest uploaded blog posts chronologically) -->
     <BlogTimeline limit={4} />
+
+    <div class="section-divider" aria-hidden="true"></div>
 
     <!-- Career Trajectory & Flight Heritage Log -->
     <Timeline timeline={timeline} />

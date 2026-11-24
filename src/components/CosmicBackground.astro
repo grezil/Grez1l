@@ -8,6 +8,38 @@
   <div class="nebula-layer nebula-2"></div>
   <div class="nebula-layer nebula-3"></div>
 
+  <!-- Earth Atmospheric Limb (Curved Horizon Glow from 540km LEO Orbit) -->
+  <div class="earth-horizon-limb">
+    <div class="earth-atmosphere-glow"></div>
+    <div class="earth-ozone-line"></div>
+    <div class="earth-curvature-body"></div>
+  </div>
+
+  <!-- Subtle Celestial & Orbital Coordinate Grid (Flight Mission Operations) -->
+  <div class="celestial-grid-overlay">
+    <svg class="celestial-grid-svg" viewBox="0 0 1920 1080" preserveAspectRatio="none">
+      <defs>
+        <linearGradient id="gridLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="rgba(142, 149, 165, 0.01)" />
+          <stop offset="50%" stop-color="rgba(142, 149, 165, 0.06)" />
+          <stop offset="100%" stop-color="rgba(142, 149, 165, 0.01)" />
+        </linearGradient>
+      </defs>
+      <!-- Horizontal Parallels -->
+      <line x1="0" y1="280" x2="1920" y2="280" stroke="url(#gridLineGrad)" stroke-width="0.75" stroke-dasharray="4 8" />
+      <line x1="0" y1="560" x2="1920" y2="560" stroke="url(#gridLineGrad)" stroke-width="0.75" stroke-dasharray="4 8" />
+      <line x1="0" y1="840" x2="1920" y2="840" stroke="url(#gridLineGrad)" stroke-width="0.75" stroke-dasharray="4 8" />
+      <!-- Astrodynamics Meridian Arcs -->
+      <path d="M 400,0 Q 480,540 400,1080" fill="none" stroke="url(#gridLineGrad)" stroke-width="0.75" stroke-dasharray="3 7" />
+      <path d="M 960,0 Q 1020,540 960,1080" fill="none" stroke="url(#gridLineGrad)" stroke-width="0.75" stroke-dasharray="3 7" />
+      <path d="M 1520,0 Q 1580,540 1520,1080" fill="none" stroke="url(#gridLineGrad)" stroke-width="0.75" stroke-dasharray="3 7" />
+      <!-- Coordinate Labels -->
+      <text x="495" y="275" fill="#8E95A5" font-size="8" font-family="'SF Mono', monospace" opacity="0.45">+32° 00' N // RAAN 142.6°</text>
+      <text x="1035" y="555" fill="#8E95A5" font-size="8" font-family="'SF Mono', monospace" opacity="0.45">EQUATORIAL REF [J2000] // INCL 53.0°</text>
+      <text x="1595" y="835" fill="#8E95A5" font-size="8" font-family="'SF Mono', monospace" opacity="0.45">-28° 00' S // EPOCH 2026.89</text>
+    </svg>
+  </div>
+
   <!-- Cosmic Celestial Starfield Canvas -->
   <canvas id="cosmic-starfield" class="starfield-canvas"></canvas>
 
@@ -18,10 +50,11 @@
       <defs>
         <!-- Trajectory Gradient -->
         <linearGradient id="orbitalPathGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stop-color="rgba(142, 149, 165, 0.04)" />
-          <stop offset="45%" stop-color="rgba(229, 169, 106, 0.22)" />
-          <stop offset="65%" stop-color="rgba(142, 149, 165, 0.18)" />
-          <stop offset="100%" stop-color="rgba(142, 149, 165, 0.04)" />
+          <stop offset="0%" stop-color="rgba(142, 149, 165, 0.03)" />
+          <stop offset="35%" stop-color="rgba(56, 189, 248, 0.25)" />
+          <stop offset="55%" stop-color="rgba(229, 169, 106, 0.35)" />
+          <stop offset="75%" stop-color="rgba(142, 149, 165, 0.18)" />
+          <stop offset="100%" stop-color="rgba(142, 149, 165, 0.03)" />
         </linearGradient>
 
         <!-- Solar Panel Cell Shimmer Gradient -->
@@ -59,16 +92,16 @@
         d="M -100,480 Q 550,110 1700,240"
         fill="none"
         stroke="url(#orbitalPathGrad)"
-        stroke-width="1.25"
+        stroke-width="1.35"
         stroke-dasharray="6 7"
       />
 
       <!-- Orbit Telemetry Waypoint Markers -->
-      <circle cx="450" cy="188" r="2.5" fill="#E5A96A" opacity="0.4" />
-      <text x="460" y="185" fill="#8E95A5" font-size="9" font-family="'SF Mono', monospace" opacity="0.65">APOGEE 550KM</text>
+      <circle cx="450" cy="188" r="2.5" fill="#E5A96A" opacity="0.5" />
+      <text x="460" y="185" fill="#E5A96A" font-size="9" font-family="'SF Mono', monospace" opacity="0.75">APOGEE 550KM // 7.61 KM/S</text>
 
-      <circle cx="1150" cy="186" r="2" fill="#8E95A5" opacity="0.3" />
-      <text x="1160" y="183" fill="#8E95A5" font-size="9" font-family="'SF Mono', monospace" opacity="0.5">ASCENDING NODE</text>
+      <circle cx="1150" cy="186" r="2" fill="#38BDF8" opacity="0.4" />
+      <text x="1160" y="183" fill="#8E95A5" font-size="9" font-family="'SF Mono', monospace" opacity="0.6">ASCENDING NODE // INCL 53.0°</text>
     </svg>
 
     <!-- Orbiting Satellite Vessel Assembly -->
@@ -151,6 +184,20 @@
       </div>
     </div>
   </div>
+
+  <!-- Ambient Aerospace Telemetry HUD HUD Strip (Minimalist Apple Style) -->
+  <div class="cosmic-telemetry-hud" aria-hidden="true">
+    <div class="hud-pill">
+      <span class="hud-live-dot"></span>
+      <span class="hud-item-mono">ORBIT: LEO 542.4 KM</span>
+      <span class="hud-sep">•</span>
+      <span class="hud-item-mono">VEL: 7.61 KM/S</span>
+      <span class="hud-sep">•</span>
+      <span class="hud-item-mono">INCL: 53.0°</span>
+      <span class="hud-sep">•</span>
+      <span class="hud-item-mono text-cyan">CCSDS SYNCED</span>
+    </div>
+  </div>
 </div>
 
 <style>
@@ -211,6 +258,117 @@
     height: 100%;
     display: block;
     pointer-events: none;
+  }
+
+  /* Earth Atmospheric Limb (Curved Horizon Glow from 540km LEO Orbit) */
+  .earth-horizon-limb {
+    position: absolute;
+    bottom: -320px;
+    left: -20%;
+    width: 140%;
+    height: 520px;
+    border-radius: 50% 50% 0 0;
+    pointer-events: none;
+    overflow: hidden;
+    z-index: 1;
+    opacity: 0.85;
+  }
+
+  .earth-atmosphere-glow {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 120px;
+    background: radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.16) 0%, rgba(37, 99, 235, 0.08) 40%, rgba(14, 20, 36, 0.02) 75%, transparent 100%);
+    filter: blur(24px);
+  }
+
+  .earth-ozone-line {
+    position: absolute;
+    top: 18px;
+    left: 5%;
+    width: 90%;
+    height: 2px;
+    background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.35) 25%, rgba(147, 197, 253, 0.5) 50%, rgba(56, 189, 248, 0.35) 75%, transparent 100%);
+    filter: blur(1px);
+    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+  }
+
+  .earth-curvature-body {
+    position: absolute;
+    top: 24px;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(ellipse at 50% 0%, rgba(10, 16, 28, 0.95) 0%, rgba(6, 8, 14, 0.98) 60%, #06080D 100%);
+  }
+
+  /* Celestial & Orbital Coordinate Grid */
+  .celestial-grid-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+  }
+
+  .celestial-grid-svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+    opacity: 0.8;
+  }
+
+  /* Ambient Aerospace Telemetry HUD Strip */
+  .cosmic-telemetry-hud {
+    position: absolute;
+    bottom: 1.25rem;
+    right: 1.5rem;
+    z-index: 2;
+    pointer-events: none;
+    opacity: 0.65;
+    transition: opacity 0.3s ease;
+  }
+
+  .hud-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.25rem 0.75rem;
+    background: rgba(14, 18, 27, 0.75);
+    border: 1px solid rgba(142, 149, 165, 0.16);
+    border-radius: 9999px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+  }
+
+  .hud-live-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 6px #10B981;
+  }
+
+  .hud-item-mono {
+    font-family: 'SF Mono', ui-monospace, Menlo, monospace;
+    font-size: 0.6875rem;
+    letter-spacing: 0.05em;
+    color: #8E95A5;
+  }
+
+  .hud-sep {
+    color: rgba(142, 149, 165, 0.3);
+    font-size: 0.625rem;
+  }
+
+  @media (max-width: 900px) {
+    .cosmic-telemetry-hud {
+      display: none;
+    }
   }
 
   /* Orbital System */
