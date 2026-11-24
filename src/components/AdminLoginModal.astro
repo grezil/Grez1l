@@ -25,33 +25,54 @@
       </div>
       <h2 id="admin-modal-title" class="modal-title">Flight Deck Authorization</h2>
       <p class="modal-subtitle">
-        Enter authorization passkey to access CV content management, add achievements, and publish mission logs.
+        Enter administrator username and security password to access CV content management, add achievements, and publish mission logs.
       </p>
     </div>
 
     <!-- Login Form -->
     <form id="admin-login-form" class="modal-form" autocomplete="off">
+      <!-- Username Field -->
       <div class="form-group">
-        <label for="admin-passkey-input" class="form-label">
-          <span>Security Passkey</span>
-          <button type="button" id="admin-quick-fill-btn" class="quick-fill-link" title="Fill default test credentials">
-            Use default (apollo11)
-          </button>
+        <label for="admin-username-input" class="form-label">
+          <span>Username / Tài khoản</span>
         </label>
         <div class="input-container">
           <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M21 2l-2 2m-1.5 1.5L16 7l-1.5-1.5-2 2L12 6l-2 2 1.5 1.5L10 11l-1.5-1.5-2 2L8 13l-1.5-1.5-2 2L6 15l-1.5-1.5L3 15v6h6l1.5-1.5L9 18l1.5-1.5 2-2L14 16l1.5-1.5 2 2 1.5-1.5 2-2 2-2z"></path>
+            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+            <circle cx="12" cy="7" r="4"></circle>
+          </svg>
+          <input
+            type="text"
+            id="admin-username-input"
+            name="username"
+            class="form-input"
+            placeholder="Nhập tài khoản (admin)..."
+            required
+            autocomplete="username"
+          />
+        </div>
+      </div>
+
+      <!-- Password Field -->
+      <div class="form-group">
+        <label for="admin-passkey-input" class="form-label">
+          <span>Security Password / Mật khẩu</span>
+        </label>
+        <div class="input-container">
+          <svg class="input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
+            <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
           </svg>
           <input
             type="password"
             id="admin-passkey-input"
             name="passkey"
             class="form-input"
-            placeholder="Enter flight passkey..."
+            placeholder="Nhập mật khẩu..."
             required
             autocomplete="current-password"
           />
-          <button type="button" id="admin-toggle-visibility" class="toggle-visibility-btn" aria-label="Toggle passkey visibility">
+          <button type="button" id="admin-toggle-visibility" class="toggle-visibility-btn" aria-label="Toggle password visibility">
             <svg id="pass-eye-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
               <circle cx="12" cy="12" r="3"></circle>
@@ -416,19 +437,21 @@
     const closeBtn = document.getElementById('admin-login-close');
     const cancelBtn = document.getElementById('admin-login-cancel');
     const form = document.getElementById('admin-login-form');
-    const input = document.getElementById('admin-passkey-input');
+    const usernameInput = document.getElementById('admin-username-input') as HTMLInputElement;
+    const input = document.getElementById('admin-passkey-input') as HTMLInputElement;
     const toggleBtn = document.getElementById('admin-toggle-visibility');
-    const quickFillBtn = document.getElementById('admin-quick-fill-btn');
     const feedback = document.getElementById('admin-login-feedback');
     const feedbackText = document.getElementById('admin-login-feedback-text');
 
     function openModal() {
       modal.classList.add('is-active', 'is-open');
       modal.setAttribute('aria-hidden', 'false');
-      if (input) {
-        input.value = '';
-        setTimeout(() => input.focus(), 150);
-      }
+      if (usernameInput) usernameInput.value = '';
+      if (input) input.value = '';
+      setTimeout(() => {
+        if (usernameInput) usernameInput.focus();
+        else if (input) input.focus();
+      }, 150);
       hideFeedback();
     }
 
@@ -464,58 +487,55 @@
       toggleBtn.style.color = isPass ? '#E5A96A' : '#6B7280';
     });
 
-    // Quick fill helper
-    quickFillBtn?.addEventListener('click', () => {
-      if (input) {
-        input.value = 'apollo11';
-        input.focus();
-      }
-    });
-
     // Handle Form Submit
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const enteredKey = input?.value?.trim() || '';
+      const enteredUser = usernameInput?.value?.trim() || '';
+      const enteredPass = input?.value?.trim() || '';
 
       try {
         let authOk = false;
-        // Dynamically check store.js if available
         let storeModule = null;
         try {
           storeModule = await import('../scripts/store.js');
         } catch (err) {
-          // fallback if store not yet exported or browser local evaluation
+          // fallback
         }
 
         if (storeModule && typeof storeModule.loginAdmin === 'function') {
-          const res = storeModule.loginAdmin(enteredKey);
+          const res = storeModule.loginAdmin(enteredUser, enteredPass);
           authOk = typeof res === 'object' && res !== null ? res.success : Boolean(res);
         } else {
-          // Fallback direct check against default or stored key
-          const storedKey = localStorage.getItem('astro_admin_passkey') || 'apollo11';
-          authOk = (enteredKey === storedKey);
+          // ponytail: strict fallback username & password check
+          authOk = (enteredUser === 'admin' && enteredPass === 'NhatNguyen141');
         }
 
         if (authOk) {
-          localStorage.setItem('space_portfolio_admin_auth', 'true');
-          localStorage.setItem('astro_admin_auth', 'true');
-          localStorage.setItem('portfolio_admin_authenticated', 'true');
+          localStorage.setItem('space_portfolio_admin_session_v2', JSON.stringify({
+            user: 'admin',
+            authenticated: true,
+            authAt: Date.now()
+          }));
+          // Clean legacy keys
+          localStorage.removeItem('space_portfolio_admin_auth');
+          localStorage.removeItem('astro_admin_auth');
+          localStorage.removeItem('portfolio_admin_authenticated');
+          localStorage.removeItem('astro_portfolio_auth');
+
           window.dispatchEvent(new CustomEvent('portfolio-admin-auth-changed', { detail: { authenticated: true } }));
           window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
-          showFeedback('Access Granted. Telemetry Uplink Established.', true);
+          showFeedback('Đăng nhập thành công! Đang kích hoạt quyền quản trị...', true);
           setTimeout(() => {
             closeModal();
-            // Dispatch notification
             window.dispatchEvent(new CustomEvent('portfolio-admin-toast', {
-              detail: { message: 'Admin Mode Active. Full Mission Permissions Granted.', type: 'success' }
+              detail: { message: 'Quyền Admin đã kích hoạt. Phiên đăng nhập hợp lệ.', type: 'success' }
             }));
-            // If on /admin, reload or refresh view
             if (window.location.pathname.includes('/admin')) {
               window.location.reload();
             }
           }, 600);
         } else {
-          showFeedback('Invalid authorization passkey. Default is: apollo11', false);
+          showFeedback('Tên tài khoản hoặc mật khẩu không chính xác.', false);
           if (input) {
             input.select();
             input.focus();
@@ -523,7 +543,7 @@
         }
       } catch (err) {
         console.error('Authentication error:', err);
-        showFeedback('Authentication system error. Check console.', false);
+        showFeedback('Lỗi hệ thống đăng nhập. Vui lòng thử lại.', false);
       }
     });
 

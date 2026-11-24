@@ -1461,6 +1461,29 @@
     });
 
     function openModal(defaultTab?: string) {
+      // ponytail: guard editor modal behind verified admin session
+      let isAuthed = false;
+      try {
+        const raw = localStorage.getItem('space_portfolio_admin_session_v2');
+        if (raw) {
+          const s = JSON.parse(raw);
+          isAuthed = Boolean(s && s.user === 'admin' && s.authenticated === true);
+        }
+      } catch (e) {}
+
+      if (!isAuthed) {
+        const loginModal = document.getElementById('admin-login-modal');
+        if (loginModal) {
+          loginModal.classList.add('is-open', 'is-active');
+          loginModal.setAttribute('aria-hidden', 'false');
+          const userInput = loginModal.querySelector('input[type="text"]') as HTMLInputElement;
+          if (userInput) setTimeout(() => userInput.focus(), 150);
+        } else if (window.location.pathname !== '/admin') {
+          window.location.href = '/admin';
+        }
+        return;
+      }
+
       modal?.classList.add('is-active');
       modal?.setAttribute('aria-hidden', 'false');
       if (defaultTab) {

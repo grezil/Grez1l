@@ -52,8 +52,8 @@
     { "name": "Admin Control", "href": "/admin" }
   ],
   "admin": {
-    "defaultPasskey": "apollo11",
-    "passkey": "apollo11",
+    "username": "admin",
+    "password": "NhatNguyen141",
     "authorizedRoles": ["Flight Software Lead", "Mission Director", "Chief Architect"]
   },
   "education": [

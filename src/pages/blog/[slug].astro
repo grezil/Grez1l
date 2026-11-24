@@ -338,9 +338,16 @@ const renderedHtml = renderMarkdown(post.content || post.summary || '');
     function checkAdminState() {
       try {
         const store = (window as any).PortfolioStore;
-        const isAdmin = (store && typeof store.checkAdminAuth === 'function')
-          ? store.checkAdminAuth()
-          : (localStorage.getItem('space_portfolio_admin_auth') === 'true' || sessionStorage.getItem('space_portfolio_admin_auth') === 'true');
+        let isAdmin = false;
+        if (store && typeof store.checkAdminAuth === 'function') {
+          isAdmin = store.checkAdminAuth();
+        } else {
+          const raw = localStorage.getItem('space_portfolio_admin_session_v2');
+          if (raw) {
+            const s = JSON.parse(raw);
+            isAdmin = Boolean(s && s.user === 'admin' && s.authenticated === true);
+          }
+        }
 
         if (adminEditLink) {
           adminEditLink.style.display = isAdmin ? 'inline-flex' : 'none';

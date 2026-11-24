@@ -490,9 +490,16 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     // 4. Check Admin Auth to show quick compose button
     function checkAdminState() {
       try {
-        const isAdmin = (typeof checkAdminAuth === 'function')
-          ? checkAdminAuth()
-          : (sessionStorage.getItem('space_portfolio_admin_auth') === 'true' || localStorage.getItem('space_portfolio_admin_auth') === 'true');
+        let isAdmin = false;
+        if (typeof checkAdminAuth === 'function') {
+          isAdmin = checkAdminAuth();
+        } else {
+          const raw = localStorage.getItem('space_portfolio_admin_session_v2');
+          if (raw) {
+            const s = JSON.parse(raw);
+            isAdmin = Boolean(s && s.user === 'admin' && s.authenticated === true);
+          }
+        }
 
         if (adminComposeBtn) {
           adminComposeBtn.style.display = isAdmin ? 'inline-flex' : 'none';

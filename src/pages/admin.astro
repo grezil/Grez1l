@@ -29,11 +29,26 @@ import Layout from '../layouts/Layout.astro';
 
         <form id="admin-page-login-form" class="auth-form" autocomplete="off">
           <div class="form-field">
+            <label for="page-username-input" class="field-label">Tài khoản / Username</label>
+            <div class="auth-input-wrapper">
+              <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
+                <circle cx="12" cy="7" r="4"></circle>
+              </svg>
+              <input
+                type="text"
+                id="page-username-input"
+                class="auth-input"
+                placeholder="Nhập tài khoản (admin)..."
+                required
+                autocomplete="username"
+              />
+            </div>
+          </div>
+
+          <div class="form-field">
             <div class="field-label-row">
-              <label for="page-passkey-input" class="field-label">Authorization Passkey</label>
-              <button type="button" id="page-quick-fill-btn" class="quick-pass-hint">
-                Use default (apollo11)
-              </button>
+              <label for="page-passkey-input" class="field-label">Mật khẩu / Security Password</label>
             </div>
             <div class="auth-input-wrapper">
               <svg class="auth-input-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -43,7 +58,7 @@ import Layout from '../layouts/Layout.astro';
                 type="password"
                 id="page-passkey-input"
                 class="auth-input"
-                placeholder="Enter flight passkey..."
+                placeholder="Nhập mật khẩu..."
                 required
                 autocomplete="current-password"
               />
@@ -608,7 +623,7 @@ import Layout from '../layouts/Layout.astro';
               <!-- Passkey Management Form -->
               <div class="dash-form-card" style="margin-bottom:1.5rem;">
                 <h4 class="cv-sub-title">Update Admin Security Passkey</h4>
-                <p style="font-size:0.82rem; color:#8E95A5; margin-bottom:1rem;">Change your secret flight passkey (Default is: apollo11).</p>
+                <p style="font-size:0.82rem; color:#8E95A5; margin-bottom:1rem;">Change your secret flight password.</p>
                 <form id="dash-passkey-form" class="form-row form-row-2">
                   <div class="form-field">
                     <label for="dash-new-passkey" class="field-label">New Passkey (min 4 chars)</label>
@@ -1823,15 +1838,20 @@ import Layout from '../layouts/Layout.astro';
     }
 
     // Check if user is authenticated
+    // ponytail: check strict session object, invalidating legacy 'true' strings
     async function checkAuth() {
       const store = await getStore();
       if (store && typeof store.checkAdminAuth === 'function') {
         return store.checkAdminAuth();
       }
-      return (
-        localStorage.getItem('space_portfolio_admin_auth') === 'true' ||
-        localStorage.getItem('astro_admin_auth') === 'true'
-      );
+      try {
+        const raw = localStorage.getItem('space_portfolio_admin_session_v2');
+        if (!raw) return false;
+        const s = JSON.parse(raw);
+        return s && s.user === 'admin' && s.authenticated === true;
+      } catch (e) {
+        return false;
+      }
     }
 
     async function syncViews() {
@@ -1850,18 +1870,11 @@ import Layout from '../layouts/Layout.astro';
     // AUTH SCREEN LOGIC
     // ----------------------------------------------------
     const loginForm = document.getElementById('admin-page-login-form') as HTMLFormElement;
+    const userInput = document.getElementById('page-username-input') as HTMLInputElement;
     const passInput = document.getElementById('page-passkey-input') as HTMLInputElement;
     const togglePassBtn = document.getElementById('page-toggle-pass');
-    const quickFillBtn = document.getElementById('page-quick-fill-btn');
     const feedbackBox = document.getElementById('page-auth-feedback');
     const feedbackMsg = document.getElementById('page-feedback-msg');
-
-    quickFillBtn?.addEventListener('click', () => {
-      if (passInput) {
-        passInput.value = 'apollo11';
-        passInput.focus();
-      }
-    });
 
     togglePassBtn?.addEventListener('click', () => {
       if (!passInput) return;
@@ -1872,29 +1885,35 @@ import Layout from '../layouts/Layout.astro';
 
     loginForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const entered = passInput?.value?.trim() || '';
+      const enteredUser = userInput?.value?.trim() || '';
+      const enteredPass = passInput?.value?.trim() || '';
       const store = await getStore();
 
       let authResult: any = { success: false };
       if (store && typeof store.loginAdmin === 'function') {
-        authResult = store.loginAdmin(entered);
+        authResult = store.loginAdmin(enteredUser, enteredPass);
       } else {
-        const storedKey = localStorage.getItem('astro_admin_passkey') || 'apollo11';
-        authResult = { success: entered === storedKey };
-        if (authResult.success) {
-          localStorage.setItem('space_portfolio_admin_auth', 'true');
-          localStorage.setItem('astro_admin_auth', 'true');
-        }
+        // ponytail: fallback direct check for admin & NhatNguyen141
+        authResult = { success: enteredUser === 'admin' && enteredPass === 'NhatNguyen141' };
       }
 
       if (authResult.success) {
         if (feedbackBox && feedbackMsg) {
-          feedbackMsg.textContent = 'Access granted. Welcome to Mission Control.';
+          feedbackMsg.textContent = 'Đăng nhập thành công. Chào mừng tới Bảng điều khiển Quản trị.';
           feedbackBox.className = 'auth-feedback is-success';
           feedbackBox.style.display = 'flex';
         }
-        localStorage.setItem('space_portfolio_admin_auth', 'true');
-        localStorage.setItem('astro_admin_auth', 'true');
+        localStorage.setItem('space_portfolio_admin_session_v2', JSON.stringify({
+          user: 'admin',
+          authenticated: true,
+          authAt: Date.now()
+        }));
+        localStorage.removeItem('space_portfolio_admin_session_v2');
+      localStorage.removeItem('space_portfolio_admin_auth');
+        localStorage.removeItem('astro_admin_auth');
+        localStorage.removeItem('portfolio_admin_authenticated');
+        localStorage.removeItem('astro_portfolio_auth');
+
         window.dispatchEvent(new CustomEvent('portfolio-admin-auth-changed', { detail: { authenticated: true } }));
 
         setTimeout(() => {
@@ -1902,7 +1921,7 @@ import Layout from '../layouts/Layout.astro';
         }, 500);
       } else {
         if (feedbackBox && feedbackMsg) {
-          feedbackMsg.textContent = authResult.error || 'Invalid authorization passkey. Default is: apollo11';
+          feedbackMsg.textContent = authResult.error || 'Tên tài khoản hoặc mật khẩu không chính xác.';
           feedbackBox.className = 'auth-feedback';
           feedbackBox.style.display = 'flex';
         }
@@ -1919,6 +1938,7 @@ import Layout from '../layouts/Layout.astro';
       if (store && typeof store.logoutAdmin === 'function') {
         store.logoutAdmin();
       }
+      localStorage.removeItem('space_portfolio_admin_session_v2');
       localStorage.removeItem('space_portfolio_admin_auth');
       localStorage.removeItem('astro_admin_auth');
       localStorage.removeItem('portfolio_admin_authenticated');

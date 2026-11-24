@@ -701,22 +701,25 @@ const { profile } = Astro.props;
         e.preventDefault();
         e.stopPropagation();
 
-        // 1. Dispatch custom event for admin modal/dock
-        window.dispatchEvent(new CustomEvent('open-avatar-editor'));
-        window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'profile' } }));
+        // ponytail: verify admin session before opening editor
+        let isAuthed = false;
+        try {
+          const raw = localStorage.getItem('space_portfolio_admin_session_v2');
+          if (raw) {
+            const s = JSON.parse(raw);
+            isAuthed = Boolean(s && s.user === 'admin' && s.authenticated === true);
+          }
+        } catch (err) {}
 
-        // 2. Open Admin Editor Modal directly if present
-        const editorModal = document.getElementById('admin-editor-modal');
-        if (editorModal) {
-          editorModal.classList.add('is-open');
-          // Switch to profile or avatar tab if present
-          const profileTabBtn = editorModal.querySelector('[data-tab="profile"], [data-tab="avatar"]') as HTMLButtonElement;
-          if (profileTabBtn) profileTabBtn.click();
+        if (isAuthed) {
+          window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'profile' } }));
         } else {
-          // If not authenticated, open login modal
           const loginModal = document.getElementById('admin-login-modal');
           if (loginModal) {
-            loginModal.classList.add('is-open');
+            loginModal.classList.add('is-open', 'is-active');
+            loginModal.setAttribute('aria-hidden', 'false');
+            const userInput = loginModal.querySelector('input[type="text"]') as HTMLInputElement;
+            if (userInput) setTimeout(() => userInput.focus(), 150);
           } else {
             window.location.href = '/admin#profile';
           }

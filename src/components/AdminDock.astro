@@ -381,12 +381,15 @@
         }
       } catch (err) {}
 
-      return (
-        localStorage.getItem('space_portfolio_admin_auth') === 'true' ||
-        localStorage.getItem('astro_admin_auth') === 'true' ||
-        localStorage.getItem('portfolio_admin_authenticated') === 'true' ||
-        localStorage.getItem('astro_portfolio_auth') === 'true'
-      );
+      // ponytail: fallback direct session verification
+      try {
+        const raw = localStorage.getItem('space_portfolio_admin_session_v2');
+        if (!raw) return false;
+        const s = JSON.parse(raw);
+        return Boolean(s && s.user === 'admin' && s.authenticated === true);
+      } catch (e) {
+        return false;
+      }
     }
 
     async function syncDockVisibility() {
@@ -466,6 +469,7 @@
         }
       } catch (err) {}
 
+      localStorage.removeItem('space_portfolio_admin_session_v2');
       localStorage.removeItem('space_portfolio_admin_auth');
       localStorage.removeItem('astro_admin_auth');
       localStorage.removeItem('portfolio_admin_authenticated');

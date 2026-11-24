@@ -7,7 +7,10 @@
 import defaultPortfolioData from '../data/portfolio.json' with { type: 'json' };
 
 const STORAGE_KEY = 'space_portfolio_data_v1';
-const AUTH_KEY = 'space_portfolio_admin_auth';
+// ponytail: v2 session key requiring strict username + password
+const AUTH_KEY = 'space_portfolio_admin_session_v2';
+const VALID_USERNAME = 'admin';
+const VALID_PASSWORD = 'NhatNguyen141';
 const UPDATES_KEY = 'space_portfolio_update_count';
 const EVENT_NAME = 'portfolio-data-updated';
 
@@ -498,32 +501,64 @@ export function deleteBlog(slugOrId) {
 
 /**
  * Check if the user is currently logged in as Admin
+ * ponytail: strict verification of session object, invalidating legacy 'true' strings
  */
 export function checkAdminAuth() {
   if (!isBrowser) return false;
   try {
-    return localStorage.getItem(AUTH_KEY) === 'true';
+    const raw = localStorage.getItem(AUTH_KEY);
+    if (!raw) return false;
+    const session = JSON.parse(raw);
+    return session && session.user === VALID_USERNAME && session.authenticated === true;
   } catch (err) {
     return false;
   }
 }
 
 /**
- * Attempt Admin login with password / passkey
- * Default passkey: 'apollo11'
+ * Attempt Admin login with username and password
+ * Required credentials: username === 'admin' && password === 'NhatNguyen141'
+ * ponytail: supports loginAdmin(username, password) or loginAdmin({ username, password })
  */
-export function loginAdmin(password) {
-  const current = getData();
-  const configuredPasskey = current.admin?.passkey || current.admin?.defaultPasskey || 'apollo11';
+export function loginAdmin(usernameOrObj, maybePassword) {
+  let username = '';
+  let password = '';
 
-  if (!password) {
-    return { success: false, error: 'Password is required' };
+  if (typeof usernameOrObj === 'object' && usernameOrObj !== null) {
+    username = usernameOrObj.username || '';
+    password = usernameOrObj.password || usernameOrObj.passkey || '';
+  } else if (maybePassword !== undefined) {
+    username = usernameOrObj || '';
+    password = maybePassword || '';
+  } else {
+    username = '';
+    password = usernameOrObj || '';
   }
 
-  if (password.trim() === configuredPasskey.trim()) {
+  username = String(username).trim();
+  password = String(password).trim();
+
+  if (!username) {
+    return { success: false, error: 'Vui lòng nhập tên tài khoản (username).' };
+  }
+  if (!password) {
+    return { success: false, error: 'Vui lòng nhập mật khẩu (password).' };
+  }
+
+  // Strict check: username: admin, password: NhatNguyen141
+  if (username === VALID_USERNAME && password === VALID_PASSWORD) {
     if (isBrowser) {
       try {
-        localStorage.setItem(AUTH_KEY, 'true');
+        localStorage.setItem(AUTH_KEY, JSON.stringify({
+          user: VALID_USERNAME,
+          authenticated: true,
+          authAt: Date.now()
+        }));
+        // Clean out legacy keys from older sessions
+        localStorage.removeItem('space_portfolio_admin_auth');
+        localStorage.removeItem('astro_admin_auth');
+        localStorage.removeItem('portfolio_admin_authenticated');
+        localStorage.removeItem('astro_portfolio_auth');
       } catch (err) {
         console.error('Error saving admin auth session:', err);
       }
@@ -531,7 +566,7 @@ export function loginAdmin(password) {
     notifySubscribers();
     return { success: true };
   } else {
-    return { success: false, error: 'Invalid security passkey. Mission access denied.' };
+    return { success: false, error: 'Tên tài khoản hoặc mật khẩu không chính xác.' };
   }
 }
 
@@ -542,6 +577,10 @@ export function logoutAdmin() {
   if (isBrowser) {
     try {
       localStorage.removeItem(AUTH_KEY);
+      localStorage.removeItem('space_portfolio_admin_auth');
+      localStorage.removeItem('astro_admin_auth');
+      localStorage.removeItem('portfolio_admin_authenticated');
+      localStorage.removeItem('astro_portfolio_auth');
     } catch (err) {
       console.error('Error clearing admin auth session:', err);
     }
