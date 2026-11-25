@@ -14,7 +14,7 @@ const { profile, timeline } = portfolioData;
   title={`${profile.name} | ${profile.title}`} 
   description={`${profile.title} - ${profile.tagline}`}
 >
-  <!-- Apple-Style Segmented View Switcher: Executive Overview vs Harvard Academic CV -->
+  <!-- Apple-Style Segmented View Switcher: Executive Overview vs My CV -->
   <div class="view-switcher-bar no-print" id="view-switcher-bar">
     <div class="container view-switcher-inner">
       <div class="apple-view-segmented" role="tablist" aria-label="Portfolio Presentation Mode">
@@ -48,13 +48,13 @@ const { profile, timeline } = portfolioData;
             <line x1="16" y1="17" x2="8" y2="17"></line>
             <polyline points="10 9 9 9 8 9"></polyline>
           </svg>
-          <span>Harvard Academic CV</span>
+          <span>My CV</span>
           <span class="view-tag-badge">FAS Standard</span>
         </button>
       </div>
 
       <div class="view-switcher-right">
-        <a href="/cv" class="btn-dedicated-cv" title="Open full dedicated Harvard CV page with 1-click PDF print">
+        <a href="/cv" class="btn-dedicated-cv" title="Open full dedicated My CV page with 1-click PDF print">
           <span>Dedicated CV Page</span>
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <line x1="7" y1="17" x2="17" y2="7"></line>
@@ -76,7 +76,7 @@ const { profile, timeline } = portfolioData;
     <Timeline timeline={timeline} />
   </div>
 
-  <!-- Primary Presentation Panel 2: Harvard Academic CV View -->
+  <!-- Primary Presentation Panel 2: My CV View -->
   <div id="panel-harvard-view" class="presentation-panel cv-panel" role="tabpanel" aria-labelledby="btn-harvard-mode" style="display: none;">
     <div class="container cv-view-container">
       <HarvardCV initialTheme="paper" hideControls={false} />

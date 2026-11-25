@@ -1,10 +1,10 @@
 ---
 /**
- * cv.astro - Dedicated Harvard Academic Curriculum Vitae Page
+ * cv.astro - Dedicated My CV Page
  *
  * Route: /cv
  * Features:
- * - Dedicated page showcasing authentic Harvard Academic CV format
+ * - Dedicated page showcasing authentic My CV format
  * - 1-Click 'Print / Save as PDF' triggering system print dialog with pristine @media print styling
  * - Seamless toggle between 'Academic Paper Mode' and 'Cosmic Dark Mode'
  * - Reactive real-time updates from store.js without page refresh
@@ -15,8 +15,8 @@ import HarvardCV from '../components/HarvardCV.astro';
 import defaultData from '../data/portfolio.json';
 
 const profile = defaultData.profile || {};
-const title = `${profile.name} (${profile.englishName || 'Nhat Nguyen Vo'}) | Harvard Academic Curriculum Vitae | Space Systems`;
-const description = `Official Harvard-style Academic and Technical Curriculum Vitae for ${profile.name} (Nhat Nguyen Vo), ${profile.title}. Flight heritage, publications, and space engineering credentials.`;
+const title = `${profile.name} (${profile.englishName || 'Nhat Nguyen Vo'}) | My CV | Space Systems`;
+const description = `Official My CV for ${profile.name} (Nhat Nguyen Vo), ${profile.title}. Flight heritage, publications, and space engineering credentials.`;
 ---
 
 <Layout title={title} description={description}>
@@ -31,7 +31,7 @@ const description = `Official Harvard-style Academic and Technical Curriculum Vi
           <span>Return to Telemetry Console</span>
         </a>
         <span class="crumb-sep">/</span>
-        <span class="crumb-current">Academic CV (Harvard Format)</span>
+        <span class="crumb-current">My CV</span>
       </div>
 
       <div class="cv-status-meta">
