@@ -2,6 +2,7 @@
  * Space Portfolio Client-Side Reactive Store & Data Engine
  * 
  * Manages reactive state via localStorage with SSR fallback to src/data/portfolio.json.
+ * Tracks course syllabi, telemetry metrics, and activity events for the Habit Tracker.
  * Dispatches 'portfolio-data-updated' CustomEvent on all mutations.
  */
 import defaultPortfolioData from '../data/portfolio.json' with { type: 'json' };
@@ -12,6 +13,7 @@ const AUTH_KEY = 'space_portfolio_admin_session_v2';
 const VALID_USERNAME = 'admin';
 const VALID_PASSWORD = 'NhatNguyen141';
 const UPDATES_KEY = 'space_portfolio_update_count';
+const ACTIVITY_LOG_KEY = 'space_portfolio_activity_log';
 const EVENT_NAME = 'portfolio-data-updated';
 
 // Helper to test browser environment
@@ -25,6 +27,15 @@ function deepClone(obj) {
     console.error('Deep clone error:', e);
     return obj;
   }
+}
+
+// Native date formatter to YYYY-MM-DD avoiding UTC offset issues
+function formatDate(d) {
+  const dateObj = d instanceof Date ? d : new Date(d);
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, '0');
+  const day = String(dateObj.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 // In-memory fallback / cache
@@ -71,16 +82,20 @@ export function incrementUpdateCount() {
 
 /**
  * Get dynamic live dashboard telemetry stats:
- * { blogsCount, achievementsCount, updatesCount }
+ * { blogsCount, achievementsCount, coursesCount, activitiesCount, updatesCount }
  */
 export function getDashboardStats() {
   const current = getData();
   const blogsCount = (current.blogs || []).length;
   const achievementsCount = (current.achievements || []).length;
+  const coursesCount = (current.courses || []).length;
+  const activitiesCount = getActivityLog().length;
   const updatesCount = getUpdateCount();
   return {
     blogsCount,
     achievementsCount,
+    coursesCount,
+    activitiesCount,
     updatesCount
   };
 }
@@ -108,6 +123,23 @@ export function getData() {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
       } catch (e) {}
     }
+
+    // Ensure courses and activities exist in parsed data from local storage
+    let needsResave = false;
+    if (!parsed.courses || !Array.isArray(parsed.courses) || parsed.courses.length === 0) {
+      parsed.courses = deepClone(defaultPortfolioData.courses || []);
+      needsResave = true;
+    }
+    if (!parsed.activities || !Array.isArray(parsed.activities) || parsed.activities.length === 0) {
+      parsed.activities = deepClone(defaultPortfolioData.activities || []);
+      needsResave = true;
+    }
+    if (needsResave) {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
+      } catch (e) {}
+    }
+
     memoryData = parsed;
     return parsed;
   } catch (err) {
@@ -128,6 +160,7 @@ export function saveData(newData) {
   if (newData.profile && Array.isArray(newData.profile.telemetryStats)) {
     const blogsCount = (newData.blogs || []).length;
     const achCount = (newData.achievements || []).length;
+    const coursesCount = (newData.courses || []).length;
 
     newData.profile.telemetryStats = newData.profile.telemetryStats.map(stat => {
       const labelLower = (stat.label || '').toLowerCase();
@@ -137,6 +170,9 @@ export function saveData(newData) {
       }
       if (key === 'achievements' || labelLower.includes('honor') || labelLower.includes('award')) {
         return { ...stat, value: String(achCount) };
+      }
+      if (key === 'courses' || labelLower.includes('course')) {
+        return { ...stat, value: String(coursesCount) };
       }
       if (key === 'updates' || labelLower.includes('update') || labelLower.includes('revision')) {
         return { ...stat, value: String(updatedRevision) };
@@ -184,7 +220,7 @@ export function notifySubscribers() {
 }
 
 /**
- * Helper to slugify strings for blog URLs
+ * Helper to slugify strings for URLs and IDs
  */
 export function slugify(text) {
   if (!text) return `entry-${Date.now()}`;
@@ -225,6 +261,7 @@ export function updateProfileAvatar(dataUrlOrUrl) {
   if (!current.profile) current.profile = {};
   current.profile.avatar = dataUrlOrUrl;
   saveData(current);
+  logActivity('cv', 'Updated Profile Avatar', 'New mission portrait uploaded');
   return dataUrlOrUrl;
 }
 
@@ -244,6 +281,7 @@ export function updateCVDocumentHtml(html) {
   if (!current.profile) current.profile = {};
   current.profile.cvDocumentHtml = html;
   saveData(current);
+  logActivity('cv', 'Updated CV Document', 'Word-style document revised');
   return html;
 }
 
@@ -289,7 +327,16 @@ export function updateCVData(sectionOrFull, maybeData) {
   }
 
   saveData(current);
+  const sectionLabel = typeof sectionOrFull === 'string' ? sectionOrFull : 'Dossier';
+  logActivity('cv', `CV Updated: ${sectionLabel}`, 'Modified academic credentials & records');
   return getCVData();
+}
+
+/**
+ * Alias for updateCVData
+ */
+export function saveCVData(sectionOrFull, maybeData) {
+  return updateCVData(sectionOrFull, maybeData);
 }
 
 // ==========================================
@@ -347,6 +394,7 @@ export function addAchievement(achievement) {
   }
 
   saveData(current);
+  logActivity('achievement', newAch.title, newAch.organization || 'Conferred milestone', newAch.timeline || null);
   return newAch;
 }
 
@@ -367,6 +415,7 @@ export function updateAchievement(id, updated) {
   };
 
   saveData(current);
+  logActivity('achievement', updated.title || current.achievements[index].title || 'Milestone Updated', 'Modified milestone details');
   return current.achievements[index];
 }
 
@@ -424,7 +473,7 @@ export function addBlog(blog) {
   const content = blog.content || '';
   const readTime = blog.readTime || calculateReadTime(content);
   const now = new Date();
-  const dateStr = blog.date || now.toISOString().split('T')[0];
+  const dateStr = blog.date || formatDate(now);
 
   const newPost = {
     id: blog.id || `post-${Date.now()}`,
@@ -449,6 +498,7 @@ export function addBlog(blog) {
 
   current.blogs.unshift(newPost);
   saveData(current);
+  logActivity('blog', newPost.title, newPost.summary || 'Published technical dispatch', newPost.date || null);
   return newPost;
 }
 
@@ -475,6 +525,7 @@ export function updateBlog(slugOrId, updated) {
   };
 
   saveData(current);
+  logActivity('blog', updated.title || current.blogs[index].title || 'Blog Updated', 'Revised technical dispatch');
   return current.blogs[index];
 }
 
@@ -496,7 +547,401 @@ export function deleteBlog(slugOrId) {
 }
 
 // ==========================================
-// 4. ADMIN AUTHENTICATION METHODS
+// 4. COURSES & ACADEMIC DOSSIER METHODS
+// ==========================================
+
+/**
+ * Get all courses from store with fallback to portfolio.json
+ */
+export function getCourses() {
+  const current = getData();
+  const courses = current.courses || defaultPortfolioData.courses || [];
+  return [...courses];
+}
+
+/**
+ * Get a single course by ID or code
+ */
+export function getCourseById(idOrCode) {
+  const courses = getCourses();
+  return courses.find((c) => c.id === idOrCode || c.code === idOrCode) || null;
+}
+
+/**
+ * Add a new course, save to localStorage, and log activity
+ */
+export function addCourse(courseData) {
+  const current = getData();
+  if (!current.courses) current.courses = [];
+
+  const now = new Date();
+  const dateStr = formatDate(now);
+  const id = courseData.id || `course-${slugify(courseData.code || courseData.title || Date.now())}`;
+
+  const tags = Array.isArray(courseData.tags)
+    ? courseData.tags
+    : (typeof courseData.tags === 'string' ? courseData.tags.split(',').map(t => t.trim()).filter(Boolean) : []);
+
+  const newCourse = {
+    id,
+    code: courseData.code || 'ENG 100',
+    title: courseData.title || 'Untitled Aerospace Course',
+    semester: courseData.semester || 'Fall 2026',
+    institution: courseData.institution || 'Caltech / Aero Department',
+    description: courseData.description || '',
+    instructorEmail: courseData.instructorEmail || 'nhatnguyen@orbital-flight.dev',
+    githubUrl: courseData.githubUrl || 'https://github.com/grezil',
+    tags,
+    updatedAt: courseData.updatedAt || dateStr,
+    ...courseData,
+    id,
+    tags
+  };
+
+  current.courses.unshift(newCourse);
+  saveData(current);
+  logActivity('course', newCourse.title, 'Published syllabus & materials');
+  return newCourse;
+}
+
+/**
+ * Update an existing course by ID and log activity
+ */
+export function updateCourse(id, patch) {
+  const current = getData();
+  if (!current.courses) return null;
+
+  const index = current.courses.findIndex((c) => c.id === id);
+  if (index === -1) return null;
+
+  const tags = patch.tags !== undefined
+    ? (Array.isArray(patch.tags) ? patch.tags : (typeof patch.tags === 'string' ? patch.tags.split(',').map(t => t.trim()).filter(Boolean) : []))
+    : current.courses[index].tags;
+
+  current.courses[index] = {
+    ...current.courses[index],
+    ...patch,
+    tags,
+    id,
+    updatedAt: patch.updatedAt || formatDate(new Date())
+  };
+
+  saveData(current);
+  logActivity('course', patch.title || current.courses[index].title || 'Course Updated', 'Updated syllabus or materials');
+  return current.courses[index];
+}
+
+/**
+ * Delete a course by ID
+ */
+export function deleteCourse(id) {
+  const current = getData();
+  if (!current.courses) return false;
+
+  const originalLength = current.courses.length;
+  current.courses = current.courses.filter((c) => c.id !== id);
+
+  if (current.courses.length !== originalLength) {
+    saveData(current);
+    return true;
+  }
+  return false;
+}
+
+// ==========================================
+// 5. ACTIVITY LOG & HABIT TRACKER ENGINE
+// ==========================================
+
+/**
+ * Get all activities from localStorage (space_portfolio_activity_log)
+ * with fallback to defaultPortfolioData.activities.
+ */
+export function getActivityLog() {
+  if (isBrowser) {
+    try {
+      const raw = localStorage.getItem(ACTIVITY_LOG_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          return parsed;
+        }
+      }
+    } catch (e) {
+      console.warn('Failed to read activity log from localStorage:', e);
+    }
+  }
+
+  const current = getData();
+  const fallback = (current.activities && current.activities.length > 0)
+    ? current.activities
+    : (defaultPortfolioData.activities || []);
+
+  if (isBrowser) {
+    try {
+      localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(fallback));
+    } catch (e) {}
+  }
+  return fallback;
+}
+
+/**
+ * Log an activity event to the Habit Tracker.
+ * Persists to space_portfolio_activity_log, increments update counter,
+ * and dispatches 'portfolio-data-updated'.
+ *
+ * @param {('blog'|'cv'|'course'|'achievement')} type
+ * @param {string} title
+ * @param {string} detail
+ * @param {string} [customDate] - Format YYYY-MM-DD
+ */
+export function logActivity(type, title, detail = '', customDate = null) {
+  const dateStr = customDate || formatDate(new Date());
+  const newActivity = {
+    id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    date: dateStr,
+    type: type || 'blog',
+    title: title || 'Telemetry Update',
+    detail: detail || ''
+  };
+
+  const activities = getActivityLog();
+  const updatedActivities = [newActivity, ...activities];
+
+  if (isBrowser) {
+    try {
+      localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(updatedActivities));
+    } catch (err) {
+      console.error('Failed to persist activity log:', err);
+    }
+  }
+
+  // Also synchronize in main storage
+  const current = getData();
+  current.activities = updatedActivities;
+  memoryData.activities = updatedActivities;
+  if (isBrowser) {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
+    } catch (e) {}
+  }
+
+  // Increment website update count
+  incrementUpdateCount();
+
+  // Dispatch reactive event
+  if (isBrowser) {
+    try {
+      window.dispatchEvent(
+        new CustomEvent(EVENT_NAME, {
+          detail: {
+            ...current,
+            activities: updatedActivities,
+            latestActivity: newActivity
+          },
+          bubbles: true
+        })
+      );
+    } catch (err) {
+      console.error('Failed to dispatch activity event:', err);
+    }
+  }
+
+  return newActivity;
+}
+
+/**
+ * Compute Contribution Calendar Heatmap Data
+ * 
+ * @param {number|string} [targetYear] - e.g. 2026, 2025, or omitted for rolling 52 weeks
+ * @param {string} [typeFilter='all'] - 'all' | 'blog' | 'cv' | 'course' | 'achievement'
+ * @returns {{
+ *   cells: Record<string, { date: string, count: number, level: number, activities: any[], dayOfWeek: number, isFuture: boolean }>,
+ *   weeks: Array<Array<any>>,
+ *   days: Array<any>,
+ *   totalCount: number,
+ *   currentStreak: number,
+ *   longestStreak: number,
+ *   activeDaysCount: number,
+ *   startDate: string,
+ *   endDate: string
+ * }}
+ */
+export function getActivityHeatmapData(targetYear = null, typeFilter = 'all') {
+  let allActivities = getActivityLog();
+  if (typeFilter && typeFilter !== 'all') {
+    allActivities = allActivities.filter((act) => act && act.type === typeFilter);
+  }
+  const now = new Date();
+  const todayStr = formatDate(now);
+  const currentYear = now.getFullYear();
+
+  let startDate, endDate;
+
+  if (targetYear && Number(targetYear) !== currentYear && !isNaN(Number(targetYear))) {
+    const y = Number(targetYear);
+    const startYear = new Date(y, 0, 1);
+    const endYear = new Date(y, 11, 31);
+
+    // Align start to preceding Sunday
+    startDate = new Date(startYear.getFullYear(), startYear.getMonth(), startYear.getDate());
+    startDate.setDate(startDate.getDate() - startDate.getDay());
+
+    // Align end to following Saturday
+    endDate = new Date(endYear.getFullYear(), endYear.getMonth(), endYear.getDate());
+    endDate.setDate(endDate.getDate() + (6 - endYear.getDay()));
+  } else {
+    // 52-week rolling window ending on the coming Saturday of current week
+    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    endDate = new Date(today);
+    endDate.setDate(today.getDate() + (6 - today.getDay()));
+
+    startDate = new Date(endDate);
+    startDate.setDate(endDate.getDate() - (52 * 7 - 1));
+  }
+
+  // Group all activities by YYYY-MM-DD
+  const dateToActivities = {};
+  allActivities.forEach((act) => {
+    if (!act || !act.date) return;
+    const d = String(act.date).trim();
+    if (!dateToActivities[d]) {
+      dateToActivities[d] = [];
+    }
+    dateToActivities[d].push(act);
+  });
+
+  const cells = {};
+  const weeks = [];
+  const days = [];
+  let currentWeek = [];
+
+  let totalCount = 0;
+  let activeDaysCount = 0;
+
+  const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
+  const finalDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
+
+  while (cursor <= finalDate) {
+    const dStr = formatDate(cursor);
+    const dayOfWeek = cursor.getDay(); // 0 is Sun, 6 is Sat
+    const dayActs = dateToActivities[dStr] || [];
+    const count = dayActs.length;
+
+    let level = 0;
+    if (count === 1) level = 1;
+    else if (count === 2) level = 2;
+    else if (count === 3) level = 3;
+    else if (count >= 4) level = 4;
+
+    const isFuture = dStr > todayStr;
+
+    if (!isFuture && count > 0) {
+      activeDaysCount++;
+    }
+    totalCount += count;
+
+    const cellObj = {
+      date: dStr,
+      count,
+      level,
+      activities: dayActs,
+      dayOfWeek,
+      isFuture
+    };
+
+    cells[dStr] = cellObj;
+    days.push(cellObj);
+    currentWeek.push(cellObj);
+
+    if (dayOfWeek === 6) {
+      weeks.push(currentWeek);
+      currentWeek = [];
+    }
+
+    cursor.setDate(cursor.getDate() + 1);
+  }
+
+  if (currentWeek.length > 0) {
+    weeks.push(currentWeek);
+  }
+
+  // Calculate Streaks
+  // Current streak: consecutive days ending today (or yesterday if today has no activity yet)
+  let currentStreak = 0;
+  const parts = todayStr.split('-').map(Number);
+  const streakCursor = new Date(parts[0], parts[1] - 1, parts[2]);
+
+  const todayCount = (dateToActivities[todayStr] || []).length;
+  if (todayCount > 0) {
+    currentStreak = 1;
+    streakCursor.setDate(streakCursor.getDate() - 1);
+  } else {
+    // Check yesterday
+    streakCursor.setDate(streakCursor.getDate() - 1);
+    const yestStr = formatDate(streakCursor);
+    if ((dateToActivities[yestStr] || []).length > 0) {
+      currentStreak = 1;
+      streakCursor.setDate(streakCursor.getDate() - 1);
+    }
+  }
+
+  if (currentStreak > 0) {
+    while (true) {
+      const prevDateStr = formatDate(streakCursor);
+      if ((dateToActivities[prevDateStr] || []).length > 0) {
+        currentStreak++;
+        streakCursor.setDate(streakCursor.getDate() - 1);
+      } else {
+        break;
+      }
+    }
+  }
+
+  // Longest streak across all recorded activities
+  let longestStreak = 0;
+  let runningStreak = 0;
+
+  const allActiveDates = Object.keys(dateToActivities)
+    .filter((d) => (dateToActivities[d] || []).length > 0)
+    .sort();
+
+  if (allActiveDates.length > 0) {
+    const pStart = allActiveDates[0].split('-').map(Number);
+    const pEnd = allActiveDates[allActiveDates.length - 1].split('-').map(Number);
+    const sweep = new Date(pStart[0], pStart[1] - 1, pStart[2]);
+    const sweepEnd = new Date(pEnd[0], pEnd[1] - 1, pEnd[2]);
+
+    while (sweep <= sweepEnd) {
+      const s = formatDate(sweep);
+      if ((dateToActivities[s] || []).length > 0) {
+        runningStreak++;
+        if (runningStreak > longestStreak) {
+          longestStreak = runningStreak;
+        }
+      } else {
+        runningStreak = 0;
+      }
+      sweep.setDate(sweep.getDate() + 1);
+    }
+  }
+
+  longestStreak = Math.max(longestStreak, currentStreak);
+
+  return {
+    cells,
+    weeks,
+    days,
+    totalCount,
+    currentStreak,
+    longestStreak,
+    activeDaysCount,
+    startDate: formatDate(startDate),
+    endDate: formatDate(endDate)
+  };
+}
+
+// ==========================================
+// 6. ADMIN AUTHENTICATION METHODS
 // ==========================================
 
 /**
@@ -608,7 +1053,7 @@ export function updateAdminPasskey(newPasskey) {
 }
 
 // ==========================================
-// 5. BACKUP, IMPORT, EXPORT & RESET
+// 7. BACKUP, IMPORT, EXPORT & RESET
 // ==========================================
 
 /**
@@ -645,6 +1090,7 @@ export function resetToDefaults() {
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(AUTH_KEY);
+      localStorage.removeItem(ACTIVITY_LOG_KEY);
       localStorage.setItem(UPDATES_KEY, '24');
     } catch (err) {
       console.error('Error resetting localStorage:', err);
@@ -680,7 +1126,7 @@ export function subscribe(callback) {
       } catch (err) {
         console.error('Storage sync error:', err);
       }
-    } else if (e.key === AUTH_KEY || e.key === UPDATES_KEY) {
+    } else if (e.key === AUTH_KEY || e.key === UPDATES_KEY || e.key === ACTIVITY_LOG_KEY) {
       callback(getData());
     }
   };
@@ -705,6 +1151,7 @@ export default {
   updateCVDocumentHtml,
   getCVData,
   updateCVData,
+  saveCVData,
   getAchievements,
   addAchievement,
   updateAchievement,
@@ -714,6 +1161,14 @@ export default {
   addBlog,
   updateBlog,
   deleteBlog,
+  getCourses,
+  getCourseById,
+  addCourse,
+  updateCourse,
+  deleteCourse,
+  logActivity,
+  getActivityLog,
+  getActivityHeatmapData,
   checkAdminAuth,
   loginAdmin,
   logoutAdmin,
@@ -740,6 +1195,7 @@ if (typeof window !== 'undefined') {
     updateCVDocumentHtml,
     getCVData,
     updateCVData,
+    saveCVData,
     getAchievements,
     addAchievement,
     updateAchievement,
@@ -749,6 +1205,14 @@ if (typeof window !== 'undefined') {
     addBlog,
     updateBlog,
     deleteBlog,
+    getCourses,
+    getCourseById,
+    addCourse,
+    updateCourse,
+    deleteCourse,
+    logActivity,
+    getActivityLog,
+    getActivityHeatmapData,
     checkAdminAuth,
     loginAdmin,
     logoutAdmin,

@@ -250,6 +250,14 @@ import Layout from '../layouts/Layout.astro';
               </svg>
               <span>My CV Studio (Chỉnh sửa CV)</span>
             </button>
+            <button type="button" class="dash-tab" data-dash-tab="dash-tab-courses" role="tab">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                <line x1="12" y1="11" x2="12" y2="17"></line>
+                <line x1="9" y1="14" x2="15" y2="14"></line>
+              </svg>
+              <span>Courses & Materials (Giáo án / Bài giảng)</span>
+            </button>
             <button type="button" class="dash-tab" data-dash-tab="dash-tab-system" role="tab">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="3"></circle>
@@ -611,7 +619,87 @@ import Layout from '../layouts/Layout.astro';
               </div>
             </div>
 
-            <!-- PANEL 4: SECURITY & BACKUP -->
+            <!-- PANEL 4: COURSES & MATERIALS ARCHIVE -->
+            <div id="dash-tab-courses" class="dash-panel">
+              <div class="panel-header-split">
+                <div>
+                  <h3 class="dash-panel-title">Academic Courses & Curricula Dossier (Giáo án / Bài giảng)</h3>
+                  <p class="dash-panel-desc">Manage aerospace curricula, syllabus overviews, lecture archives, and direct GitHub repositories without consuming local telemetry bandwidth.</p>
+                </div>
+                <button type="button" id="dash-course-reset-btn" class="dash-sub-btn">+ New Course Form</button>
+              </div>
+
+              <!-- Course Form -->
+              <form id="dash-course-form" class="dash-form-card">
+                <input type="hidden" id="dash-course-id" value="" />
+
+                <div class="form-row form-row-2">
+                  <div class="form-field">
+                    <label for="dash-course-code" class="field-label">Course Code *</label>
+                    <input type="text" id="dash-course-code" class="editor-input" placeholder="e.g. AER 402" required />
+                  </div>
+                  <div class="form-field">
+                    <label for="dash-course-title" class="field-label">Course Title *</label>
+                    <input type="text" id="dash-course-title" class="editor-input" placeholder="e.g. Orbital Mechanics & Astrodynamics" required />
+                  </div>
+                </div>
+
+                <div class="form-row form-row-2">
+                  <div class="form-field">
+                    <label for="dash-course-semester" class="field-label">Semester *</label>
+                    <input type="text" id="dash-course-semester" class="editor-input" placeholder="e.g. Fall 2025" required />
+                  </div>
+                  <div class="form-field">
+                    <label for="dash-course-institution" class="field-label">Institution / Department *</label>
+                    <input type="text" id="dash-course-institution" class="editor-input" placeholder="e.g. Caltech / Aero Department" required />
+                  </div>
+                </div>
+
+                <div class="form-row form-row-2">
+                  <div class="form-field">
+                    <label for="dash-course-email" class="field-label">Instructor Contact Email *</label>
+                    <input type="email" id="dash-course-email" class="editor-input" placeholder="e.g. nhatnguyen@orbital-flight.dev" required />
+                  </div>
+                  <div class="form-field">
+                    <label for="dash-course-github" class="field-label">GitHub Repository / Folder URL *</label>
+                    <input type="url" id="dash-course-github" class="editor-input" placeholder="e.g. https://github.com/grezil/orbital-mechanics-lectures" required />
+                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="dash-course-desc" class="field-label">Description / Syllabus Overview *</label>
+                  <textarea id="dash-course-desc" rows="3" class="editor-textarea" placeholder="Comprehensive syllabus, module overview, and curriculum topics..." required></textarea>
+                </div>
+
+                <div class="form-field">
+                  <label for="dash-course-tags" class="field-label">Tags (comma-separated)</label>
+                  <input type="text" id="dash-course-tags" class="editor-input" placeholder="e.g. Astrodynamics, Trajectory Design, MATLAB, SPICE" />
+                </div>
+
+                <div class="form-action-bar">
+                  <button type="submit" id="dash-course-submit-btn" class="btn-primary-amber">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path>
+                      <polyline points="17 21 17 13 7 13 7 21"></polyline>
+                    </svg>
+                    <span>Save & Publish Course</span>
+                  </button>
+                </div>
+              </form>
+
+              <!-- Courses Inventory -->
+              <div class="dash-inventory-wrapper">
+                <div class="dash-inv-title-bar">
+                  <h4>Academic Courses Directory</h4>
+                  <span id="dash-course-badge" class="count-pill">0 courses</span>
+                </div>
+                <div id="dash-course-list" class="dash-inventory-list">
+                  <!-- Dynamically rendered -->
+                </div>
+              </div>
+            </div>
+
+            <!-- PANEL 5: SECURITY & BACKUP -->
             <div id="dash-tab-system" class="dash-panel">
               <div class="panel-header-split">
                 <div>
@@ -2099,6 +2187,11 @@ import Layout from '../layouts/Layout.astro';
         }
       }
 
+      if (store && typeof store.logActivity === 'function') {
+        store.logActivity('achievement', payload.title, 'Conferred distinction / technical award');
+      }
+
+      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       resetAchForm();
       loadAchievements();
       alert('Achievement successfully saved to store & timeline!');
@@ -2236,6 +2329,11 @@ import Layout from '../layouts/Layout.astro';
         }
       }
 
+      if (store && typeof store.logActivity === 'function') {
+        store.logActivity('blog', payload.title, 'Published technical mission article');
+      }
+
+      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       resetBlogForm();
       loadBlogs();
       alert('Blog article saved and published to Mission Log!');
@@ -2464,6 +2562,11 @@ import Layout from '../layouts/Layout.astro';
         store.updateCVData('cvDocumentHtml', html);
       }
 
+      if (store && typeof store.logActivity === 'function') {
+        store.logActivity('cv', 'Word Document CV', 'Synced Harvard Word document canvas');
+      }
+
+      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       alert('Word Document CV saved and synchronized successfully!');
     });
 
@@ -2656,11 +2759,189 @@ import Layout from '../layouts/Layout.astro';
         store.updateCVData(updatedCV);
       }
 
+      if (store && typeof store.logActivity === 'function') {
+        store.logActivity('cv', 'Harvard CV Dossier', 'Updated executive credentials & experience');
+      }
+
+      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       alert('My CV profile, appointments, and education successfully updated!');
     });
 
     // ----------------------------------------------------
-    // TAB 4: SYSTEM SECURITY & BACKUP
+    // TAB 4: COURSES & MATERIALS CMS (GIÁO ÁN / BÀI GIẢNG)
+    // ----------------------------------------------------
+    const courseForm = document.getElementById('dash-course-form') as HTMLFormElement;
+    const courseId = document.getElementById('dash-course-id') as HTMLInputElement;
+    const courseCode = document.getElementById('dash-course-code') as HTMLInputElement;
+    const courseTitle = document.getElementById('dash-course-title') as HTMLInputElement;
+    const courseSemester = document.getElementById('dash-course-semester') as HTMLInputElement;
+    const courseInstitution = document.getElementById('dash-course-institution') as HTMLInputElement;
+    const courseEmail = document.getElementById('dash-course-email') as HTMLInputElement;
+    const courseGithub = document.getElementById('dash-course-github') as HTMLInputElement;
+    const courseDesc = document.getElementById('dash-course-desc') as HTMLTextAreaElement;
+    const courseTags = document.getElementById('dash-course-tags') as HTMLInputElement;
+    const courseList = document.getElementById('dash-course-list');
+    const courseBadge = document.getElementById('dash-course-badge');
+    const courseResetBtn = document.getElementById('dash-course-reset-btn');
+
+    function resetCourseForm() {
+      if (!courseForm) return;
+      courseId.value = '';
+      courseCode.value = '';
+      courseTitle.value = '';
+      courseSemester.value = '';
+      courseInstitution.value = '';
+      courseEmail.value = '';
+      courseGithub.value = '';
+      courseDesc.value = '';
+      courseTags.value = '';
+      const sBtn = document.getElementById('dash-course-submit-btn');
+      if (sBtn) sBtn.querySelector('span')!.textContent = 'Save & Publish Course';
+    }
+
+    courseResetBtn?.addEventListener('click', resetCourseForm);
+
+    async function loadCourses() {
+      if (!courseList) return;
+      const store = await getStore();
+      let list: any[] = [];
+      if (store && typeof store.getCourses === 'function') {
+        list = store.getCourses();
+      } else {
+        const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
+        list = fullData.courses || [];
+      }
+
+      if (courseBadge) courseBadge.textContent = `${list.length} courses`;
+
+      if (list.length === 0) {
+        courseList.innerHTML = `<div style="text-align:center; padding:2rem; color:#8E95A5;">No academic courses recorded yet. Add one above!</div>`;
+        return;
+      }
+
+      courseList.innerHTML = list.map((item: any) => `
+        <div class="dash-item-card" data-id="${item.id}">
+          <div class="dash-card-left">
+            <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
+              <span style="background:rgba(229,169,106,0.15); color:#E5A96A; border:1px solid rgba(229,169,106,0.3); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700;">${item.code || 'COURSE'}</span>
+              <h5 class="dash-card-title" style="margin:0;">${item.title || 'Untitled'}</h5>
+            </div>
+            <div class="dash-card-meta">
+              <span style="color:#E5A96A; font-weight:600;">${item.semester || ''}</span>
+              ${item.institution ? `<span>•</span><span>${item.institution}</span>` : ''}
+              ${item.instructorEmail ? `<span>•</span><span>${item.instructorEmail}</span>` : ''}
+              ${item.githubUrl ? `<span>•</span><a href="${item.githubUrl}" target="_blank" rel="noopener noreferrer" style="color:#60A5FA; text-decoration:underline;">GitHub ↗</a>` : ''}
+            </div>
+          </div>
+          <div class="dash-card-actions">
+            <button type="button" class="btn-inv-edit" data-edit-course="${item.id}">Edit</button>
+            <button type="button" class="btn-inv-delete" data-delete-course="${item.id}">Delete</button>
+          </div>
+        </div>
+      `).join('');
+
+      // Wire edit
+      courseList.querySelectorAll('[data-edit-course]').forEach(b => {
+        b.addEventListener('click', () => {
+          const id = b.getAttribute('data-edit-course');
+          const target = list.find((c: any) => c.id === id);
+          if (target) {
+            courseId.value = target.id || '';
+            courseCode.value = target.code || '';
+            courseTitle.value = target.title || '';
+            courseSemester.value = target.semester || '';
+            courseInstitution.value = target.institution || '';
+            courseEmail.value = target.instructorEmail || target.email || '';
+            courseGithub.value = target.githubUrl || '';
+            courseDesc.value = target.description || '';
+            courseTags.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
+            const sBtn = document.getElementById('dash-course-submit-btn');
+            if (sBtn) sBtn.querySelector('span')!.textContent = 'Update Course Archive';
+            courseForm.scrollIntoView({ behavior: 'smooth' });
+          }
+        });
+      });
+
+      // Wire delete
+      courseList.querySelectorAll('[data-delete-course]').forEach(b => {
+        b.addEventListener('click', async () => {
+          const id = b.getAttribute('data-delete-course');
+          if (!confirm('Are you sure you want to delete this course archive?')) return;
+          const store = await getStore();
+          if (store && typeof store.deleteCourse === 'function') {
+            store.deleteCourse(id);
+          } else {
+            const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
+            const courses = (fullData.courses || []).filter((c: any) => c.id !== id);
+            fullData.courses = courses;
+            if (store && typeof store.saveData === 'function') store.saveData(fullData);
+          }
+          if (store && typeof store.logActivity === 'function') {
+            store.logActivity('course', 'Course Archive Updated', 'Removed course material');
+          }
+          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+          loadCourses();
+        });
+      });
+    }
+
+    courseForm?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const code = courseCode.value.trim();
+      const title = courseTitle.value.trim();
+      const id = courseId.value || `course-${code.toLowerCase().replace(/[^a-z0-9]/g, '-') || Date.now()}`;
+      const payload = {
+        id,
+        code,
+        title,
+        semester: courseSemester.value.trim(),
+        institution: courseInstitution.value.trim(),
+        instructorEmail: courseEmail.value.trim(),
+        githubUrl: courseGithub.value.trim(),
+        description: courseDesc.value.trim(),
+        tags: courseTags.value.split(',').map(t => t.trim()).filter(Boolean),
+        updatedAt: new Date().toISOString().split('T')[0]
+      };
+
+      const store = await getStore();
+      if (courseId.value) {
+        if (store && typeof store.updateCourse === 'function') {
+          store.updateCourse(id, payload);
+        } else {
+          const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
+          const courses = fullData.courses || [];
+          const idx = courses.findIndex((c: any) => c.id === id);
+          if (idx >= 0) courses[idx] = { ...courses[idx], ...payload };
+          else courses.push(payload);
+          fullData.courses = courses;
+          if (store && typeof store.saveData === 'function') store.saveData(fullData);
+        }
+        if (store && typeof store.logActivity === 'function') {
+          store.logActivity('course', title, 'Updated syllabus & course materials');
+        }
+      } else {
+        if (store && typeof store.addCourse === 'function') {
+          store.addCourse(payload);
+        } else {
+          const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
+          const courses = fullData.courses || [];
+          courses.unshift(payload);
+          fullData.courses = courses;
+          if (store && typeof store.saveData === 'function') store.saveData(fullData);
+        }
+        if (store && typeof store.logActivity === 'function') {
+          store.logActivity('course', title, 'Published syllabus & materials');
+        }
+      }
+
+      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+      resetCourseForm();
+      loadCourses();
+      alert('Course archive successfully saved and published!');
+    });
+
+    // ----------------------------------------------------
+    // TAB 5: SYSTEM SECURITY & BACKUP
     // ----------------------------------------------------
     const exportBtn = document.getElementById('dash-export-btn');
     const importInput = document.getElementById('dash-import-file') as HTMLInputElement;
@@ -2767,6 +3048,7 @@ import Layout from '../layouts/Layout.astro';
       loadAchievements();
       loadBlogs();
       loadCV();
+      loadCourses();
       updateDashboardTelemetryStats();
     }
 

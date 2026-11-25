@@ -1,0 +1,969 @@
+---
+// Apple-Grade Academic & Teaching Dossier / Course Archive Component
+import portfolioData from '../data/portfolio.json';
+
+export interface Course {
+  id?: string;
+  code: string;
+  title: string;
+  semester: string;
+  institution: string;
+  description: string;
+  instructorEmail?: string;
+  githubUrl: string;
+  tags: string[];
+  updatedAt?: string;
+}
+
+export interface Props {
+  courses?: Course[];
+}
+
+const defaultCourses: Course[] = (portfolioData as any).courses || [
+  {
+    id: "course-aer-402",
+    code: "AER 402",
+    title: "Orbital Mechanics & Astrodynamics",
+    semester: "Fall 2025",
+    institution: "Caltech / Aero Department",
+    description: "Keplerian orbits, Lambert's problem, perturbation analysis, continuous-thrust trajectory optimization, and orbital rendezvous maneuvers.",
+    instructorEmail: "nhatnguyen@orbital-flight.dev",
+    githubUrl: "https://github.com/grezil/orbital-mechanics-lectures",
+    tags: ["Astrodynamics", "Trajectory Design", "MATLAB", "SPICE"],
+    updatedAt: "2025-11-20"
+  },
+  {
+    id: "course-cs-520",
+    code: "CS 520",
+    title: "Deterministic Flight Software & RTOS",
+    semester: "Spring 2025",
+    institution: "MIT Space Systems Laboratory",
+    description: "Real-time task scheduling, cyclic executives, fault detection, isolation and recovery (FDIR), CCSDS telemetry decommutation, and bare-metal Rust/C systems.",
+    instructorEmail: "nhatnguyen@orbital-flight.dev",
+    githubUrl: "https://github.com/grezil/flight-software-curriculum",
+    tags: ["Embedded Systems", "FreeRTOS", "Rust", "DO-178C"],
+    updatedAt: "2025-10-15"
+  },
+  {
+    id: "course-cubesat-101",
+    code: "ENG 310",
+    title: "CubeSat Avionics & Flight Qualification",
+    semester: "Fall 2024",
+    institution: "Space Systems Academy",
+    description: "CubeSat bus architectures, power budget analysis, thermal-vacuum testing protocols, solar array deployment, and ground station operations.",
+    instructorEmail: "nhatnguyen@orbital-flight.dev",
+    githubUrl: "https://github.com/grezil/cubesat-avionics-lab",
+    tags: ["Avionics", "CubeSats", "Telemetry", "Hardware-in-the-Loop"],
+    updatedAt: "2024-12-05"
+  }
+];
+
+const { courses = defaultCourses } = Astro.props;
+
+// Collect unique tags for filter chips
+const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0, 8);
+---
+
+<section id="courses" class="course-archive-section section" aria-label="Academic and Teaching Dossier">
+  <div class="container">
+    <!-- Header -->
+    <header class="section-header">
+      <div class="section-tag-apple">ACADEMIC & TEACHING DOSSIER</div>
+      <h2 class="section-title">
+        Curriculum, Syllabi & <span class="glow-text">Course Materials</span>
+      </h2>
+      <p class="section-subtitle">
+        Curated syllabus, lecture modules, lab repositories, and course materials. Files and source materials are directly mirrored on GitHub to conserve server telemetry bandwidth.
+      </p>
+    </header>
+
+    <!-- Search & Filter Controls -->
+    <div class="course-controls-wrapper">
+      <div class="course-search-bar">
+        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input 
+          type="search" 
+          id="course-search-input" 
+          class="course-search-input" 
+          placeholder="Filter courses by code, title, topic or institution (e.g. AER 402, Rust, Caltech)..." 
+          aria-label="Filter course archives"
+        />
+        <button type="button" id="course-search-clear" class="btn-search-clear" aria-label="Clear search query" style="display: none;">
+          ✕
+        </button>
+      </div>
+
+      <!-- Filter Chips -->
+      <div class="course-filter-chips" role="toolbar" aria-label="Course Category Filters" id="course-filter-chips">
+        <button type="button" class="chip-filter active" data-filter="all">
+          <span>All Dossiers</span>
+          <span class="chip-count" id="count-all">{courses.length}</span>
+        </button>
+        {allTags.map(tag => (
+          <button type="button" class="chip-filter" data-filter={tag}>
+            <span>{tag}</span>
+          </button>
+        ))}
+      </div>
+
+      <div class="filter-results-status">
+        <span id="course-filter-stats" class="status-meta">Showing {courses.length} of {courses.length} courses</span>
+      </div>
+    </div>
+
+    <!-- Course Cards Grid -->
+    <div class="courses-grid" id="courses-grid" data-initial-courses={JSON.stringify(courses)}>
+      {courses.map(course => (
+        <article class="course-card glass-card" data-course-id={course.id || ''} data-course-code={course.code} data-tags={(course.tags || []).join(',')}>
+          <!-- Card Header -->
+          <div class="course-header">
+            <div class="course-code-group">
+              <span class="course-code-badge">{course.code}</span>
+              <span class="course-semester-pill">{course.semester}</span>
+            </div>
+            <div class="course-inst-tag" title={course.institution}>
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M15 10v11M12 2L2 7h20L12 2z"></path>
+              </svg>
+              <span>{course.institution}</span>
+            </div>
+          </div>
+
+          <!-- Course Title -->
+          <h3 class="course-title">{course.title}</h3>
+
+          <!-- Course Description -->
+          <p class="course-desc">{course.description}</p>
+
+          <!-- Topic Tags -->
+          {course.tags && course.tags.length > 0 && (
+            <div class="course-tags">
+              {course.tags.map(tag => (
+                <span class="tag-pill">#{tag}</span>
+              ))}
+            </div>
+          )}
+
+          <!-- Card Footer & Action Row -->
+          <div class="course-footer">
+            <!-- Teaching / Contact Email -->
+            <div class="course-contact-box">
+              <div class="contact-header">
+                <span class="instructor-badge">
+                  <span class="instructor-dot"></span>
+                  Teaching Contact
+                </span>
+              </div>
+              <div class="contact-action-row">
+                <a 
+                  href={`mailto:${course.instructorEmail || 'nhatnguyen@orbital-flight.dev'}`} 
+                  class="contact-email-link"
+                  title="Direct instructor email"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                    <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                  </svg>
+                  <span>{course.instructorEmail || 'nhatnguyen@orbital-flight.dev'}</span>
+                </a>
+                <button 
+                  type="button" 
+                  class="btn-copy-email" 
+                  data-email={course.instructorEmail || 'nhatnguyen@orbital-flight.dev'} 
+                  title="Copy instructor email address"
+                  aria-label="Copy instructor email"
+                >
+                  <svg class="icon-copy" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                    <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                  </svg>
+                  <span class="copy-text">Copy</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Direct GitHub Action -->
+            <div class="course-repo-action">
+              <a 
+                href={course.githubUrl} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                class="btn-course-github"
+                title={`Open ${course.code} files & syllabus on GitHub`}
+              >
+                <!-- GitHub Octocat Icon -->
+                <svg class="octocat-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                  <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                </svg>
+                <span>View Course Files on GitHub</span>
+                <span class="external-arrow">↗</span>
+              </a>
+
+              <!-- Zero-Server Storage Pill -->
+              <div class="telemetry-pill">
+                <span class="telemetry-dot"></span>
+                <span>Zero-Server Storage • GitHub Folder Link</span>
+              </div>
+            </div>
+          </div>
+        </article>
+      ))}
+    </div>
+
+    <!-- Empty State -->
+    <div id="courses-empty-state" class="courses-empty-state glass-card" style="display: none;">
+      <div class="empty-icon">🔍</div>
+      <h3 class="empty-title">No Matching Course Dossiers</h3>
+      <p class="empty-desc">No curriculum archives match your search criteria. Try a different keyword or reset filters.</p>
+      <button type="button" id="btn-reset-course-filters" class="btn-reset-filters">
+        Reset All Filters
+      </button>
+    </div>
+  </div>
+</section>
+
+<!-- Client Script for Search, Filter, Copy, and Store Reactivity -->
+<script>
+  // Self-contained client controller for CourseArchive
+  function initCourseArchive() {
+    const grid = document.getElementById('courses-grid');
+    if (!grid) return;
+
+    let coursesData: any[] = [];
+    try {
+      coursesData = JSON.parse(grid.dataset.initialCourses || '[]');
+    } catch (e) {
+      coursesData = [];
+    }
+
+    const searchInput = document.getElementById('course-search-input') as HTMLInputElement | null;
+    const clearBtn = document.getElementById('course-search-clear');
+    const filterChips = document.querySelectorAll('#course-filter-chips .chip-filter');
+    const emptyState = document.getElementById('courses-empty-state');
+    const statusMeta = document.getElementById('course-filter-stats');
+    const countAll = document.getElementById('count-all');
+    const btnReset = document.getElementById('btn-reset-course-filters');
+
+    let activeFilter = 'all';
+    let searchQuery = '';
+
+    // Load reactive courses from localStorage or window.PortfolioStore
+    function getStoredCourses(): any[] {
+      try {
+        if ((window as any).PortfolioStore?.getCourses) {
+          const list = (window as any).PortfolioStore.getCourses();
+          if (Array.isArray(list) && list.length > 0) return list;
+        }
+        const rawSpecific = localStorage.getItem('space_portfolio_courses');
+        if (rawSpecific) {
+          const parsed = JSON.parse(rawSpecific);
+          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        }
+        const rawFull = localStorage.getItem('space_portfolio_data_v1');
+        if (rawFull) {
+          const parsed = JSON.parse(rawFull);
+          if (Array.isArray(parsed?.courses) && parsed.courses.length > 0) return parsed.courses;
+        }
+      } catch (err) {
+        console.warn('Error reading courses from store:', err);
+      }
+      return coursesData;
+    }
+
+    function renderCourseCards(list: any[]) {
+      if (!grid) return;
+
+      if (countAll) {
+        countAll.textContent = String(coursesData.length);
+      }
+
+      const filtered = list.filter(course => {
+        const matchesTag = activeFilter === 'all' || 
+          (course.tags || []).some((t: string) => t.toLowerCase() === activeFilter.toLowerCase());
+
+        if (!matchesTag) return false;
+
+        if (!searchQuery) return true;
+
+        const q = searchQuery.toLowerCase();
+        const codeMatch = (course.code || '').toLowerCase().includes(q);
+        const titleMatch = (course.title || '').toLowerCase().includes(q);
+        const instMatch = (course.institution || '').toLowerCase().includes(q);
+        const descMatch = (course.description || '').toLowerCase().includes(q);
+        const tagMatch = (course.tags || []).some((t: string) => t.toLowerCase().includes(q));
+
+        return codeMatch || titleMatch || instMatch || descMatch || tagMatch;
+      });
+
+      if (statusMeta) {
+        statusMeta.textContent = `Showing ${filtered.length} of ${coursesData.length} courses`;
+      }
+
+      if (filtered.length === 0) {
+        grid.style.display = 'none';
+        if (emptyState) emptyState.style.display = 'block';
+        return;
+      }
+
+      grid.style.display = 'grid';
+      if (emptyState) emptyState.style.display = 'none';
+
+      grid.innerHTML = filtered.map(course => {
+        const email = course.instructorEmail || 'nhatnguyen@orbital-flight.dev';
+        const tags = Array.isArray(course.tags) ? course.tags : [];
+        return `
+          <article class="course-card glass-card" data-course-id="${course.id || ''}" data-course-code="${course.code || ''}">
+            <div class="course-header">
+              <div class="course-code-group">
+                <span class="course-code-badge">${escapeHtml(course.code || '')}</span>
+                <span class="course-semester-pill">${escapeHtml(course.semester || '')}</span>
+              </div>
+              <div class="course-inst-tag" title="${escapeHtml(course.institution || '')}">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 21h18M3 10h18M5 10v11M19 10v11M9 10v11M15 10v11M12 2L2 7h20L12 2z"></path>
+                </svg>
+                <span>${escapeHtml(course.institution || '')}</span>
+              </div>
+            </div>
+
+            <h3 class="course-title">${escapeHtml(course.title || '')}</h3>
+            <p class="course-desc">${escapeHtml(course.description || '')}</p>
+
+            ${tags.length > 0 ? `
+              <div class="course-tags">
+                ${tags.map((t: string) => `<span class="tag-pill">#${escapeHtml(t)}</span>`).join('')}
+              </div>
+            ` : ''}
+
+            <div class="course-footer">
+              <div class="course-contact-box">
+                <div class="contact-header">
+                  <span class="instructor-badge">
+                    <span class="instructor-dot"></span>
+                    Teaching Contact
+                  </span>
+                </div>
+                <div class="contact-action-row">
+                  <a href="mailto:${escapeHtml(email)}" class="contact-email-link" title="Direct instructor email">
+                    <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="2" y="4" width="20" height="16" rx="2"></rect>
+                      <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
+                    </svg>
+                    <span>${escapeHtml(email)}</span>
+                  </a>
+                  <button type="button" class="btn-copy-email" data-email="${escapeHtml(email)}" title="Copy instructor email address" aria-label="Copy instructor email">
+                    <svg class="icon-copy" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                    </svg>
+                    <span class="copy-text">Copy</span>
+                  </button>
+                </div>
+              </div>
+
+              <div class="course-repo-action">
+                <a href="${escapeHtml(course.githubUrl || '#')}" target="_blank" rel="noopener noreferrer" class="btn-course-github" title="Open ${escapeHtml(course.code)} files & syllabus on GitHub">
+                  <svg class="octocat-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
+                    <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+                  </svg>
+                  <span>View Course Files on GitHub</span>
+                  <span class="external-arrow">↗</span>
+                </a>
+
+                <div class="telemetry-pill">
+                  <span class="telemetry-dot"></span>
+                  <span>Zero-Server Storage • GitHub Folder Link</span>
+                </div>
+              </div>
+            </div>
+          </article>
+        `;
+      }).join('');
+
+      attachCopyHandlers();
+    }
+
+    function escapeHtml(str: string): string {
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function attachCopyHandlers() {
+      const copyBtns = grid?.querySelectorAll('.btn-copy-email') || [];
+      copyBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.preventDefault();
+          const email = btn.getAttribute('data-email');
+          if (!email) return;
+
+          navigator.clipboard.writeText(email).then(() => {
+            const textSpan = btn.querySelector('.copy-text');
+            const originalText = textSpan ? textSpan.textContent : 'Copy';
+            btn.classList.add('copied');
+            if (textSpan) textSpan.textContent = 'Copied!';
+
+            setTimeout(() => {
+              btn.classList.remove('copied');
+              if (textSpan) textSpan.textContent = originalText;
+            }, 2000);
+          }).catch(err => {
+            console.error('Clipboard copy failed:', err);
+          });
+        });
+      });
+    }
+
+    // Refresh courses data
+    function refreshCourses() {
+      coursesData = getStoredCourses();
+      renderCourseCards(coursesData);
+    }
+
+    // Event listeners for search input
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        searchQuery = (e.target as HTMLInputElement).value.trim();
+        if (clearBtn) {
+          clearBtn.style.display = searchQuery ? 'inline-flex' : 'none';
+        }
+        renderCourseCards(coursesData);
+      });
+    }
+
+    if (clearBtn) {
+      clearBtn.addEventListener('click', () => {
+        if (searchInput) {
+          searchInput.value = '';
+          searchQuery = '';
+          searchInput.focus();
+        }
+        clearBtn.style.display = 'none';
+        renderCourseCards(coursesData);
+      });
+    }
+
+    // Event listeners for filter chips
+    filterChips.forEach(chip => {
+      chip.addEventListener('click', () => {
+        filterChips.forEach(c => c.classList.remove('active'));
+        chip.classList.add('active');
+        activeFilter = chip.getAttribute('data-filter') || 'all';
+        renderCourseCards(coursesData);
+      });
+    });
+
+    if (btnReset) {
+      btnReset.addEventListener('click', () => {
+        searchQuery = '';
+        activeFilter = 'all';
+        if (searchInput) {
+          searchInput.value = '';
+        }
+        if (clearBtn) {
+          clearBtn.style.display = 'none';
+        }
+        filterChips.forEach(c => {
+          if (c.getAttribute('data-filter') === 'all') c.classList.add('active');
+          else c.classList.remove('active');
+        });
+        renderCourseCards(coursesData);
+      });
+    }
+
+    // Listen for portfolio updates
+    window.addEventListener('portfolio-data-updated', refreshCourses);
+
+    // Initial attach
+    attachCopyHandlers();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initCourseArchive);
+  } else {
+    initCourseArchive();
+  }
+</script>
+
+<style>
+  .course-archive-section {
+    padding: 3.5rem 0 4.5rem;
+    position: relative;
+  }
+
+  /* Header Tags & Subtitle are inherited from space-apple.css */
+
+  /* Controls: Search Bar & Chips */
+  .course-controls-wrapper {
+    margin-top: 2rem;
+    margin-bottom: 2.25rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .course-search-bar {
+    position: relative;
+    display: flex;
+    align-items: center;
+    max-width: 680px;
+    width: 100%;
+    margin: 0 auto;
+    background: rgba(18, 22, 32, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9999px;
+    padding: 0.5rem 1rem 0.5rem 1.25rem;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .course-search-bar:focus-within {
+    border-color: rgba(229, 169, 106, 0.45);
+    background: rgba(22, 27, 40, 0.9);
+    box-shadow: 0 0 20px rgba(229, 169, 106, 0.15);
+  }
+
+  .search-icon {
+    color: #8E95A5;
+    flex-shrink: 0;
+    margin-right: 0.75rem;
+  }
+
+  .course-search-input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #F3F4F6;
+    font-family: inherit;
+    font-size: 0.875rem;
+    line-height: 1.5;
+  }
+
+  .course-search-input::placeholder {
+    color: #606675;
+    font-size: 0.8125rem;
+  }
+
+  .btn-search-clear {
+    background: rgba(255, 255, 255, 0.08);
+    border: none;
+    color: #8E95A5;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-search-clear:hover {
+    background: rgba(255, 255, 255, 0.18);
+    color: #F3F4F6;
+  }
+
+  /* Filter Chips */
+  .course-filter-chips {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .chip-filter {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.85rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.07);
+    color: #8E95A5;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .chip-filter:hover {
+    color: #F3F4F6;
+    border-color: rgba(255, 255, 255, 0.16);
+    background: rgba(255, 255, 255, 0.06);
+  }
+
+  .chip-filter.active {
+    background: rgba(229, 169, 106, 0.14);
+    border-color: rgba(229, 169, 106, 0.4);
+    color: #E5A96A;
+  }
+
+  .chip-count {
+    font-size: 0.6875rem;
+    padding: 0.1rem 0.4rem;
+    border-radius: 9999px;
+    background: rgba(229, 169, 106, 0.22);
+    color: #E5A96A;
+  }
+
+  .filter-results-status {
+    text-align: center;
+    font-size: 0.75rem;
+    color: #606675;
+  }
+
+  /* Grid Layout */
+  .courses-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .courses-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Course Card */
+  .course-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.75rem;
+    border-radius: 18px;
+    background: rgba(18, 22, 32, 0.65);
+    border: 1px solid rgba(142, 149, 165, 0.14);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    position: relative;
+  }
+
+  .course-card:hover {
+    transform: translateY(-3px);
+    border-color: rgba(229, 169, 106, 0.38);
+    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), 0 0 24px -4px rgba(229, 169, 106, 0.2);
+  }
+
+  /* Course Card Header */
+  .course-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+  }
+
+  .course-code-group {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .course-code-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.6rem;
+    border-radius: 6px;
+    background: rgba(229, 169, 106, 0.15);
+    border: 1px solid rgba(229, 169, 106, 0.3);
+    color: #E5A96A;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    font-family: inherit;
+  }
+
+  .course-semester-pill {
+    font-size: 0.6875rem;
+    padding: 0.2rem 0.5rem;
+    border-radius: 9999px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #B6BAC6;
+  }
+
+  .course-inst-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.6875rem;
+    color: #8E95A5;
+    background: rgba(255, 255, 255, 0.02);
+    padding: 0.2rem 0.5rem;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+  }
+
+  .course-inst-tag svg {
+    color: #E5A96A;
+    flex-shrink: 0;
+  }
+
+  /* Course Title & Description */
+  .course-title {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #F3F4F6;
+    line-height: 1.4;
+    margin: 0 0 0.75rem 0;
+    font-family: inherit;
+    transition: color 0.2s ease;
+  }
+
+  .course-card:hover .course-title {
+    color: #F3C78E;
+  }
+
+  .course-desc {
+    font-size: 0.8125rem;
+    line-height: 1.6;
+    color: #8E95A5;
+    margin: 0 0 1.25rem 0;
+    flex-grow: 1;
+  }
+
+  /* Topic Tags */
+  .course-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .tag-pill {
+    font-size: 0.6875rem;
+    color: #38BDF8;
+    background: rgba(56, 189, 248, 0.08);
+    border: 1px solid rgba(56, 189, 248, 0.2);
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+  }
+
+  /* Footer & Action Section */
+  .course-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+    padding-top: 1.25rem;
+  }
+
+  /* Instructor Contact Box */
+  .course-contact-box {
+    background: rgba(255, 255, 255, 0.02);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: 12px;
+    padding: 0.65rem 0.85rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  .contact-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .instructor-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    font-size: 0.625rem;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #8E95A5;
+    font-weight: 600;
+  }
+
+  .instructor-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10B981;
+    box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+  }
+
+  .contact-action-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+  }
+
+  .contact-email-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.75rem;
+    color: #B6BAC6;
+    text-decoration: none;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    transition: color 0.2s ease;
+  }
+
+  .contact-email-link:hover {
+    color: #E5A96A;
+  }
+
+  .contact-email-link svg {
+    color: #E5A96A;
+    flex-shrink: 0;
+  }
+
+  .btn-copy-email {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    padding: 0.25rem 0.55rem;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #8E95A5;
+    font-size: 0.6875rem;
+    font-family: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-copy-email:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: #F3F4F6;
+    border-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .btn-copy-email.copied {
+    background: rgba(16, 185, 129, 0.18);
+    border-color: rgba(16, 185, 129, 0.4);
+    color: #10B981;
+  }
+
+  /* GitHub Action Button */
+  .course-repo-action {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .btn-course-github {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.55rem;
+    width: 100%;
+    padding: 0.65rem 1rem;
+    border-radius: 12px;
+    background: linear-gradient(180deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.04) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #F3F4F6;
+    text-decoration: none;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  }
+
+  .btn-course-github:hover {
+    background: linear-gradient(180deg, rgba(229, 169, 106, 0.2) 0%, rgba(229, 169, 106, 0.08) 100%);
+    border-color: rgba(229, 169, 106, 0.45);
+    color: #E5A96A;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 14px rgba(229, 169, 106, 0.2);
+  }
+
+  .octocat-icon {
+    flex-shrink: 0;
+  }
+
+  .external-arrow {
+    font-size: 0.875rem;
+    transition: transform 0.2s ease;
+  }
+
+  .btn-course-github:hover .external-arrow {
+    transform: translate(2px, -2px);
+  }
+
+  /* Telemetry / Security Pill */
+  .telemetry-pill {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.45rem;
+    font-size: 0.625rem;
+    color: #606675;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-weight: 500;
+  }
+
+  .telemetry-dot {
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: #38BDF8;
+    box-shadow: 0 0 5px rgba(56, 189, 248, 0.7);
+  }
+
+  /* Empty State */
+  .courses-empty-state {
+    text-align: center;
+    padding: 3.5rem 1.5rem;
+    max-width: 500px;
+    margin: 2rem auto 0;
+  }
+
+  .empty-icon {
+    font-size: 2.25rem;
+    margin-bottom: 1rem;
+  }
+
+  .empty-title {
+    font-size: 1.1rem;
+    color: #F3F4F6;
+    margin-bottom: 0.5rem;
+    font-family: inherit;
+  }
+
+  .empty-desc {
+    font-size: 0.8125rem;
+    color: #8E95A5;
+    line-height: 1.6;
+    margin-bottom: 1.25rem;
+  }
+
+  .btn-reset-filters {
+    padding: 0.5rem 1.25rem;
+    border-radius: 9999px;
+    background: rgba(229, 169, 106, 0.15);
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    color: #E5A96A;
+    font-family: inherit;
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-reset-filters:hover {
+    background: rgba(229, 169, 106, 0.25);
+    color: #F3C78E;
+  }
+</style>

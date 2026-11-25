@@ -1,0 +1,1215 @@
+---
+// src/components/ContributionHeatmap.astro
+// Apple-Grade Aerospace Mission Activity & Habit Tracker Heatmap
+import { getActivityHeatmapData, getActivityLog } from '../scripts/store.js';
+
+export interface Props {
+  initialFilter?: string;
+}
+
+const { initialFilter = 'all' } = Astro.props;
+
+// Compute initial SSR data safely
+const initialData = getActivityHeatmapData ? getActivityHeatmapData(null, initialFilter) : {
+  totalCount: 0,
+  currentStreak: 0,
+  longestStreak: 0,
+  activeDaysCount: 0,
+  cells: {}
+};
+
+const allActivities = getActivityLog ? getActivityLog() : [];
+
+// Compute category counts for filter buttons
+const categoryCounts = {
+  all: allActivities.length,
+  blog: allActivities.filter((a: any) => a?.type === 'blog').length,
+  cv: allActivities.filter((a: any) => a?.type === 'cv').length,
+  course: allActivities.filter((a: any) => a?.type === 'course').length,
+  achievement: allActivities.filter((a: any) => a?.type === 'achievement').length
+};
+
+// Calculate 52 weeks aligned Monday to Sunday
+const now = new Date();
+const dow = now.getDay(); // 0 is Sunday, 1 is Monday
+const daysUntilSunday = (7 - dow) % 7;
+const endSunday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilSunday);
+const startMonday = new Date(endSunday.getFullYear(), endSunday.getMonth(), endSunday.getDate() - (52 * 7 - 1));
+
+// Generate Month Labels aligned with week columns
+interface MonthLabel {
+  col: number;
+  label: string;
+}
+const monthLabels: MonthLabel[] = [];
+let prevMonth = -1;
+let prevCol = -10;
+for (let col = 0; col < 52; col++) {
+  const d = new Date(startMonday.getFullYear(), startMonday.getMonth(), startMonday.getDate() + col * 7);
+  const m = d.getMonth();
+  if (m !== prevMonth && (col - prevCol >= 3 || col === 0)) {
+    monthLabels.push({ col, label: d.toLocaleString('en-US', { month: 'short' }) });
+    prevMonth = m;
+    prevCol = col;
+  }
+}
+
+// Generate 52 columns x 7 rows cells
+interface CalendarCell {
+  dateStr: string;
+  count: number;
+  level: number;
+  activities: any[];
+  isFuture: boolean;
+  formattedDate: string;
+  dayOfWeekIndex: number;
+  colIndex: number;
+}
+
+const gridCells: CalendarCell[] = [];
+const todayIso = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+
+for (let col = 0; col < 52; col++) {
+  for (let row = 0; row < 7; row++) {
+    const cellDate = new Date(startMonday.getFullYear(), startMonday.getMonth(), startMonday.getDate() + (col * 7 + row));
+    const year = cellDate.getFullYear();
+    const month = String(cellDate.getMonth() + 1).padStart(2, '0');
+    const day = String(cellDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
+
+    const cellData = initialData.cells[dateStr] || { count: 0, level: 0, activities: [] };
+    const isFuture = dateStr > todayIso;
+
+    const formattedDate = cellDate.toLocaleDateString('en-US', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'short',
+      day: 'numeric'
+    });
+
+    gridCells.push({
+      dateStr,
+      count: isFuture ? 0 : cellData.count,
+      level: isFuture ? 0 : cellData.level,
+      activities: isFuture ? [] : (cellData.activities || []),
+      isFuture,
+      formattedDate,
+      dayOfWeekIndex: row,
+      colIndex: col
+    });
+  }
+}
+
+const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
+---
+
+<section id="habit-tracker" class="habit-heatmap-section section" aria-label="Mission Activity and Habit Tracker">
+  <div class="container">
+    <div class="heatmap-card glass-card">
+      
+      <!-- Section Header -->
+      <header class="heatmap-header">
+        <div class="header-content">
+          <div class="section-tag-apple">
+            <span class="telemetry-beacon"></span>
+            MISSION ACTIVITY & HABIT TRACKER
+          </div>
+          <h2 class="section-title heatmap-title">
+            Research & Orbital <span class="glow-warm">Activity Telemetry</span>
+          </h2>
+          <p class="section-subtitle heatmap-subtitle">
+            Continuous telemetry of research dispatches, syllabus publishing, curriculum revisions, and orbital milestones.
+          </p>
+        </div>
+
+        <!-- Filter Tabs -->
+        <div class="filter-tabs-container" role="tablist" aria-label="Filter activities by category">
+          <button type="button" class="filter-tab-btn active" data-filter="all" role="tab" aria-selected="true" aria-controls="heatmap-calendar-grid">
+            <span class="filter-name">All Activities</span>
+            <span class="filter-badge" id="badge-all">{categoryCounts.all}</span>
+          </button>
+          <button type="button" class="filter-tab-btn" data-filter="blog" role="tab" aria-selected="false">
+            <span class="filter-icon">📝</span>
+            <span class="filter-name">Blogs</span>
+            <span class="filter-badge" id="badge-blog">{categoryCounts.blog}</span>
+          </button>
+          <button type="button" class="filter-tab-btn" data-filter="cv" role="tab" aria-selected="false">
+            <span class="filter-icon">🏛️</span>
+            <span class="filter-name">CV Updates</span>
+            <span class="filter-badge" id="badge-cv">{categoryCounts.cv}</span>
+          </button>
+          <button type="button" class="filter-tab-btn" data-filter="course" role="tab" aria-selected="false">
+            <span class="filter-icon">📚</span>
+            <span class="filter-name">Course Materials</span>
+            <span class="filter-badge" id="badge-course">{categoryCounts.course}</span>
+          </button>
+          <button type="button" class="filter-tab-btn" data-filter="achievement" role="tab" aria-selected="false">
+            <span class="filter-icon">🏆</span>
+            <span class="filter-name">Achievements</span>
+            <span class="filter-badge" id="badge-achievement">{categoryCounts.achievement}</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Stats Ribbon -->
+      <div class="stats-ribbon" role="region" aria-label="Habit and Contribution Telemetry Statistics">
+        <div class="stat-card">
+          <div class="stat-meta">
+            <svg class="stat-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+            </svg>
+            <span class="stat-label">TOTAL CONTRIBUTIONS</span>
+          </div>
+          <div class="stat-val-row">
+            <span class="stat-value" id="stat-total">{initialData.totalCount}</span>
+            <span class="stat-unit">Activities</span>
+          </div>
+          <span class="stat-desc">52-week telemetry log</span>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-meta">
+            <span class="stat-icon-flame">🔥</span>
+            <span class="stat-label">CURRENT STREAK</span>
+          </div>
+          <div class="stat-val-row">
+            <span class="stat-value text-amber" id="stat-current-streak">{initialData.currentStreak}</span>
+            <span class="stat-unit">Days</span>
+          </div>
+          <span class="stat-desc">Consecutive cadence</span>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-meta">
+            <svg class="stat-icon text-gold" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"></polygon>
+            </svg>
+            <span class="stat-label">LONGEST STREAK</span>
+          </div>
+          <div class="stat-val-row">
+            <span class="stat-value text-gold" id="stat-longest-streak">{initialData.longestStreak}</span>
+            <span class="stat-unit">Days</span>
+          </div>
+          <span class="stat-desc">Record orbital run</span>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-meta">
+            <svg class="stat-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
+              <line x1="16" y1="2" x2="16" y2="6"></line>
+              <line x1="8" y1="2" x2="8" y2="6"></line>
+              <line x1="3" y1="10" x2="21" y2="10"></line>
+            </svg>
+            <span class="stat-label">ACTIVE DAYS</span>
+          </div>
+          <div class="stat-val-row">
+            <span class="stat-value" id="stat-active-days">{initialData.activeDaysCount}</span>
+            <span class="stat-unit">Days</span>
+          </div>
+          <span class="stat-desc">Days with active telemetry</span>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-meta">
+            <svg class="stat-icon text-cyan" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 14 14"></polyline>
+            </svg>
+            <span class="stat-label">CONSISTENCY RATE</span>
+          </div>
+          <div class="stat-val-row">
+            <span class="stat-value text-cyan" id="stat-consistency-rate">{consistencyRate}%</span>
+            <span class="stat-unit">Rate</span>
+          </div>
+          <span class="stat-desc">Annual operational uptime</span>
+        </div>
+      </div>
+
+      <!-- Calendar Heatmap Grid Area -->
+      <div class="heatmap-scroll-area" id="heatmap-scroll-area">
+        <div class="heatmap-canvas" id="heatmap-canvas">
+          
+          <!-- Month labels header row -->
+          <div class="month-labels-row" aria-hidden="true">
+            <div class="month-col-spacer"></div>
+            <div class="month-cols-grid">
+              {monthLabels.map(item => (
+                <span class="month-label" style={`grid-column-start: ${item.col + 1};`}>
+                  {item.label}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <!-- Main Calendar Grid with Day Labels + 52 Columns -->
+          <div class="calendar-body-row">
+            <!-- Day of Week indicators (Mon, Wed, Fri) -->
+            <div class="day-labels-col" aria-hidden="true">
+              <span class="day-label">Mon</span>
+              <span class="day-label-blank"></span>
+              <span class="day-label">Wed</span>
+              <span class="day-label-blank"></span>
+              <span class="day-label">Fri</span>
+              <span class="day-label-blank"></span>
+              <span class="day-label-blank"></span>
+            </div>
+
+            <!-- 52 columns x 7 rows cells -->
+            <div 
+              class="heatmap-grid" 
+              id="heatmap-calendar-grid"
+              role="grid"
+              aria-label="52-Week Contribution Calendar Grid"
+            >
+              {gridCells.map((cell) => (
+                <div
+                  class={`heatmap-cell level-${cell.level} ${cell.isFuture ? 'cell-future' : ''}`}
+                  data-date={cell.dateStr}
+                  data-count={cell.count}
+                  data-level={cell.level}
+                  data-future={cell.isFuture ? "true" : "false"}
+                  data-formatted-date={cell.formattedDate}
+                  data-activities={JSON.stringify(cell.activities)}
+                  tabindex={cell.isFuture ? "-1" : "0"}
+                  role="gridcell"
+                  aria-label={`${cell.formattedDate}: ${cell.count} ${cell.count === 1 ? 'activity' : 'activities'}`}
+                ></div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer & Legend -->
+      <footer class="heatmap-footer">
+        <div class="footer-summary">
+          <span class="summary-dot"></span>
+          <span id="heatmap-summary-text">Displaying continuous telemetry across the past 52 weeks ({initialData.totalCount} events)</span>
+        </div>
+
+        <div class="heatmap-legend" aria-label="Activity intensity scale">
+          <span class="legend-text">Less</span>
+          <span class="legend-swatch level-0" title="0 activities"></span>
+          <span class="legend-swatch level-1" title="1 activity"></span>
+          <span class="legend-swatch level-2" title="2 activities"></span>
+          <span class="legend-swatch level-3" title="3 activities"></span>
+          <span class="legend-swatch level-4" title="4+ activities"></span>
+          <span class="legend-text">More</span>
+        </div>
+      </footer>
+
+      <!-- Floating Interactive Tooltip -->
+      <div 
+        class="heatmap-tooltip" 
+        id="heatmap-tooltip"
+        role="tooltip"
+        aria-hidden="true"
+      >
+        <div class="tooltip-header">
+          <span class="tooltip-date" id="tooltip-date">Wednesday, Nov 25, 2026</span>
+          <span class="tooltip-badge" id="tooltip-count">3 activities</span>
+        </div>
+        <div class="tooltip-items" id="tooltip-items">
+          <!-- Populated dynamically on hover -->
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- Client Script: Reactivity, Filter Switching & Interactive Tooltip -->
+<script>
+  import { getActivityHeatmapData, getActivityLog } from '../scripts/store.js';
+
+  let currentFilter = 'all';
+
+  function initHeatmap() {
+    const grid = document.getElementById('heatmap-calendar-grid');
+    const tooltip = document.getElementById('heatmap-tooltip');
+    const scrollArea = document.getElementById('heatmap-scroll-area');
+    if (!grid || !tooltip) return;
+
+    // Auto-scroll to end (most recent weeks) on mobile/overflow
+    if (scrollArea) {
+      scrollArea.scrollLeft = scrollArea.scrollWidth;
+    }
+
+    // Bind filter buttons
+    const filterButtons = document.querySelectorAll('.filter-tab-btn');
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const filter = btn.getAttribute('data-filter') || 'all';
+        setFilter(filter);
+      });
+    });
+
+    // Tooltip event listeners
+    setupTooltip(grid, tooltip);
+
+    // Reactivity to store updates
+    window.addEventListener('portfolio-data-updated', () => {
+      refreshData();
+    });
+
+    // Run initial refresh
+    refreshData();
+  }
+
+  function setFilter(filter) {
+    currentFilter = filter;
+
+    const filterButtons = document.querySelectorAll('.filter-tab-btn');
+    filterButtons.forEach(btn => {
+      const active = btn.getAttribute('data-filter') === filter;
+      btn.classList.toggle('active', active);
+      btn.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    refreshData();
+  }
+
+  function refreshData() {
+    try {
+      const getHeatmapFn = window.PortfolioStore?.getActivityHeatmapData || getActivityHeatmapData;
+      const getLogFn = window.PortfolioStore?.getActivityLog || getActivityLog;
+
+      if (typeof getHeatmapFn !== 'function') return;
+
+      const data = getHeatmapFn(null, currentFilter);
+      const allActivities = typeof getLogFn === 'function' ? getLogFn() : [];
+
+      // Update Category Badges
+      const counts = {
+        all: allActivities.length,
+        blog: allActivities.filter(a => a?.type === 'blog').length,
+        cv: allActivities.filter(a => a?.type === 'cv').length,
+        course: allActivities.filter(a => a?.type === 'course').length,
+        achievement: allActivities.filter(a => a?.type === 'achievement').length
+      };
+
+      const bAll = document.getElementById('badge-all');
+      if (bAll) bAll.textContent = String(counts.all);
+      const bBlog = document.getElementById('badge-blog');
+      if (bBlog) bBlog.textContent = String(counts.blog);
+      const bCv = document.getElementById('badge-cv');
+      if (bCv) bCv.textContent = String(counts.cv);
+      const bCourse = document.getElementById('badge-course');
+      if (bCourse) bCourse.textContent = String(counts.course);
+      const bAch = document.getElementById('badge-achievement');
+      if (bAch) bAch.textContent = String(counts.achievement);
+
+      // Update Stats Ribbon
+      const statTotal = document.getElementById('stat-total');
+      if (statTotal) statTotal.textContent = String(data.totalCount);
+      const statCurrent = document.getElementById('stat-current-streak');
+      if (statCurrent) statCurrent.textContent = String(data.currentStreak);
+      const statLongest = document.getElementById('stat-longest-streak');
+      if (statLongest) statLongest.textContent = String(data.longestStreak);
+      const statActive = document.getElementById('stat-active-days');
+      if (statActive) statActive.textContent = String(data.activeDaysCount);
+      const statRate = document.getElementById('stat-consistency-rate');
+      if (statRate) {
+        const rate = ((data.activeDaysCount / 365) * 100).toFixed(1);
+        statRate.textContent = `${rate}%`;
+      }
+
+      // Update Summary Text
+      const summaryText = document.getElementById('heatmap-summary-text');
+      if (summaryText) {
+        const filterNames = {
+          all: 'all activities',
+          blog: 'blog dispatches',
+          cv: 'CV revisions',
+          course: 'course materials & syllabi',
+          achievement: 'honors & flight awards'
+        };
+        summaryText.textContent = `Displaying continuous ${filterNames[currentFilter] || 'telemetry'} across the past 52 weeks (${data.totalCount} events)`;
+      }
+
+      // Update All Cells in Grid
+      const cells = document.querySelectorAll('.heatmap-cell');
+      cells.forEach(cell => {
+        const isFuture = cell.getAttribute('data-future') === 'true';
+        if (isFuture) return;
+
+        const dateStr = cell.getAttribute('data-date');
+        if (!dateStr) return;
+
+        const cellInfo = data.cells[dateStr] || { count: 0, level: 0, activities: [] };
+
+        // Reset classes
+        cell.className = `heatmap-cell level-${cellInfo.level}`;
+        cell.setAttribute('data-count', String(cellInfo.count));
+        cell.setAttribute('data-level', String(cellInfo.level));
+        cell.setAttribute('data-activities', JSON.stringify(cellInfo.activities || []));
+
+        const formattedDate = cell.getAttribute('data-formatted-date') || dateStr;
+        cell.setAttribute('aria-label', `${formattedDate}: ${cellInfo.count} ${cellInfo.count === 1 ? 'activity' : 'activities'}`);
+      });
+    } catch (err) {
+      console.warn('Error refreshing heatmap telemetry:', err);
+    }
+  }
+
+  function setupTooltip(grid, tooltip) {
+    const tooltipDate = document.getElementById('tooltip-date');
+    const tooltipCount = document.getElementById('tooltip-count');
+    const tooltipItems = document.getElementById('tooltip-items');
+
+    function showTooltip(cell) {
+      const isFuture = cell.getAttribute('data-future') === 'true';
+      const formattedDate = cell.getAttribute('data-formatted-date') || '';
+      const count = parseInt(cell.getAttribute('data-count') || '0', 10);
+      let activities = [];
+      try {
+        activities = JSON.parse(cell.getAttribute('data-activities') || '[]');
+      } catch (e) {
+        activities = [];
+      }
+
+      if (tooltipDate) tooltipDate.textContent = formattedDate;
+      if (tooltipCount) {
+        if (isFuture) {
+          tooltipCount.textContent = 'Future';
+          tooltipCount.className = 'tooltip-badge badge-future';
+        } else {
+          tooltipCount.textContent = `${count} ${count === 1 ? 'activity' : 'activities'}`;
+          tooltipCount.className = `tooltip-badge ${count > 0 ? 'badge-active' : 'badge-empty'}`;
+        }
+      }
+
+      if (tooltipItems) {
+        if (isFuture) {
+          tooltipItems.innerHTML = '<div class="tooltip-empty">Upcoming date in current week.</div>';
+        } else if (activities.length === 0) {
+          tooltipItems.innerHTML = '<div class="tooltip-empty">No telemetry recorded on this date.</div>';
+        } else {
+          const typeBadgeMap = {
+            blog: { label: 'Blog', class: 'tag-blog' },
+            cv: { label: 'CV', class: 'tag-cv' },
+            course: { label: 'Course', class: 'tag-course' },
+            achievement: { label: 'Award', class: 'tag-achievement' }
+          };
+
+          tooltipItems.innerHTML = activities.slice(0, 4).map(act => {
+            const conf = typeBadgeMap[act.type] || { label: 'Log', class: 'tag-default' };
+            const cleanTitle = (act.title || '').replace(/"/g, '&quot;');
+            return `
+              <div class="tooltip-item">
+                <span class="type-tag ${conf.class}">${conf.label}</span>
+                <span class="item-text" title="${cleanTitle}">${cleanTitle}</span>
+              </div>
+            `;
+          }).join('') + (activities.length > 4 ? `<div class="tooltip-more">+${activities.length - 4} more activities</div>` : '');
+        }
+      }
+
+      // Positioning tooltip relative to grid / viewport
+      const cellRect = cell.getBoundingClientRect();
+      const card = cell.closest('.heatmap-card') || document.body;
+      const cardRect = card.getBoundingClientRect();
+
+      tooltip.classList.add('is-visible');
+      tooltip.setAttribute('aria-hidden', 'false');
+
+      // Calculate position
+      const cellCenterX = (cellRect.left + cellRect.width / 2) - cardRect.left;
+      const cellTopY = cellRect.top - cardRect.top;
+
+      const tooltipWidth = tooltip.offsetWidth || 260;
+      const tooltipHeight = tooltip.offsetHeight || 90;
+
+      let leftPos = cellCenterX;
+      // Clamp within card edges
+      if (leftPos - tooltipWidth / 2 < 12) {
+        leftPos = tooltipWidth / 2 + 12;
+      } else if (leftPos + tooltipWidth / 2 > cardRect.width - 12) {
+        leftPos = cardRect.width - tooltipWidth / 2 - 12;
+      }
+
+      let topPos = cellTopY - 10;
+      if (topPos - tooltipHeight < 10) {
+        // Place below cell if too close to top
+        topPos = cellTopY + cellRect.height + tooltipHeight + 10;
+      }
+
+      tooltip.style.left = `${leftPos}px`;
+      tooltip.style.top = `${topPos}px`;
+    }
+
+    function hideTooltip() {
+      tooltip.classList.remove('is-visible');
+      tooltip.setAttribute('aria-hidden', 'true');
+    }
+
+    // Grid event delegation
+    grid.addEventListener('mouseover', (e) => {
+      const target = e.target.closest('.heatmap-cell');
+      if (target) showTooltip(target);
+    });
+
+    grid.addEventListener('mouseout', (e) => {
+      const target = e.target.closest('.heatmap-cell');
+      if (target) hideTooltip();
+    });
+
+    grid.addEventListener('focusin', (e) => {
+      const target = e.target.closest('.heatmap-cell');
+      if (target) showTooltip(target);
+    });
+
+    grid.addEventListener('focusout', () => {
+      hideTooltip();
+    });
+  }
+
+  // Initialize on load and Astro view transitions
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initHeatmap);
+  } else {
+    initHeatmap();
+  }
+  document.addEventListener('astro:page-load', initHeatmap);
+</script>
+
+<style>
+  /* ==========================================================================
+     CONTRIBUTION HEATMAP & HABIT TRACKER STYLES
+     Space-Apple Aesthetic: Frosted Onyx, Monospace, Telemetry Amber/Cyan
+     ========================================================================== */
+
+  .habit-heatmap-section {
+    padding: 3rem 0;
+    position: relative;
+  }
+
+  .heatmap-card {
+    background: linear-gradient(135deg, rgba(16, 20, 30, 0.88), rgba(11, 13, 19, 0.95));
+    border: 1px solid rgba(142, 149, 165, 0.16);
+    border-radius: var(--radius-lg, 18px);
+    padding: 2.25rem 2.5rem;
+    box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.55), 0 0 1px 1px rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    position: relative;
+    overflow: visible;
+  }
+
+  /* Section Header */
+  .heatmap-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+
+  .header-content {
+    max-width: 680px;
+  }
+
+  .telemetry-beacon {
+    display: inline-block;
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--telemetry-green, #10B981);
+    box-shadow: 0 0 8px var(--telemetry-green, #10B981);
+    animation: beaconPulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    margin-right: 0.45rem;
+  }
+
+  @keyframes beaconPulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.85); }
+  }
+
+  .heatmap-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary, #F3F4F6);
+    margin: 0.5rem 0 0.4rem;
+  }
+
+  .glow-warm {
+    color: var(--amber, #E5A96A);
+    text-shadow: 0 0 16px rgba(229, 169, 106, 0.35);
+  }
+
+  .heatmap-subtitle {
+    font-size: 0.875rem;
+    color: var(--text-muted, #8E95A5);
+    line-height: 1.55;
+  }
+
+  /* Filter Tabs Bar */
+  .filter-tabs-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    background: rgba(14, 18, 27, 0.65);
+    padding: 0.35rem;
+    border-radius: 999px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .filter-tab-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.35rem 0.75rem;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    color: var(--text-secondary, #B6BAC6);
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .filter-tab-btn:hover {
+    color: #FFFFFF;
+    background: rgba(255, 255, 255, 0.05);
+  }
+
+  .filter-tab-btn.active {
+    background: rgba(229, 169, 106, 0.16);
+    border-color: rgba(229, 169, 106, 0.4);
+    color: #FFFFFF;
+    box-shadow: 0 0 14px rgba(229, 169, 106, 0.25);
+  }
+
+  .filter-icon {
+    font-size: 0.85rem;
+    line-height: 1;
+  }
+
+  .filter-badge {
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.05rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    color: var(--amber, #E5A96A);
+  }
+
+  .filter-tab-btn.active .filter-badge {
+    background: rgba(229, 169, 106, 0.28);
+    color: #FFF3D6;
+  }
+
+  /* Stats Ribbon */
+  .stats-ribbon {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .stat-card {
+    background: rgba(14, 18, 27, 0.55);
+    border: 1px solid rgba(142, 149, 165, 0.12);
+    border-radius: 12px;
+    padding: 1rem 1.15rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    transition: transform 0.2s ease, border-color 0.2s ease, background 0.2s ease;
+  }
+
+  .stat-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(229, 169, 106, 0.3);
+    background: rgba(18, 24, 36, 0.75);
+  }
+
+  .stat-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    margin-bottom: 0.4rem;
+  }
+
+  .stat-icon {
+    color: var(--titanium, #8E95A5);
+  }
+
+  .stat-icon-flame {
+    font-size: 0.85rem;
+  }
+
+  .stat-label {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.6875rem;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    color: var(--text-muted, #8E95A5);
+  }
+
+  .stat-val-row {
+    display: flex;
+    align-items: baseline;
+    gap: 0.35rem;
+    margin: 0.2rem 0;
+  }
+
+  .stat-value {
+    font-family: var(--font-mono, monospace);
+    font-size: 1.75rem;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text-primary, #F3F4F6);
+    line-height: 1.15;
+  }
+
+  .stat-unit {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    color: var(--text-secondary, #B6BAC6);
+  }
+
+  .stat-desc {
+    font-size: 0.6875rem;
+    color: var(--text-dim, #606675);
+    margin-top: 0.2rem;
+  }
+
+  .text-amber {
+    color: var(--amber, #E5A96A);
+    text-shadow: 0 0 12px rgba(229, 169, 106, 0.3);
+  }
+
+  .text-gold {
+    color: var(--amber-gold, #D4AF37);
+    text-shadow: 0 0 12px rgba(212, 175, 55, 0.3);
+  }
+
+  .text-cyan {
+    color: var(--telemetry-cyan, #38BDF8);
+    text-shadow: 0 0 12px rgba(56, 189, 248, 0.3);
+  }
+
+  /* Heatmap Calendar Scroll Area */
+  .heatmap-scroll-area {
+    width: 100%;
+    overflow-x: auto;
+    padding-bottom: 0.75rem;
+    position: relative;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .heatmap-scroll-area::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .heatmap-scroll-area::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: 999px;
+  }
+
+  .heatmap-scroll-area::-webkit-scrollbar-thumb {
+    background: rgba(229, 169, 106, 0.28);
+    border-radius: 999px;
+  }
+
+  .heatmap-scroll-area::-webkit-scrollbar-thumb:hover {
+    background: rgba(229, 169, 106, 0.55);
+  }
+
+  .heatmap-canvas {
+    min-width: 860px;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+
+  /* Month labels row */
+  .month-labels-row {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .month-col-spacer {
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .month-cols-grid {
+    display: grid;
+    grid-template-columns: repeat(52, 13px);
+    gap: 3.5px;
+    flex-grow: 1;
+  }
+
+  .month-label {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.6875rem;
+    color: var(--text-muted, #8E95A5);
+    white-space: nowrap;
+    text-align: left;
+  }
+
+  /* Calendar Body Row */
+  .calendar-body-row {
+    display: flex;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  /* Day labels column */
+  .day-labels-col {
+    display: flex;
+    flex-direction: column;
+    gap: 3.5px;
+    width: 32px;
+    flex-shrink: 0;
+  }
+
+  .day-label {
+    height: 13px;
+    line-height: 13px;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.65rem;
+    color: var(--text-muted, #8E95A5);
+    text-align: right;
+    padding-right: 4px;
+  }
+
+  .day-label-blank {
+    height: 13px;
+  }
+
+  /* Main 52 x 7 Grid */
+  .heatmap-grid {
+    display: grid;
+    grid-template-rows: repeat(7, 13px);
+    grid-auto-flow: column;
+    grid-auto-columns: 13px;
+    gap: 3.5px;
+  }
+
+  /* Heatmap Cells */
+  .heatmap-cell {
+    width: 13px;
+    height: 13px;
+    border-radius: 2.5px;
+    outline: none;
+    cursor: pointer;
+    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
+                background-color 0.2s ease,
+                box-shadow 0.2s ease;
+  }
+
+  /* Level 0: Empty subtle slot */
+  .heatmap-cell.level-0 {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  /* Level 1: Soft titanium glow */
+  .heatmap-cell.level-1 {
+    background: rgba(56, 189, 248, 0.35);
+    border: 1px solid rgba(56, 189, 248, 0.55);
+    box-shadow: 0 0 4px rgba(56, 189, 248, 0.25);
+  }
+
+  /* Level 2: Warm amber dim */
+  .heatmap-cell.level-2 {
+    background: rgba(229, 169, 106, 0.5);
+    border: 1px solid rgba(229, 169, 106, 0.7);
+    box-shadow: 0 0 6px rgba(229, 169, 106, 0.35);
+  }
+
+  /* Level 3: Radiant gold */
+  .heatmap-cell.level-3 {
+    background: #D4AF37;
+    border: 1px solid #F3C78E;
+    box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
+  }
+
+  /* Level 4: Intense cosmic amber with soft box-shadow */
+  .heatmap-cell.level-4 {
+    background: #E5A96A;
+    border: 1px solid #FFF3D6;
+    box-shadow: 0 0 12px 2px rgba(229, 169, 106, 0.85);
+  }
+
+  /* Future cell */
+  .heatmap-cell.cell-future {
+    background: rgba(255, 255, 255, 0.015);
+    border: 1px dashed rgba(255, 255, 255, 0.04);
+    opacity: 0.35;
+    cursor: default;
+  }
+
+  /* Hover & Focus Interaction */
+  .heatmap-cell:not(.cell-future):hover,
+  .heatmap-cell:not(.cell-future):focus {
+    transform: scale(1.4);
+    z-index: 10;
+    outline: 1.5px solid #FFFFFF;
+    box-shadow: 0 0 12px rgba(255, 255, 255, 0.65);
+  }
+
+  /* Heatmap Footer */
+  .heatmap-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .footer-summary {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    color: var(--text-muted, #8E95A5);
+  }
+
+  .summary-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: var(--amber, #E5A96A);
+    box-shadow: 0 0 6px var(--amber, #E5A96A);
+  }
+
+  /* Legend */
+  .heatmap-legend {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    color: var(--text-muted, #8E95A5);
+  }
+
+  .legend-text {
+    padding: 0 0.2rem;
+  }
+
+  .legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 2.5px;
+    display: inline-block;
+  }
+
+  .legend-swatch.level-0 {
+    background: rgba(255, 255, 255, 0.035);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+
+  .legend-swatch.level-1 {
+    background: rgba(56, 189, 248, 0.35);
+    border: 1px solid rgba(56, 189, 248, 0.55);
+  }
+
+  .legend-swatch.level-2 {
+    background: rgba(229, 169, 106, 0.5);
+    border: 1px solid rgba(229, 169, 106, 0.7);
+  }
+
+  .legend-swatch.level-3 {
+    background: #D4AF37;
+    border: 1px solid #F3C78E;
+  }
+
+  .legend-swatch.level-4 {
+    background: #E5A96A;
+    border: 1px solid #FFF3D6;
+    box-shadow: 0 0 8px rgba(229, 169, 106, 0.6);
+  }
+
+  /* Interactive Tooltip */
+  .heatmap-tooltip {
+    position: absolute;
+    transform: translate(-50%, -100%);
+    pointer-events: none;
+    z-index: 9999;
+    background: rgba(14, 18, 27, 0.96);
+    border: 1px solid rgba(229, 169, 106, 0.35);
+    border-radius: 8px;
+    padding: 0.75rem 0.95rem;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 1px 1px rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    width: max-content;
+    max-width: 340px;
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1),
+                transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .heatmap-tooltip.is-visible {
+    opacity: 1;
+    visibility: visible;
+  }
+
+  .tooltip-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.85rem;
+    padding-bottom: 0.45rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 0.5rem;
+  }
+
+  .tooltip-date {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--text-primary, #F3F4F6);
+  }
+
+  .tooltip-badge {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+  }
+
+  .tooltip-badge.badge-active {
+    background: rgba(229, 169, 106, 0.2);
+    border: 1px solid rgba(229, 169, 106, 0.4);
+    color: var(--amber, #E5A96A);
+  }
+
+  .tooltip-badge.badge-empty {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text-muted, #8E95A5);
+  }
+
+  .tooltip-badge.badge-future {
+    background: rgba(142, 149, 165, 0.1);
+    color: var(--text-muted, #8E95A5);
+  }
+
+  .tooltip-items {
+    display: flex;
+    flex-direction: column;
+    gap: 0.35rem;
+  }
+
+  .tooltip-item {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    font-size: 0.725rem;
+    color: var(--text-secondary, #B6BAC6);
+  }
+
+  .type-tag {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.625rem;
+    font-weight: 700;
+    padding: 0.05rem 0.35rem;
+    border-radius: 4px;
+    letter-spacing: 0.04em;
+    flex-shrink: 0;
+  }
+
+  .type-tag.tag-blog {
+    background: rgba(229, 169, 106, 0.2);
+    border: 1px solid rgba(229, 169, 106, 0.4);
+    color: #F3C78E;
+  }
+
+  .type-tag.tag-cv {
+    background: rgba(56, 189, 248, 0.2);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    color: #7DD3FC;
+  }
+
+  .type-tag.tag-course {
+    background: rgba(167, 139, 250, 0.2);
+    border: 1px solid rgba(167, 139, 250, 0.4);
+    color: #C4B5FD;
+  }
+
+  .type-tag.tag-achievement {
+    background: rgba(212, 175, 55, 0.2);
+    border: 1px solid rgba(212, 175, 55, 0.45);
+    color: #FDE047;
+  }
+
+  .type-tag.tag-default {
+    background: rgba(255, 255, 255, 0.08);
+    color: #D1D5DB;
+  }
+
+  .item-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 250px;
+    font-family: var(--font-sans, system-ui, sans-serif);
+  }
+
+  .tooltip-empty {
+    font-size: 0.725rem;
+    color: var(--text-muted, #8E95A5);
+    font-style: italic;
+  }
+
+  .tooltip-more {
+    font-family: var(--font-mono, monospace);
+    font-size: 0.6875rem;
+    color: var(--amber, #E5A96A);
+    margin-top: 0.2rem;
+  }
+
+  /* Responsive Adjustments */
+  @media (max-width: 1024px) {
+    .stats-ribbon {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .heatmap-card {
+      padding: 1.5rem 1.25rem;
+    }
+    .stats-ribbon {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .heatmap-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .filter-tabs-container {
+      width: 100%;
+      overflow-x: auto;
+      border-radius: 12px;
+      padding: 0.5rem;
+      scrollbar-width: none;
+    }
+    .filter-tabs-container::-webkit-scrollbar {
+      display: none;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .stats-ribbon {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

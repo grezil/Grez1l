@@ -45,16 +45,35 @@
     }
   },
   "navigation": [
-    { "name": "Home", "href": "/" },
-    { "name": "My CV", "href": "/cv" },
-    { "name": "Blog", "href": "/blog" },
-    { "name": "Timeline", "href": "/#timeline" },
-    { "name": "Admin Control", "href": "/admin" }
+    {
+      "name": "Home",
+      "href": "/"
+    },
+    {
+      "name": "My CV",
+      "href": "/cv"
+    },
+    {
+      "name": "Blog",
+      "href": "/blog"
+    },
+    {
+      "name": "Timeline",
+      "href": "/#timeline"
+    },
+    {
+      "name": "Admin Control",
+      "href": "/admin"
+    }
   ],
   "admin": {
     "username": "admin",
     "password": "NhatNguyen141",
-    "authorizedRoles": ["Flight Software Lead", "Mission Director", "Chief Architect"]
+    "authorizedRoles": [
+      "Flight Software Lead",
+      "Mission Director",
+      "Chief Architect"
+    ]
   },
   "education": [
     {
@@ -126,7 +145,14 @@
         "Directed end-to-end hardware-in-the-loop (HIL) testing and 72-hour thermal-vacuum 'Day-in-the-Life' acceptance campaigns, verifying 100% compliance with NASA Class D smallsat flight guidelines.",
         "Formulated CCSDS 133.0-B-1 Space Packet Protocol telecommand decoders and high-throughput telemetry framers, achieving sustained 50 Mbps S-Band downlink with <0.001% packet loss."
       ],
-      "tags": ["Rust (no_std)", "FreeRTOS", "ARM Cortex-M7", "CCSDS 133.0-B-1", "FDIR", "HIL Qualification"]
+      "tags": [
+        "Rust (no_std)",
+        "FreeRTOS",
+        "ARM Cortex-M7",
+        "CCSDS 133.0-B-1",
+        "FDIR",
+        "HIL Qualification"
+      ]
     },
     {
       "id": "exp-helios",
@@ -143,7 +169,14 @@
         "Automated 100,000+ Monte Carlo trajectory dispersions leveraging NASA SPICE ephemeris kernels (NAIF DE440), accelerating launch window and conjunction risk assessments by 85x.",
         "Authored spacecraft attitude control allocation algorithms for 3-axis reaction wheel momentum dumping via magnetorquer B-dot magnetic torquing."
       ],
-      "tags": ["C++20", "NASA SPICE", "GMAT", "Extended Kalman Filter", "Attitude Dynamics", "Eigen"]
+      "tags": [
+        "C++20",
+        "NASA SPICE",
+        "GMAT",
+        "Extended Kalman Filter",
+        "Attitude Dynamics",
+        "Eigen"
+      ]
     },
     {
       "id": "exp-polaris",
@@ -160,7 +193,15 @@
         "Built hardware-in-the-loop (HIL) test harness emulating orbital dynamics and sensor noise to stress test flight computers prior to flight software burn-in.",
         "Authored automated satellite pass scheduler and antenna pointing servomechanism control loops compliant with CCSDS SLE (Space Link Extension) standards."
       ],
-      "tags": ["Golang", "TypeScript", "CANopen", "SpaceWire", "Docker", "ZeroMQ", "C"]
+      "tags": [
+        "Golang",
+        "TypeScript",
+        "CANopen",
+        "SpaceWire",
+        "Docker",
+        "ZeroMQ",
+        "C"
+      ]
     },
     {
       "id": "exp-jpl",
@@ -176,7 +217,14 @@
         "Simulated onboard optical relative navigation algorithms in high-fidelity synthetic camera environments with varying illumination and albedo.",
         "Co-authored technical recommendations incorporated into NASA Small Spacecraft Technology Program (SSTP) reliability guidelines."
       ],
-      "tags": ["Astrodynamics", "Convex Optimization", "NASA SPICE", "Optical Nav", "Python", "C++"]
+      "tags": [
+        "Astrodynamics",
+        "Convex Optimization",
+        "NASA SPICE",
+        "Optical Nav",
+        "Python",
+        "C++"
+      ]
     }
   ],
   "missions": [
@@ -199,9 +247,18 @@
       "badge": "Flight Proven",
       "missionHighlights": "Demonstrated first on-orbit execution of memory-safe Rust flight executive with zero telemetry dropouts over 6,500+ orbits and zero uncommanded safe-mode transitions.",
       "metrics": [
-        { "label": "On-Orbit Time", "value": "20+ Months" },
-        { "label": "Orbits Completed", "value": "6,500+" },
-        { "label": "FSW Uptime", "value": "100.00%" }
+        {
+          "label": "On-Orbit Time",
+          "value": "20+ Months"
+        },
+        {
+          "label": "Orbits Completed",
+          "value": "6,500+"
+        },
+        {
+          "label": "FSW Uptime",
+          "value": "100.00%"
+        }
       ]
     },
     {
@@ -223,9 +280,18 @@
       "badge": "Full Success",
       "missionHighlights": "Validated autonomous relative distance estimation and synchronized attitude slews between paired nanosatellites without ground intervention.",
       "metrics": [
-        { "label": "Formation Drift", "value": "<50 m RMS" },
-        { "label": "Inter-Sat Latency", "value": "<8 ms" },
-        { "label": "Downlink Success", "value": "99.8%" }
+        {
+          "label": "Formation Drift",
+          "value": "<50 m RMS"
+        },
+        {
+          "label": "Inter-Sat Latency",
+          "value": "<8 ms"
+        },
+        {
+          "label": "Downlink Success",
+          "value": "99.8%"
+        }
       ]
     },
     {
@@ -247,9 +313,18 @@
       "badge": "Deep Space Cruise",
       "missionHighlights": "Maintained closed-loop 3-axis pointing accuracy of 0.012° during multiple gravitational perturbation transits toward lunar injection orbit.",
       "metrics": [
-        { "label": "Distance Flown", "value": "285,000 km" },
-        { "label": "Pointing Knowledge", "value": "0.012° 3-σ" },
-        { "label": "Delta-V Margin", "value": "+18.4%" }
+        {
+          "label": "Distance Flown",
+          "value": "285,000 km"
+        },
+        {
+          "label": "Pointing Knowledge",
+          "value": "0.012° 3-σ"
+        },
+        {
+          "label": "Delta-V Margin",
+          "value": "+18.4%"
+        }
       ]
     }
   ],
@@ -370,7 +445,16 @@
       "category": "Avionics & Flight Software",
       "icon": "satellite",
       "summary": "Deterministic, fault-tolerant embedded architectures, hard real-time executives, and flight communication standards.",
-      "tags": ["C/C++", "Rust (no_std)", "FreeRTOS", "RTOS", "CCSDS", "CANopen", "SpaceWire", "FDIR"],
+      "tags": [
+        "C/C++",
+        "Rust (no_std)",
+        "FreeRTOS",
+        "RTOS",
+        "CCSDS",
+        "CANopen",
+        "SpaceWire",
+        "FDIR"
+      ],
       "items": [
         {
           "name": "C / C++ (MISRA C:2012)",
@@ -408,7 +492,14 @@
       "category": "Astrodynamics & Simulation",
       "icon": "orbit",
       "summary": "High-fidelity orbital mechanics, attitude determination & control (ADCS), and scientific simulation engines.",
-      "tags": ["NASA SPICE", "GMAT", "Keplerian/N-body", "Orbit Determination", "6-DOF Dynamics", "Kalman Filter"],
+      "tags": [
+        "NASA SPICE",
+        "GMAT",
+        "Keplerian/N-body",
+        "Orbit Determination",
+        "6-DOF Dynamics",
+        "Kalman Filter"
+      ],
       "items": [
         {
           "name": "NASA SPICE Toolkit",
@@ -446,7 +537,14 @@
       "category": "Ground Segment & Telemetry",
       "icon": "radar",
       "summary": "Real-time mission telemetry pipelines, streaming protocols, web operations consoles, and containerized backends.",
-      "tags": ["WebSockets", "TypeScript", "Golang", "Real-time Telemetry", "Docker", "TimescaleDB"],
+      "tags": [
+        "WebSockets",
+        "TypeScript",
+        "Golang",
+        "Real-time Telemetry",
+        "Docker",
+        "TimescaleDB"
+      ],
       "items": [
         {
           "name": "WebSockets & Streaming",
@@ -484,7 +582,14 @@
       "category": "Embedded Standards & Flight Qualification",
       "icon": "shield",
       "summary": "Strict compliance with international aerospace standards, flight safety guidelines, and space radiation design.",
-      "tags": ["DO-178C", "ECSS-E-ST-40C", "NASA-STD-8739.8", "MISRA C", "RHBD", "SEU Mitigation"],
+      "tags": [
+        "DO-178C",
+        "ECSS-E-ST-40C",
+        "NASA-STD-8739.8",
+        "MISRA C",
+        "RHBD",
+        "SEU Mitigation"
+      ],
       "items": [
         {
           "name": "DO-178C / ED-12C",
@@ -526,11 +631,27 @@
         "Autonomous hierarchical FDIR (Fault Detection, Isolation, and Recovery) reducing safe-mode triggers by 64%"
       ],
       "metrics": [
-        { "label": "Loop Jitter", "value": "<85 µs" },
-        { "label": "Thermal-Vac Testing", "value": "1,200 hrs" },
-        { "label": "Flight Heritage", "value": "LEO Orbit 2023-2024" }
+        {
+          "label": "Loop Jitter",
+          "value": "<85 µs"
+        },
+        {
+          "label": "Thermal-Vac Testing",
+          "value": "1,200 hrs"
+        },
+        {
+          "label": "Flight Heritage",
+          "value": "LEO Orbit 2023-2024"
+        }
       ],
-      "tags": ["Rust", "FreeRTOS", "ARM Cortex-M7", "CCSDS", "FDIR", "Embedded C"],
+      "tags": [
+        "Rust",
+        "FreeRTOS",
+        "ARM Cortex-M7",
+        "CCSDS",
+        "FDIR",
+        "Embedded C"
+      ],
       "github": "https://github.com/space-engineer/aether-os",
       "demo": "https://aether-os.orbital-flight.dev",
       "badge": "Flight Proven",
@@ -547,11 +668,27 @@
         "Built-in CCSDS packet decommutator with real-time limit-checking and automated escalation alerting"
       ],
       "metrics": [
-        { "label": "Ingest Throughput", "value": "50k pts/sec" },
-        { "label": "Display Latency", "value": "<12 ms" },
-        { "label": "Ground Heritage", "value": "2 Operational Sites" }
+        {
+          "label": "Ingest Throughput",
+          "value": "50k pts/sec"
+        },
+        {
+          "label": "Display Latency",
+          "value": "<12 ms"
+        },
+        {
+          "label": "Ground Heritage",
+          "value": "2 Operational Sites"
+        }
       ],
-      "tags": ["TypeScript", "Astro", "WebSockets", "Golang", "Three.js", "Docker"],
+      "tags": [
+        "TypeScript",
+        "Astro",
+        "WebSockets",
+        "Golang",
+        "Three.js",
+        "Docker"
+      ],
       "github": "https://github.com/space-engineer/astrolink-telemetry",
       "demo": "https://astrolink.orbital-flight.dev",
       "badge": "Live Ops",
@@ -568,11 +705,27 @@
         "Native integration with NASA SPICE kernels (NAIF) for planetary bodies, lunar gravity, and solar ephemeris"
       ],
       "metrics": [
-        { "label": "Computation Speed", "value": "120x vs GMAT" },
-        { "label": "30-Day Accuracy", "value": "<0.8 m Ephemeris" },
-        { "label": "Monte Carlo Runs", "value": "10,000 orbits in 4.2s" }
+        {
+          "label": "Computation Speed",
+          "value": "120x vs GMAT"
+        },
+        {
+          "label": "30-Day Accuracy",
+          "value": "<0.8 m Ephemeris"
+        },
+        {
+          "label": "Monte Carlo Runs",
+          "value": "10,000 orbits in 4.2s"
+        }
       ],
-      "tags": ["C++20", "CUDA", "NASA SPICE", "GMAT", "Astrodynamics", "Kalman Filter"],
+      "tags": [
+        "C++20",
+        "CUDA",
+        "NASA SPICE",
+        "GMAT",
+        "Astrodynamics",
+        "Kalman Filter"
+      ],
       "github": "https://github.com/space-engineer/orbitsim-6dof",
       "demo": "https://orbitsim.orbital-flight.dev",
       "badge": "Simulation Core",
@@ -589,11 +742,27 @@
         "Automated Two-Line Element (TLE) tracking interface controlling dual-axis azimuth/elevation antenna rotors"
       ],
       "metrics": [
-        { "label": "Eb/N0 Threshold", "value": "-1.4 dB (Rate 1/2)" },
-        { "label": "Frame Recovery", "value": "99.7% in Fringe Passes" },
-        { "label": "RF Bands", "value": "S-Band & X-Band" }
+        {
+          "label": "Eb/N0 Threshold",
+          "value": "-1.4 dB (Rate 1/2)"
+        },
+        {
+          "label": "Frame Recovery",
+          "value": "99.7% in Fringe Passes"
+        },
+        {
+          "label": "RF Bands",
+          "value": "S-Band & X-Band"
+        }
       ],
-      "tags": ["SDR", "GNU Radio", "C++", "DSP", "CCSDS 131.0-B-3", "FPGA"],
+      "tags": [
+        "SDR",
+        "GNU Radio",
+        "C++",
+        "DSP",
+        "CCSDS 131.0-B-3",
+        "FPGA"
+      ],
       "github": "https://github.com/space-engineer/deepspace-sdr",
       "demo": "https://sdr.orbital-flight.dev",
       "badge": "Signal Processing",
@@ -614,7 +783,14 @@
         "Conducted 72-hour continuous thermal-vacuum 'Day-in-the-Life' tests with zero unexpected reboot cycles or priority inversions.",
         "Implemented CCSDS 133.0-B-1 Space Packet Protocol packet handlers for uplink commands and downlinked health beacons."
       ],
-      "tags": ["Rust", "FreeRTOS", "ARM Cortex-M7", "CCSDS", "FDIR", "HIL Testing"]
+      "tags": [
+        "Rust",
+        "FreeRTOS",
+        "ARM Cortex-M7",
+        "CCSDS",
+        "FDIR",
+        "HIL Testing"
+      ]
     },
     {
       "period": "2021 — 2023",
@@ -628,7 +804,14 @@
         "Built high-fidelity 6-DOF orbital simulation in C++ incorporating solar radiation pressure and J2–J4 geopotential harmonics.",
         "Automated Monte Carlo dispersed trajectory analyses using NASA SPICE kernels, validating de-orbit compliance with NASA orbital debris standards."
       ],
-      "tags": ["C++20", "NASA SPICE", "GMAT", "Kalman Filter", "Attitude Dynamics", "Eigen"]
+      "tags": [
+        "C++20",
+        "NASA SPICE",
+        "GMAT",
+        "Kalman Filter",
+        "Attitude Dynamics",
+        "Eigen"
+      ]
     },
     {
       "period": "2019 — 2021",
@@ -642,7 +825,15 @@
         "Developed bare-metal C device drivers for CANopen and SpaceWire bus controllers across satellite payload modules.",
         "Built hardware-in-the-loop (HIL) test harness emulating orbital dynamics and sensor noise to stress test flight computers."
       ],
-      "tags": ["Golang", "TypeScript", "CANopen", "SpaceWire", "Docker", "ZeroMQ", "C"]
+      "tags": [
+        "Golang",
+        "TypeScript",
+        "CANopen",
+        "SpaceWire",
+        "Docker",
+        "ZeroMQ",
+        "C"
+      ]
     },
     {
       "period": "2015 — 2021",
@@ -656,7 +847,13 @@
         "Recipient of NASA Space Technology Research Fellowship (NSTRF) and Charles Stark Draper Laboratory Fellowship.",
         "Published 4 peer-reviewed journal papers in AIAA Journal of Spacecraft & Rockets and IEEE Transactions on Aerospace."
       ],
-      "tags": ["Astrodynamics", "C++", "Orbital Mechanics", "Optimal Control", "Embedded Systems"]
+      "tags": [
+        "Astrodynamics",
+        "C++",
+        "Orbital Mechanics",
+        "Optimal Control",
+        "Embedded Systems"
+      ]
     }
   ],
   "blogs": [
@@ -667,7 +864,13 @@
       "date": "2024-11-10",
       "readTime": "8 min read",
       "category": "Flight Software",
-      "tags": ["Flight Software", "Rust", "Embedded Systems", "FreeRTOS", "ARM Cortex-M7"],
+      "tags": [
+        "Flight Software",
+        "Rust",
+        "Embedded Systems",
+        "FreeRTOS",
+        "ARM Cortex-M7"
+      ],
       "author": {
         "name": "VO QUANG NHAT NGUYEN",
         "role": "Principal Flight Software Architect",
@@ -683,7 +886,13 @@
       "date": "2024-09-24",
       "readTime": "10 min read",
       "category": "Astrodynamics",
-      "tags": ["Astrodynamics", "Orbital Mechanics", "C++20", "NASA SPICE", "GNC"],
+      "tags": [
+        "Astrodynamics",
+        "Orbital Mechanics",
+        "C++20",
+        "NASA SPICE",
+        "GNC"
+      ],
       "author": {
         "name": "VO QUANG NHAT NGUYEN",
         "role": "Lead GNC Engineer",
@@ -699,7 +908,13 @@
       "date": "2024-07-15",
       "readTime": "7 min read",
       "category": "Avionics & Operations",
-      "tags": ["FDIR", "Avionics", "Fault Tolerance", "CCSDS", "Mission Operations"],
+      "tags": [
+        "FDIR",
+        "Avionics",
+        "Fault Tolerance",
+        "CCSDS",
+        "Mission Operations"
+      ],
       "author": {
         "name": "VO QUANG NHAT NGUYEN",
         "role": "Flight Software Lead",
@@ -715,7 +930,13 @@
       "date": "2024-05-02",
       "readTime": "9 min read",
       "category": "Ground Segment",
-      "tags": ["CCSDS", "Telemetry", "RF Comms", "DSP", "Ground Segment"],
+      "tags": [
+        "CCSDS",
+        "Telemetry",
+        "RF Comms",
+        "DSP",
+        "Ground Segment"
+      ],
       "author": {
         "name": "VO QUANG NHAT NGUYEN",
         "role": "Avionics Specialist",
@@ -723,6 +944,362 @@
       },
       "summary": "Designing deterministic packet decommutators, COP-1 sliding window telecommand verification, and LDPC forward error correction frames for high-reliability smallsat downlinks.",
       "content": "### 1. The CCSDS Standard in Modern Spaceflight\n\nThe Consultative Committee for Space Data Systems (CCSDS) provides the international standard for spacecraft telemetry and telecommand formatting. The **Space Packet Protocol (CCSDS 133.0-B-1)** defines structured 6-byte packet headers that guarantee interoperability across NASA Deep Space Network (DSN), ESA Estrack, and commercial ground networks like KSAT and AWS Ground Station.\n\n```\n+-------------------------------------------------------------+\n|                   CCSDS Primary Header (6 Bytes)             |\n+---------------------+-------------------+-------------------+\n| Version (3 bits)    | Type (1 bit)      | Sec. Hdr Flag (1b)|\n+---------------------+-------------------+-------------------+\n| Application Process Identifier (APID) (11 bits)             |\n+-------------------------------------------------------------+\n| Sequence Flags (2b) | Packet Sequence Count (14 bits)       |\n+-------------------------------------------------------------+\n| Packet Data Length (16 bits)                                |\n+-------------------------------------------------------------+\n```\n\n---\n\n### 2. High-Throughput Packet Decommutation\n\nWhen a satellite passes at 7.5 km/s overhead, downlinking telemetry at 50 Mbps over S-Band or X-Band, the ground station gateway must decommutate thousands of packets per second without memory bottlenecks.\n\nOur open-source Golang telemetry gateway uses zero-copy slicing directly over binary buffers:\n\n```go\ntype SpacePacketHeader struct {\n    Version         uint8\n    PacketType      uint8\n    SecHdrPresent   bool\n    APID            uint16\n    SeqFlags        uint8\n    PacketSeqCount  uint16\n    PacketLength    uint16\n}\n\nfunc ParseHeader(buf []byte) (SpacePacketHeader, error) {\n    if len(buf) < 6 {\n        return SpacePacketHeader{}, io.ErrShortBuffer\n    }\n    \n    b0 := buf[0]\n    b1 := buf[1]\n    b2 := buf[2]\n    b3 := buf[3]\n    b4 := buf[4]\n    b5 := buf[5]\n    \n    return SpacePacketHeader{\n        Version:        (b0 >> 5) & 0x07,\n        PacketType:     (b0 >> 4) & 0x01,\n        SecHdrPresent:  ((b0 >> 3) & 0x01) == 1,\n        APID:           (uint16(b0&0x07) << 8) | uint16(b1),\n        SeqFlags:       (b2 >> 6) & 0x03,\n        PacketSeqCount: (uint16(b2&0x3F) << 8) | uint16(b3),\n        PacketLength:   (uint16(b4) << 8) | uint16(b5),\n    }, nil\n}\n```\n\n---\n\n### 3. COP-1 Command Verification Loop\n\nFor telecommand uplink, dropping a command or executing out-of-order instructions can endanger the vehicle. CCSDS Communications Operation Procedure-1 (COP-1) provides a sliding window frame retransmission protocol that verifies every uplinked byte before executing onboard actuators."
+    }
+  ],
+  "courses": [
+    {
+      "id": "course-aer-402",
+      "code": "AER 402",
+      "title": "Orbital Mechanics & Astrodynamics",
+      "semester": "Fall 2025",
+      "institution": "Caltech / Aero Department",
+      "description": "Keplerian orbits, Lambert's problem, perturbation analysis, continuous-thrust trajectory optimization, and orbital rendezvous maneuvers.",
+      "instructorEmail": "nhatnguyen@orbital-flight.dev",
+      "githubUrl": "https://github.com/grezil/orbital-mechanics-lectures",
+      "tags": [
+        "Astrodynamics",
+        "Trajectory Design",
+        "MATLAB",
+        "SPICE"
+      ],
+      "updatedAt": "2025-11-20"
+    },
+    {
+      "id": "course-cs-520",
+      "code": "CS 520",
+      "title": "Deterministic Flight Software & RTOS",
+      "semester": "Spring 2025",
+      "institution": "MIT Space Systems Laboratory",
+      "description": "Real-time task scheduling, cyclic executives, fault detection, isolation and recovery (FDIR), CCSDS telemetry decommutation, and bare-metal Rust/C systems.",
+      "instructorEmail": "nhatnguyen@orbital-flight.dev",
+      "githubUrl": "https://github.com/grezil/flight-software-curriculum",
+      "tags": [
+        "Embedded Systems",
+        "FreeRTOS",
+        "Rust",
+        "DO-178C"
+      ],
+      "updatedAt": "2025-10-15"
+    },
+    {
+      "id": "course-cubesat-101",
+      "code": "ENG 310",
+      "title": "CubeSat Avionics & Flight Qualification",
+      "semester": "Fall 2024",
+      "institution": "Space Systems Academy",
+      "description": "CubeSat bus architectures, power budget analysis, thermal-vacuum testing protocols, solar array deployment, and ground station operations.",
+      "instructorEmail": "nhatnguyen@orbital-flight.dev",
+      "githubUrl": "https://github.com/grezil/cubesat-avionics-lab",
+      "tags": [
+        "Avionics",
+        "CubeSats",
+        "Telemetry",
+        "Hardware-in-the-Loop"
+      ],
+      "updatedAt": "2024-12-05"
+    }
+  ],
+  "activities": [
+    {
+      "id": "act-2026-11-25-course",
+      "date": "2026-11-25",
+      "type": "course",
+      "title": "AER 402 Final Mission Trajectory Project Released",
+      "detail": "Interplanetary transfer orbit problem sets & grading rubrics"
+    },
+    {
+      "id": "act-2026-11-24-blog",
+      "date": "2026-11-24",
+      "type": "blog",
+      "title": "Autonomous Safe-Mode Cascades for Deep-Space Probes",
+      "detail": "Hierarchical FDIR architecture for single-event upsets"
+    },
+    {
+      "id": "act-2026-11-23-cv",
+      "date": "2026-11-23",
+      "type": "cv",
+      "title": "Updated Harvard CV Dossier",
+      "detail": "Synchronized research bibliography and flight awards"
+    },
+    {
+      "id": "act-2026-11-22-course",
+      "date": "2026-11-22",
+      "type": "course",
+      "title": "CS 520 Real-Time Schedulability Analysis Monograph",
+      "detail": "Published rate monotonic analysis proof & lecture notes"
+    },
+    {
+      "id": "act-2026-11-20-course",
+      "date": "2026-11-20",
+      "type": "course",
+      "title": "AER 402 Fall 2026 Syllabus & Lecture Modules Published",
+      "detail": "Uploaded complete lecture slides and SPICE toolkit code"
+    },
+    {
+      "id": "act-2026-11-20-blog",
+      "date": "2026-11-20",
+      "type": "blog",
+      "title": "High-Precision 6-DOF Orbital Propagator v2.0",
+      "detail": "Released revised trajectory simulation benchmark"
+    },
+    {
+      "id": "act-2026-11-19-cv",
+      "date": "2026-11-19",
+      "type": "cv",
+      "title": "Updated Academic Affiliation & Lab Appointments",
+      "detail": "Refreshed Caltech and MIT research credentials"
+    },
+    {
+      "id": "act-2026-11-15-ach",
+      "date": "2026-11-15",
+      "type": "achievement",
+      "title": "NASA Exceptional Technical Achievement Medal",
+      "detail": "Conferred for fault-tolerant flight software in deep space"
+    },
+    {
+      "id": "act-2026-11-08-course",
+      "date": "2026-11-08",
+      "type": "course",
+      "title": "ENG 310 Ground Station Operations Telemetry Protocol",
+      "detail": "Automated tracking and doppler shift correction lab"
+    },
+    {
+      "id": "act-2026-10-29-blog",
+      "date": "2026-10-29",
+      "type": "blog",
+      "title": "Autonomous Optical Navigation for SmallSat Rendezvous",
+      "detail": "Line-of-sight pose estimation with neural acceleration"
+    },
+    {
+      "id": "act-2026-10-19-cv",
+      "date": "2026-10-19",
+      "type": "cv",
+      "title": "Mission Software Heritage Audit Completed",
+      "detail": "Verified zero unhandled faults across 10,000 simulated orbits"
+    },
+    {
+      "id": "act-2026-10-18-course",
+      "date": "2026-10-18",
+      "type": "course",
+      "title": "CS 520 Bare-Metal Rust on Dual-Core Cortex-M7",
+      "detail": "Inter-core IPC and shared memory ring buffers"
+    },
+    {
+      "id": "act-2026-10-17-cv",
+      "date": "2026-10-17",
+      "type": "cv",
+      "title": "CubeSat Thermal Qualification Telemetry Logged",
+      "detail": "Logged TVAC chamber sensor profile and heater duty cycles"
+    },
+    {
+      "id": "act-2026-10-16-blog",
+      "date": "2026-10-16",
+      "type": "blog",
+      "title": "Deterministic RTOS Context Switching on Cortex-M7",
+      "detail": "Cycle-accurate measurement of task preemption latency"
+    },
+    {
+      "id": "act-2026-10-15-course",
+      "date": "2026-10-15",
+      "type": "course",
+      "title": "CS 520 Real-Time Scheduler Lab Code Released",
+      "detail": "Published priority inversion ceiling protocol lab"
+    },
+    {
+      "id": "act-2026-10-04-cv",
+      "date": "2026-10-04",
+      "type": "cv",
+      "title": "Updated Flight Software Heritage Certifications",
+      "detail": "Added DO-178C Level A qualification records"
+    },
+    {
+      "id": "act-2026-09-19-blog",
+      "date": "2026-09-19",
+      "type": "blog",
+      "title": "Deterministic Time Synchronization over SpaceWire Networks",
+      "detail": "IEEE 1588 precision time protocol implementation"
+    },
+    {
+      "id": "act-2026-09-02-course",
+      "date": "2026-09-02",
+      "type": "course",
+      "title": "AER 402 Continuous-Thrust Trajectory Optimization",
+      "detail": "Low-thrust ion propulsion trajectory design problem set"
+    },
+    {
+      "id": "act-2026-08-16-ach",
+      "date": "2026-08-16",
+      "type": "achievement",
+      "title": "IEEE Outstanding Contribution in Space Avionics",
+      "detail": "Milestone award for high-rate S-Band telemetry receiver"
+    },
+    {
+      "id": "act-2026-07-29-blog",
+      "date": "2026-07-29",
+      "type": "blog",
+      "title": "Radiation Mitigation Strategies for COTS Microcontrollers",
+      "detail": "Triple modular redundancy and memory scrubbing"
+    },
+    {
+      "id": "act-2026-07-11-cv",
+      "date": "2026-07-11",
+      "type": "cv",
+      "title": "Updated Publications Dossier",
+      "detail": "Added IEEE Aerospace conference paper citation"
+    },
+    {
+      "id": "act-2026-06-20-course",
+      "date": "2026-06-20",
+      "type": "course",
+      "title": "ENG 310 Solar Array Deployment Telemetry Lab",
+      "detail": "Thermal cycling and pyrotechnic deployment qualification"
+    },
+    {
+      "id": "act-2026-06-05-blog",
+      "date": "2026-06-05",
+      "type": "blog",
+      "title": "Sub-Millisecond Interrupt Latency on Cortex-M7",
+      "detail": "Lock-free ring buffers for avionics sensor buses"
+    },
+    {
+      "id": "act-2026-05-18-course",
+      "date": "2026-05-18",
+      "type": "course",
+      "title": "CS 520 FDIR Telemetry Decommutation Module",
+      "detail": "Fault recovery and autonomous safe mode labs"
+    },
+    {
+      "id": "act-2026-04-25-cv",
+      "date": "2026-04-25",
+      "type": "cv",
+      "title": "Updated Flight Experience Log",
+      "detail": "Added orbital insertion telemetry for Astraea-2 trial"
+    },
+    {
+      "id": "act-2026-04-10-blog",
+      "date": "2026-04-10",
+      "type": "blog",
+      "title": "SPICE Kernels Ephemeris Computation on Embedded ARM",
+      "detail": "Fixed-point planetary vector approximations"
+    },
+    {
+      "id": "act-2026-03-24-course",
+      "date": "2026-03-24",
+      "type": "course",
+      "title": "AER 402 Lambert Problem Solvers Released",
+      "detail": "Vectorized orbital rendezvous algorithms in MATLAB"
+    },
+    {
+      "id": "act-2026-03-15-ach",
+      "date": "2026-03-15",
+      "type": "achievement",
+      "title": "AIAA Space Flight Systems Recognition",
+      "detail": "Conferred for smallsat deterministic FSW architecture"
+    },
+    {
+      "id": "act-2026-02-28-blog",
+      "date": "2026-02-28",
+      "type": "blog",
+      "title": "CCSDS Telemetry Frame Sync & Reed-Solomon Decoding",
+      "detail": "FPGA decommutation benchmark results"
+    },
+    {
+      "id": "act-2026-02-12-cv",
+      "date": "2026-02-12",
+      "type": "cv",
+      "title": "AIAA Senior Member Nomination Update",
+      "detail": "Updated professional affiliations and credentials"
+    },
+    {
+      "id": "act-2026-01-29-course",
+      "date": "2026-01-29",
+      "type": "course",
+      "title": "CS 520 FreeRTOS Kernel Labs Published",
+      "detail": "Uploaded hardware-in-the-loop task scheduling tests"
+    },
+    {
+      "id": "act-2026-01-14-blog",
+      "date": "2026-01-14",
+      "type": "blog",
+      "title": "Zero-Allocation Cyclic Executives for Hard Real-Time Systems",
+      "detail": "Analysis of static scheduling algorithms"
+    },
+    {
+      "id": "act-2025-12-22-course",
+      "date": "2025-12-22",
+      "type": "course",
+      "title": "ENG 310 Lab Protocols Updated",
+      "detail": "Refreshed TVAC qualification checklist"
+    },
+    {
+      "id": "act-2025-12-08-cv",
+      "date": "2025-12-08",
+      "type": "cv",
+      "title": "Updated Caltech Space Radiation Lab Credentials",
+      "detail": "Added flight software verification dossier"
+    },
+    {
+      "id": "act-2025-11-20-course",
+      "date": "2025-11-20",
+      "type": "course",
+      "title": "AER 402: Orbital Mechanics & Astrodynamics",
+      "detail": "Published syllabus, SPICE toolkit labs and trajectory optimization code"
+    },
+    {
+      "id": "act-2025-10-15-course",
+      "date": "2025-10-15",
+      "type": "course",
+      "title": "CS 520: Deterministic Flight Software & RTOS",
+      "detail": "Released syllabus, FreeRTOS scheduler labs & Rust bare-metal kernel"
+    },
+    {
+      "id": "act-2024-12-05-course",
+      "date": "2024-12-05",
+      "type": "course",
+      "title": "ENG 310: CubeSat Avionics & Flight Qualification",
+      "detail": "Published syllabus, bus architecture & TVAC qualification protocols"
+    },
+    {
+      "id": "act-2024-11-10-blog",
+      "date": "2024-11-10",
+      "type": "blog",
+      "title": "Architecting Deterministic Flight Software in Rust on Dual-Core Cortex-M7",
+      "detail": "Real-time embedded dispatch and zero-allocation Rust"
+    },
+    {
+      "id": "act-2024-10-14-ach",
+      "date": "2024-10-14",
+      "type": "achievement",
+      "title": "NASA Space Flight Honor Award",
+      "detail": "Conferred for flight software excellence on smallsat mission"
+    },
+    {
+      "id": "act-2024-09-24-blog",
+      "date": "2024-09-24",
+      "type": "blog",
+      "title": "Building a High-Precision 6-DOF Orbital Propagator with NASA SPICE Kernels",
+      "detail": "Published trajectory propagator equations and code"
+    },
+    {
+      "id": "act-2024-07-22-ach",
+      "date": "2024-07-22",
+      "type": "achievement",
+      "title": "AIAA Best Technical Paper Award (Space Operations & FSW)",
+      "detail": "Conferred at AIAA Space Operations & FSW Forum"
+    },
+    {
+      "id": "act-2024-07-15-blog",
+      "date": "2024-07-15",
+      "type": "blog",
+      "title": "Sub-Second FDIR: Autonomous Fault Isolation and Safe Mode Cascades for SmallSats",
+      "detail": "Fault detection, isolation & recovery deep dive"
+    },
+    {
+      "id": "act-2024-05-02-blog",
+      "date": "2024-05-02",
+      "type": "blog",
+      "title": "Implementing CCSDS Space Packet Protocol over Low-SNR S-Band Links",
+      "detail": "Technical dispatch on low-SNR telemetry protocol"
     }
   ]
 }

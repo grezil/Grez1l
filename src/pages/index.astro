@@ -2,7 +2,9 @@
 // Streamlined Apple-Grade Space Engineer Portfolio
 import Layout from '../layouts/Layout.astro';
 import Hero from '../components/Hero.astro';
+import ContributionHeatmap from '../components/ContributionHeatmap.astro';
 import Timeline from '../components/Timeline.astro';
+import CourseArchive from '../components/CourseArchive.astro';
 import HarvardCV from '../components/HarvardCV.astro';
 
 import portfolioData from '../data/portfolio.json';
@@ -72,8 +74,18 @@ const { profile, timeline } = portfolioData;
 
     <div class="section-divider" aria-hidden="true"></div>
 
+    <!-- Habit Tracker & Telemetry Contribution Graph -->
+    <ContributionHeatmap />
+
+    <div class="section-divider" aria-hidden="true"></div>
+
     <!-- Career Trajectory & Flight Heritage Log -->
     <Timeline timeline={timeline} />
+
+    <div class="section-divider" aria-hidden="true"></div>
+
+    <!-- Academic & Teaching Dossier / Course Archive -->
+    <CourseArchive />
   </div>
 
   <!-- Primary Presentation Panel 2: My CV View -->
