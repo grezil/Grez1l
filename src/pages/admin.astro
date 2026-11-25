@@ -2889,7 +2889,7 @@ import Layout from '../layouts/Layout.astro';
       e.preventDefault();
       const code = courseCode.value.trim();
       const title = courseTitle.value.trim();
-      const id = courseId.value || `course-${code.toLowerCase().replace(/[^a-z0-9]/g, '-') || Date.now()}`;
+      const id = courseId.value || `course-${code.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'item'}-${Date.now()}`;
       const payload = {
         id,
         code,

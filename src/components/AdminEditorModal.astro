@@ -2540,7 +2540,7 @@
       e.preventDefault();
       const code = courseCodeInput.value.trim();
       const title = courseTitleInput.value.trim();
-      const id = courseIdInput.value || `course-${code.toLowerCase().replace(/[^a-z0-9]/g, '-') || Date.now()}`;
+      const id = courseIdInput.value || `course-${code.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'item'}-${Date.now()}`;
       const payload = {
         id,
         code,

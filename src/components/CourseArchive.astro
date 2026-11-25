@@ -241,7 +241,6 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
 
     const searchInput = document.getElementById('course-search-input') as HTMLInputElement | null;
     const clearBtn = document.getElementById('course-search-clear');
-    const filterChips = document.querySelectorAll('#course-filter-chips .chip-filter');
     const emptyState = document.getElementById('courses-empty-state');
     const statusMeta = document.getElementById('course-filter-stats');
     const countAll = document.getElementById('count-all');
@@ -250,22 +249,17 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
     let activeFilter = 'all';
     let searchQuery = '';
 
-    // Load reactive courses from localStorage or window.PortfolioStore
+    // Load reactive courses from window.PortfolioStore or localStorage
     function getStoredCourses(): any[] {
       try {
         if ((window as any).PortfolioStore?.getCourses) {
           const list = (window as any).PortfolioStore.getCourses();
-          if (Array.isArray(list) && list.length > 0) return list;
-        }
-        const rawSpecific = localStorage.getItem('space_portfolio_courses');
-        if (rawSpecific) {
-          const parsed = JSON.parse(rawSpecific);
-          if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+          if (Array.isArray(list)) return list;
         }
         const rawFull = localStorage.getItem('space_portfolio_data_v1');
         if (rawFull) {
           const parsed = JSON.parse(rawFull);
-          if (Array.isArray(parsed?.courses) && parsed.courses.length > 0) return parsed.courses;
+          if (Array.isArray(parsed?.courses)) return parsed.courses;
         }
       } catch (err) {
         console.warn('Error reading courses from store:', err);
@@ -273,11 +267,54 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
       return coursesData;
     }
 
+    // Dynamic Filter Chips updating
+    function updateFilterChips() {
+      const chipsContainer = document.getElementById('course-filter-chips');
+      if (!chipsContainer) return;
+
+      const tagsSet = new Set<string>();
+      coursesData.forEach((c: any) => {
+        if (Array.isArray(c.tags)) {
+          c.tags.forEach((t: string) => {
+            if (t && typeof t === 'string' && t.trim()) tagsSet.add(t.trim());
+          });
+        }
+      });
+      const uniqueTags = Array.from(tagsSet).slice(0, 10);
+
+      if (activeFilter !== 'all' && !tagsSet.has(activeFilter)) {
+        activeFilter = 'all';
+      }
+
+      chipsContainer.innerHTML = `
+        <button type="button" class="chip-filter ${activeFilter === 'all' ? 'active' : ''}" data-filter="all">
+          <span>All Dossiers</span>
+          <span class="chip-count" id="count-all">${coursesData.length}</span>
+        </button>
+        ${uniqueTags.map(tag => `
+          <button type="button" class="chip-filter ${activeFilter === tag ? 'active' : ''}" data-filter="${escapeHtml(tag)}">
+            <span>${escapeHtml(tag)}</span>
+          </button>
+        `).join('')}
+      `;
+
+      // Re-bind click event to newly created chips
+      chipsContainer.querySelectorAll('.chip-filter').forEach(chip => {
+        chip.addEventListener('click', () => {
+          chipsContainer.querySelectorAll('.chip-filter').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+          activeFilter = chip.getAttribute('data-filter') || 'all';
+          renderCourseCards(coursesData);
+        });
+      });
+    }
+
     function renderCourseCards(list: any[]) {
       if (!grid) return;
 
-      if (countAll) {
-        countAll.textContent = String(coursesData.length);
+      const currentCountBadge = document.getElementById('count-all');
+      if (currentCountBadge) {
+        currentCountBadge.textContent = String(coursesData.length);
       }
 
       const filtered = list.filter(course => {
@@ -304,7 +341,22 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
 
       if (filtered.length === 0) {
         grid.style.display = 'none';
-        if (emptyState) emptyState.style.display = 'block';
+        if (emptyState) {
+          emptyState.style.display = 'block';
+          const emptyTitle = emptyState.querySelector('.empty-title');
+          const emptyDesc = emptyState.querySelector('.empty-desc');
+          const resetBtnEl = document.getElementById('btn-reset-course-filters');
+
+          if (coursesData.length === 0) {
+            if (emptyTitle) emptyTitle.textContent = 'Chưa Có Giáo Án Nào Được Lưu Trữ';
+            if (emptyDesc) emptyDesc.textContent = 'Hiện tại chưa có giáo án, bài giảng hoặc tệp tin nào. Bạn có thể thêm giáo án mới trong bảng điều khiển Admin!';
+            if (resetBtnEl) (resetBtnEl as HTMLElement).style.display = 'none';
+          } else {
+            if (emptyTitle) emptyTitle.textContent = 'No Matching Course Dossiers';
+            if (emptyDesc) emptyDesc.textContent = 'No curriculum archives match your search criteria. Try a different keyword or reset filters.';
+            if (resetBtnEl) (resetBtnEl as HTMLElement).style.display = 'inline-block';
+          }
+        }
         return;
       }
 
@@ -315,7 +367,7 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
         const email = course.instructorEmail || 'nhatnguyen@orbital-flight.dev';
         const tags = Array.isArray(course.tags) ? course.tags : [];
         return `
-          <article class="course-card glass-card" data-course-id="${course.id || ''}" data-course-code="${course.code || ''}">
+          <article class="course-card glass-card" data-course-id="${escapeHtml(course.id || '')}" data-course-code="${escapeHtml(course.code || '')}" data-tags="${escapeHtml(tags.join(','))}">
             <div class="course-header">
               <div class="course-code-group">
                 <span class="course-code-badge">${escapeHtml(course.code || '')}</span>
@@ -420,9 +472,10 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
       });
     }
 
-    // Refresh courses data
-    function refreshCourses() {
+    // Refresh courses data and sync UI
+    function syncCourses() {
       coursesData = getStoredCourses();
+      updateFilterChips();
       renderCourseCards(coursesData);
     }
 
@@ -449,16 +502,6 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
       });
     }
 
-    // Event listeners for filter chips
-    filterChips.forEach(chip => {
-      chip.addEventListener('click', () => {
-        filterChips.forEach(c => c.classList.remove('active'));
-        chip.classList.add('active');
-        activeFilter = chip.getAttribute('data-filter') || 'all';
-        renderCourseCards(coursesData);
-      });
-    });
-
     if (btnReset) {
       btnReset.addEventListener('click', () => {
         searchQuery = '';
@@ -469,7 +512,8 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
         if (clearBtn) {
           clearBtn.style.display = 'none';
         }
-        filterChips.forEach(c => {
+        const chipsContainer = document.getElementById('course-filter-chips');
+        chipsContainer?.querySelectorAll('.chip-filter').forEach(c => {
           if (c.getAttribute('data-filter') === 'all') c.classList.add('active');
           else c.classList.remove('active');
         });
@@ -477,8 +521,14 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
       });
     }
 
-    // Listen for portfolio updates
-    window.addEventListener('portfolio-data-updated', refreshCourses);
+    // Live reactive sync across components and events
+    syncCourses();
+    window.addEventListener('portfolio-data-updated', syncCourses);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'space_portfolio_data_v1') {
+        syncCourses();
+      }
+    });
 
     // Initial attach
     attachCopyHandlers();
@@ -489,6 +539,7 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
   } else {
     initCourseArchive();
   }
+  document.addEventListener('astro:page-load', initCourseArchive);
 </script>
 
 <style>

@@ -126,11 +126,11 @@ export function getData() {
 
     // Ensure courses and activities exist in parsed data from local storage
     let needsResave = false;
-    if (!parsed.courses || !Array.isArray(parsed.courses) || parsed.courses.length === 0) {
+    if (!Array.isArray(parsed.courses)) {
       parsed.courses = deepClone(defaultPortfolioData.courses || []);
       needsResave = true;
     }
-    if (!parsed.activities || !Array.isArray(parsed.activities) || parsed.activities.length === 0) {
+    if (!Array.isArray(parsed.activities)) {
       parsed.activities = deepClone(defaultPortfolioData.activities || []);
       needsResave = true;
     }
@@ -555,8 +555,10 @@ export function deleteBlog(slugOrId) {
  */
 export function getCourses() {
   const current = getData();
-  const courses = current.courses || defaultPortfolioData.courses || [];
-  return [...courses];
+  if (Array.isArray(current.courses)) {
+    return [...current.courses];
+  }
+  return [...(defaultPortfolioData.courses || [])];
 }
 
 /**
@@ -636,13 +638,14 @@ export function updateCourse(id, patch) {
  */
 export function deleteCourse(id) {
   const current = getData();
-  if (!current.courses) return false;
+  if (!current.courses || !Array.isArray(current.courses)) return false;
 
   const originalLength = current.courses.length;
   current.courses = current.courses.filter((c) => c.id !== id);
 
   if (current.courses.length !== originalLength) {
     saveData(current);
+    logActivity('course', 'Course Archive Removed', 'Deleted syllabus & materials');
     return true;
   }
   return false;
