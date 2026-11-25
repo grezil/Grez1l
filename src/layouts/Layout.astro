@@ -21,6 +21,8 @@ const pathname = Astro.url.pathname;
 const isHome = pathname === '/' || pathname === '';
 const isCV = pathname.startsWith('/cv');
 const isBlog = pathname.startsWith('/blog');
+const isCourse = pathname.startsWith('/course') || pathname.startsWith('/courses');
+const isTimeline = pathname.startsWith('/timeline');
 ---
 
 <!DOCTYPE html>
@@ -131,7 +133,15 @@ const isBlog = pathname.startsWith('/blog');
           <span class="dock-nav-label">Blog</span>
         </a>
 
-        <a href={isHome ? "#timeline" : "/#timeline"} class="dock-nav-item" data-tooltip="Orbital Heritage Timeline">
+        <a href="/course" class={`dock-nav-item ${isCourse ? 'active' : ''}`} data-tooltip="Academic & Teaching Dossier" aria-current={isCourse ? 'page' : undefined}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+            <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+          </svg>
+          <span class="dock-nav-label">Course</span>
+        </a>
+
+        <a href="/timeline" class={`dock-nav-item ${isTimeline ? 'active' : ''}`} data-tooltip="Orbital Heritage Timeline" aria-current={isTimeline ? 'page' : undefined}>
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <circle cx="12" cy="12" r="10"></circle>
             <polyline points="12 6 12 12 16 14"></polyline>
@@ -186,20 +196,12 @@ const isBlog = pathname.startsWith('/blog');
         <div class="footer-divider"></div>
 
         <div class="footer-bottom">
-          <div class="footer-brand-info">
-            <p class="footer-copy">
-              © {new Date().getFullYear()} Võ Quang Nhật Nguyên. Designed with Apple precision.
-            </p>
-            <p class="footer-note">
-              Mission-critical embedded software • Real-time telemetry • Astrodynamics
-            </p>
-          </div>
-
           <div class="footer-links">
             <a href="/">Home</a>
             <a href="/cv">My CV</a>
-            <a href="/blog">Technical Blog</a>
-            {isHome && <a href="#timeline">Timeline</a>}
+            <a href="/blog">Blog</a>
+            <a href="/course">Course</a>
+            <a href="/timeline">Timeline</a>
             <a href="/admin" class="footer-admin-link">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
@@ -548,33 +550,17 @@ const isBlog = pathname.startsWith('/blog');
   .footer-bottom {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     flex-wrap: wrap;
     gap: 1.5rem;
-  }
-
-  .footer-brand-info {
-    display: flex;
-    flex-direction: column;
-    gap: 0.35rem;
-  }
-
-  .footer-copy {
-    color: var(--titanium-light);
-    font-size: 0.8125rem;
-  }
-
-  .footer-note {
-    color: var(--titanium);
-    font-size: 0.75rem;
-    font-family: var(--font-mono);
   }
 
   .footer-links {
     display: flex;
     align-items: center;
+    justify-content: center;
     flex-wrap: wrap;
-    gap: 1.5rem;
+    gap: 1.75rem;
   }
 
   .footer-links a {

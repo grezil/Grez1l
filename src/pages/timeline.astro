@@ -1,0 +1,110 @@
+---
+/**
+ * timeline.astro - Dedicated Aerospace & Software Flight Heritage Page
+ * Route: /timeline
+ */
+import Layout from '../layouts/Layout.astro';
+import Timeline from '../components/Timeline.astro';
+import portfolioData from '../data/portfolio.json';
+
+const profile = portfolioData.profile || {};
+const timeline = portfolioData.timeline || [];
+const title = `Aerospace Flight Heritage & Timeline | ${profile.name || 'Võ Quang Nhật Nguyên'}`;
+const description = `Mission log, orbital heritage, flight qualification milestones, and aerospace software career trajectory of ${profile.name || 'Võ Quang Nhật Nguyên'}.`;
+---
+
+<Layout title={title} description={description}>
+  <div class="timeline-page-container">
+    <!-- Breadcrumb & Telemetry Navigation Bar -->
+    <div class="page-nav-bar container no-print">
+      <div class="nav-breadcrumbs">
+        <a href="/" class="crumb-link">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="15 18 9 12 15 6"></polyline>
+          </svg>
+          <span>Return to Telemetry Console</span>
+        </a>
+        <span class="crumb-sep">/</span>
+        <span class="crumb-current">Flight Heritage Timeline</span>
+      </div>
+
+      <div class="page-status-meta">
+        <span class="meta-tag">TRACK RECORD: 100% SUCCESS</span>
+        <span class="meta-dot">•</span>
+        <span class="meta-tag text-amber">VERIFIED FLIGHT LOG</span>
+      </div>
+    </div>
+
+    <!-- Orbital Trajectory Timeline Component -->
+    <Timeline timeline={timeline} />
+  </div>
+</Layout>
+
+<style>
+  .timeline-page-container {
+    min-height: 100vh;
+    padding-top: 1.5rem;
+    padding-bottom: 8rem;
+    position: relative;
+  }
+
+  .page-nav-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 1.25rem;
+    padding-top: 0.5rem;
+  }
+
+  .nav-breadcrumbs {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    font-family: var(--font-mono, monospace);
+  }
+
+  .crumb-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    color: var(--titanium, #8E95A5);
+    text-decoration: none;
+    transition: color 0.2s ease;
+  }
+
+  .crumb-link:hover {
+    color: var(--amber, #E5A96A);
+  }
+
+  .crumb-sep {
+    color: rgba(142, 149, 165, 0.4);
+  }
+
+  .crumb-current {
+    color: var(--text-ivory, #F3F4F6);
+    font-weight: 500;
+  }
+
+  .page-status-meta {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 0.72rem;
+    font-family: var(--font-mono, monospace);
+  }
+
+  .meta-tag {
+    color: var(--titanium, #8E95A5);
+  }
+
+  .meta-dot {
+    color: rgba(142, 149, 165, 0.4);
+  }
+
+  .text-amber {
+    color: #e5a96a;
+  }
+</style>

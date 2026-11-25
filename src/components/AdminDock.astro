@@ -41,6 +41,17 @@
       <span class="dock-label">+ Award</span>
     </button>
 
+    <!-- Quick Action: Manage Courses & Materials -->
+    <button type="button" class="dock-btn" id="dock-action-courses" data-tooltip="Manage Courses & Materials">
+      <div class="dock-icon-wrapper">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M22 10v6M2 10l10-5 10 5-10 5z"></path>
+          <path d="M6 12v5c3 3 9 3 12 0v-5"></path>
+        </svg>
+      </div>
+      <span class="dock-label">Courses</span>
+    </button>
+
     <!-- Quick Action 3: Compose Blog Post -->
     <button type="button" class="dock-btn" id="dock-action-blog" data-tooltip="Compose Technical Article">
       <div class="dock-icon-wrapper">
@@ -444,6 +455,11 @@
     // Action: Add Achievement
     document.getElementById('dock-action-achievement')?.addEventListener('click', () => {
       window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'achievement' } }));
+    });
+
+    // Action: Manage Courses & Materials
+    document.getElementById('dock-action-courses')?.addEventListener('click', () => {
+      window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'courses' } }));
     });
 
     // Action: Compose Blog Post
