@@ -180,28 +180,7 @@ const isTimeline = pathname.startsWith('/timeline');
     <!-- Space Systems Refined Engineering Footer -->
     <footer class="site-footer">
       <div class="container">
-        <!-- Telemetry Data Strip -->
-        <div class="footer-telemetry">
-          <div class="telemetry-item">
-            <span class="telemetry-label">ORBITAL REGIME</span>
-            <span class="telemetry-val">LEO 550KM // 51.6° INCLINATION</span>
-          </div>
-          <div class="telemetry-item">
-            <span class="telemetry-label">COMMUNICATION STANDARD</span>
-            <span class="telemetry-val">CCSDS 2.2 GHz S-BAND // QPSK</span>
-          </div>
-          <div class="telemetry-item">
-            <span class="telemetry-label">ACADEMIC & INDUSTRY</span>
-            <span class="telemetry-val">HARVARD // MIT // NASA HERITAGE</span>
-          </div>
-          <div class="telemetry-item">
-            <span class="telemetry-label">SYSTEMS STATUS</span>
-            <span class="telemetry-val text-amber">FLIGHT NOMINAL // ALL SUB-SYSTEMS GO</span>
-          </div>
-        </div>
-
-        <div class="footer-divider"></div>
-
+        <!-- ponytail: removed redundant telemetry block per request -->
         <div class="footer-bottom">
           <div class="footer-links">
             <a href="/">Home</a>
@@ -512,45 +491,9 @@ const isTimeline = pathname.startsWith('/timeline');
     background-color: rgba(11, 13, 19, 0.94);
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
-    padding: 3.5rem 0 3.5rem;
+    padding: 2.25rem 0;
     position: relative;
     z-index: 1;
-    margin-bottom: 2rem;
-  }
-
-  .footer-telemetry {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 2.25rem;
-    background: var(--bg-card);
-    border: 1px solid var(--border-subtle);
-    border-radius: var(--radius-md);
-    padding: 1.25rem 1.5rem;
-  }
-
-  .telemetry-item {
-    display: flex;
-    flex-direction: column;
-    gap: 0.3rem;
-    font-family: var(--font-mono);
-  }
-
-  .telemetry-label {
-    font-size: 0.6875rem;
-    color: var(--titanium);
-    letter-spacing: 0.08em;
-  }
-
-  .telemetry-val {
-    font-size: 0.8125rem;
-    color: var(--text-ivory);
-    font-weight: 500;
-  }
-
-  .footer-divider {
-    height: 1px;
-    background: var(--border-subtle);
     margin-bottom: 2rem;
   }
 
