@@ -20,6 +20,7 @@ const categories = [
 ];
 
 const totalArticles = initialBlogs.length;
+const totalCourses = ((portfolioData as any).courses || []).length || 3;
 const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/).length || 500), 0);
 ---
 
@@ -57,23 +58,23 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
           <!-- Telemetry Specs Bar -->
           <div class="telemetry-bar">
             <div class="telemetry-stat">
-              <span class="stat-label">TOTAL DISPATCHES</span>
-              <span class="stat-val" id="stat-total-count">{totalArticles} Articles</span>
+              <span class="stat-label">SITE UPDATES</span>
+              <span class="stat-val text-amber" id="stat-updates-count">64 Updates</span>
             </div>
             <div class="telemetry-divider"></div>
             <div class="telemetry-stat">
-              <span class="stat-label">SITE REVISIONS</span>
-              <span class="stat-val text-amber" id="stat-updates-count">24 Updates</span>
+              <span class="stat-label">BLOG ARTICLES</span>
+              <span class="stat-val text-cyan" id="stat-total-count">{totalArticles} Articles</span>
             </div>
             <div class="telemetry-divider"></div>
             <div class="telemetry-stat">
-              <span class="stat-label">PRIMARY ORBIT</span>
-              <span class="stat-val text-cyan">550km SSO // 97.4° INC</span>
+              <span class="stat-label">FILE ARCHIVES</span>
+              <span class="stat-val text-blue" id="stat-archives-count">GitHub Mirrored</span>
             </div>
             <div class="telemetry-divider"></div>
             <div class="telemetry-stat">
-              <span class="stat-label">TELEMETRY LINK</span>
-              <span class="stat-val text-green">SYNCHRONIZED</span>
+              <span class="stat-label">COURSES</span>
+              <span class="stat-val text-green" id="stat-courses-count">{totalCourses} Courses</span>
             </div>
           </div>
         </div>
@@ -240,6 +241,8 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     const emptyResetBtn = document.getElementById('empty-reset-btn');
     const statTotalCount = document.getElementById('stat-total-count');
     const statUpdatesCount = document.getElementById('stat-updates-count');
+    const statArchivesCount = document.getElementById('stat-archives-count');
+    const statCoursesCount = document.getElementById('stat-courses-count');
     const adminComposeBtn = document.getElementById('admin-compose-btn');
 
     // Reader Modal Elements
@@ -337,17 +340,20 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
         statTotalCount.textContent = `${blogList.length} Articles`;
       }
 
-      if (statUpdatesCount) {
-        try {
-          if (typeof getDashboardStats === 'function') {
-            const stats = getDashboardStats();
-            if (stats && stats.updatesCount) {
+      try {
+        if (typeof getDashboardStats === 'function') {
+          const stats = getDashboardStats();
+          if (stats) {
+            if (statUpdatesCount && stats.updatesCount) {
               statUpdatesCount.textContent = `${stats.updatesCount} Updates`;
             }
+            if (statCoursesCount && typeof stats.coursesCount !== 'undefined') {
+              statCoursesCount.textContent = `${stats.coursesCount} Courses`;
+            }
           }
-        } catch (e) {
-          // quiet
         }
+      } catch (e) {
+        // quiet
       }
 
       const normalizedSearch = searchQuery.toLowerCase().trim();
@@ -790,6 +796,7 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
   .text-amber { color: #f59e0b; }
   .text-cyan { color: #00f2fe; }
   .text-green { color: #10b981; }
+  .text-blue { color: #60a5fa; }
 
   .telemetry-divider {
     width: 1px;

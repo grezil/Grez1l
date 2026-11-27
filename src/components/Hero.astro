@@ -169,19 +169,24 @@ const { profile } = Astro.props;
           <!-- Highlight Key Stats (Live Dynamic Dashboard) -->
           <div class="card-stats-grid dynamic-dashboard-stats" id="hero-dashboard-stats">
             <div class="stat-mini-box">
-              <span class="stat-mini-val glow-text" id="hero-stat-blogs">{profile.telemetryStats?.[0]?.value || "4"}</span>
-              <span class="stat-mini-label">Blogs Published</span>
-              <span class="stat-mini-unit">Articles</span>
-            </div>
-            <div class="stat-mini-box">
-              <span class="stat-mini-val glow-text" id="hero-stat-awards">{profile.telemetryStats?.[1]?.value || "6"}</span>
-              <span class="stat-mini-label">Honors & Awards</span>
-              <span class="stat-mini-unit">Distinctions</span>
-            </div>
-            <div class="stat-mini-box">
-              <span class="stat-mini-val glow-text" id="hero-stat-updates">{profile.telemetryStats?.[2]?.value || "24"}</span>
+              <span class="stat-mini-val glow-text" id="hero-stat-updates">{profile.telemetryStats?.[0]?.value || "64"}</span>
               <span class="stat-mini-label">Site Updates</span>
               <span class="stat-mini-unit">Revisions</span>
+            </div>
+            <div class="stat-mini-box">
+              <span class="stat-mini-val glow-text" id="hero-stat-blogs">{profile.telemetryStats?.[1]?.value || "4"}</span>
+              <span class="stat-mini-label">Blog Articles</span>
+              <span class="stat-mini-unit">Dispatches</span>
+            </div>
+            <div class="stat-mini-box">
+              <span class="stat-mini-val glow-text" id="hero-stat-archive">{profile.telemetryStats?.[2]?.value || "GitHub"}</span>
+              <span class="stat-mini-label">File Archive</span>
+              <span class="stat-mini-unit">Zero-Server</span>
+            </div>
+            <div class="stat-mini-box">
+              <span class="stat-mini-val glow-text" id="hero-stat-courses">{profile.telemetryStats?.[3]?.value || "3"}</span>
+              <span class="stat-mini-label">Courses</span>
+              <span class="stat-mini-unit">Syllabi</span>
             </div>
           </div>
 
@@ -539,10 +544,16 @@ const { profile } = Astro.props;
   /* Stats Grid */
   .card-stats-grid {
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(4, 1fr);
     gap: 0.65rem;
     position: relative;
     z-index: 1;
+  }
+
+  @media (max-width: 640px) {
+    .card-stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
   }
 
   .stat-mini-box {
@@ -633,8 +644,9 @@ const { profile } = Astro.props;
     const fallback = document.getElementById('hero-avatar-fallback');
     const cameraBtn = document.getElementById('avatar-camera-trigger');
     const blogsEl = document.getElementById('hero-stat-blogs');
-    const awardsEl = document.getElementById('hero-stat-awards');
     const updatesEl = document.getElementById('hero-stat-updates');
+    const coursesEl = document.getElementById('hero-stat-courses');
+    const archiveEl = document.getElementById('hero-stat-archive');
 
     function syncAvatar() {
       try {
@@ -663,7 +675,7 @@ const { profile } = Astro.props;
 
     function syncDashboardStats() {
       try {
-        let stats: { blogsCount?: number; achievementsCount?: number; updatesCount?: number } | null = null;
+        let stats: { blogsCount?: number; coursesCount?: number; updatesCount?: number } | null = null;
         if (typeof getDashboardStats === 'function') {
           stats = getDashboardStats();
         } else if ((window as any).store?.getDashboardStats) {
@@ -671,14 +683,17 @@ const { profile } = Astro.props;
         }
 
         if (stats) {
+          if (updatesEl && typeof stats.updatesCount !== 'undefined') {
+            updatesEl.textContent = String(stats.updatesCount);
+          }
           if (blogsEl && typeof stats.blogsCount !== 'undefined') {
             blogsEl.textContent = String(stats.blogsCount);
           }
-          if (awardsEl && typeof stats.achievementsCount !== 'undefined') {
-            awardsEl.textContent = String(stats.achievementsCount);
+          if (archiveEl) {
+            archiveEl.textContent = 'GitHub';
           }
-          if (updatesEl && typeof stats.updatesCount !== 'undefined') {
-            updatesEl.textContent = String(stats.updatesCount);
+          if (coursesEl && typeof stats.coursesCount !== 'undefined') {
+            coursesEl.textContent = String(stats.coursesCount);
           }
         }
       } catch (err) {

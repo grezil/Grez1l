@@ -17,22 +17,28 @@
     "cvDocumentHtml": "<p><strong>VO QUANG NHAT NGUYEN (Nhat Nguyen Vo)</strong> is a dual-specialist in aerospace systems and deterministic flight computing. Holding a Ph.D. from <em>Caltech</em> and M.S. from <em>MIT</em>, he has architected fault-tolerant flight software for multiple LEO/Deep-Space smallsat missions with 100% mission availability.</p>",
     "telemetryStats": [
       {
-        "label": "Blogs Published",
+        "label": "Site Updates",
+        "value": "64",
+        "unit": "Revisions",
+        "key": "updates"
+      },
+      {
+        "label": "Blog Articles",
         "value": "4",
-        "unit": "Technical Dispatches",
+        "unit": "Dispatches",
         "key": "blogs"
       },
       {
-        "label": "Honors & Awards",
-        "value": "6",
-        "unit": "Conferred Milestones",
-        "key": "achievements"
+        "label": "File Archive",
+        "value": "GitHub",
+        "unit": "Zero-Server",
+        "key": "archive"
       },
       {
-        "label": "Site Updates",
-        "value": "24",
-        "unit": "Revisions & Syncs",
-        "key": "updates"
+        "label": "Courses",
+        "value": "3",
+        "unit": "Syllabi",
+        "key": "courses"
       }
     ],
     "social": {

@@ -159,23 +159,22 @@ export function saveData(newData) {
   // Synchronize telemetry stats on profile if present
   if (newData.profile && Array.isArray(newData.profile.telemetryStats)) {
     const blogsCount = (newData.blogs || []).length;
-    const achCount = (newData.achievements || []).length;
     const coursesCount = (newData.courses || []).length;
 
     newData.profile.telemetryStats = newData.profile.telemetryStats.map(stat => {
       const labelLower = (stat.label || '').toLowerCase();
       const key = stat.key || '';
+      if (key === 'updates' || labelLower.includes('update') || labelLower.includes('revision')) {
+        return { ...stat, value: String(updatedRevision) };
+      }
       if (key === 'blogs' || labelLower.includes('blog')) {
         return { ...stat, value: String(blogsCount) };
       }
-      if (key === 'achievements' || labelLower.includes('honor') || labelLower.includes('award')) {
-        return { ...stat, value: String(achCount) };
+      if (key === 'archive' || labelLower.includes('archive')) {
+        return { ...stat, value: 'GitHub' };
       }
       if (key === 'courses' || labelLower.includes('course')) {
         return { ...stat, value: String(coursesCount) };
-      }
-      if (key === 'updates' || labelLower.includes('update') || labelLower.includes('revision')) {
-        return { ...stat, value: String(updatedRevision) };
       }
       return stat;
     });
