@@ -109,6 +109,10 @@ const isTimeline = pathname.startsWith('/timeline');
       <slot />
     </main>
 
+    <!-- ponytail: Apple-style ambient frosted blur vignettes for smooth gliding depth -->
+    <div class="apple-scroll-vignette-top" aria-hidden="true"></div>
+    <div class="apple-scroll-vignette-bottom" aria-hidden="true"></div>
+
     <!-- Apple Floating Bottom Navigation Dock -->
     <nav class="floating-bottom-dock" id="floating-bottom-dock" aria-label="Floating Navigation Dock">
       <div class="floating-dock-pill">
@@ -334,6 +338,102 @@ const isTimeline = pathname.startsWith('/timeline');
           setTimeout(() => toast.remove(), 260);
         }, 3600);
       };
+
+      // ponytail: Apple kinetic smooth scroll and soft velocity blur
+      (function setupAppleScrollExperience() {
+        if (typeof window === 'undefined') return;
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+
+        const root = document.documentElement;
+        const header = document.querySelector('.site-header');
+        let lastY = window.scrollY;
+        let velocity = 0;
+        let currentBlur = 0;
+        let isTicking = false;
+        let scrollTimer: any = null;
+
+        function renderVelocityBlur() {
+          // Smooth decay of kinetic velocity
+          velocity *= 0.86;
+          const targetBlur = Math.min(velocity * 0.022, 1.15); // gentle cap at 1.15px
+          currentBlur += (targetBlur - currentBlur) * 0.28;
+
+          if (currentBlur > 0.04) {
+            root.style.setProperty('--scroll-blur', `${currentBlur.toFixed(2)}px`);
+            requestAnimationFrame(renderVelocityBlur);
+          } else {
+            root.style.setProperty('--scroll-blur', '0px');
+            document.body.classList.remove('is-scrolling');
+            isTicking = false;
+          }
+        }
+
+        window.addEventListener('scroll', () => {
+          const currentY = window.scrollY;
+          const delta = Math.abs(currentY - lastY);
+          lastY = currentY;
+
+          velocity = Math.max(velocity, Math.min(delta, 70));
+
+          // Elevate header with deeper frosted glass on scroll
+          if (header) {
+            if (currentY > 10) {
+              header.classList.add('is-scrolled');
+            } else {
+              header.classList.remove('is-scrolled');
+            }
+          }
+
+          document.body.classList.add('is-scrolling');
+
+          if (!isTicking) {
+            isTicking = true;
+            requestAnimationFrame(renderVelocityBlur);
+          }
+
+          clearTimeout(scrollTimer);
+          scrollTimer = setTimeout(() => {
+            velocity = 0;
+          }, 60);
+        }, { passive: true });
+
+        // Smooth momentum interpolation for discrete mouse wheel
+        let isWheelSmooth = false;
+        let targetScrollY = window.scrollY;
+        let currentScrollY = window.scrollY;
+
+        function smoothScrollStep() {
+          const diff = targetScrollY - currentScrollY;
+          if (Math.abs(diff) < 0.6) {
+            currentScrollY = targetScrollY;
+            window.scrollTo(0, targetScrollY);
+            isWheelSmooth = false;
+            return;
+          }
+          currentScrollY += diff * 0.14;
+          window.scrollTo(0, currentScrollY);
+          requestAnimationFrame(smoothScrollStep);
+        }
+
+        window.addEventListener('wheel', (e: WheelEvent) => {
+          const isDiscrete = Math.abs(e.deltaY) >= 30 && (e.deltaY % 10 === 0 || e.deltaMode !== 0);
+          if (!isDiscrete) {
+            targetScrollY = window.scrollY;
+            currentScrollY = window.scrollY;
+            return;
+          }
+
+          e.preventDefault();
+          const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+          targetScrollY = Math.max(0, Math.min(maxScroll, (isWheelSmooth ? targetScrollY : window.scrollY) + e.deltaY * 0.9));
+
+          if (!isWheelSmooth) {
+            isWheelSmooth = true;
+            currentScrollY = window.scrollY;
+            requestAnimationFrame(smoothScrollStep);
+          }
+        }, { passive: false });
+      })();
     </script>
   </body>
 </html>
@@ -348,6 +448,9 @@ const isTimeline = pathname.startsWith('/timeline');
     position: relative;
     z-index: 1;
     padding-bottom: 7rem; /* Clearance for floating bottom dock */
+    filter: blur(var(--scroll-blur, 0px));
+    will-change: filter;
+    transition: filter 0.08s ease-out;
   }
 
   /* Frosted Apple Minimal Header */
@@ -359,7 +462,43 @@ const isTimeline = pathname.startsWith('/timeline');
     -webkit-backdrop-filter: blur(24px);
     background-color: rgba(11, 13, 19, 0.78);
     border-bottom: 1px solid var(--border-subtle);
-    transition: background-color var(--transition-smooth), border-color var(--transition-smooth);
+    transition: background-color var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+  }
+
+  .site-header.is-scrolled {
+    background-color: rgba(11, 13, 19, 0.88);
+    backdrop-filter: blur(32px) saturate(200%);
+    -webkit-backdrop-filter: blur(32px) saturate(200%);
+    box-shadow: 0 4px 24px -2px rgba(0, 0, 0, 0.5), inset 0 -1px 0 rgba(255, 255, 255, 0.08);
+  }
+
+  /* Apple Frosted Edge Vignettes */
+  .apple-scroll-vignette-top {
+    position: fixed;
+    top: 3.5rem;
+    left: 0;
+    right: 0;
+    height: 2.2rem;
+    pointer-events: none;
+    z-index: 80;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+    -webkit-mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+  }
+
+  .apple-scroll-vignette-bottom {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4.5rem;
+    pointer-events: none;
+    z-index: 80;
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
+    mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
+    -webkit-mask-image: linear-gradient(to top, rgba(0, 0, 0, 1) 0%, rgba(0, 0, 0, 0) 100%);
   }
 
   .header-inner {
