@@ -8,7 +8,7 @@
     "tagline": "Architecting deterministic flight software, orbital dynamics engines, and mission-critical telemetry systems.",
     "bio": "Dual-specialist in aerospace engineering and distributed systems. With 8+ years developing flight-proven software for small satellites, deep space communications, and high-rate telemetry pipelines, I bridge the gap between orbital mechanics and bare-metal embedded reliability. Experienced in flight heritage software, CCSDS standards, fault-tolerant architectures, and real-time mission operations.",
     "academicAffiliation": "Caltech Space Radiation Lab • AIAA Associate Fellow",
-    "location": "Pasadena, CA",
+    "location": "Ho Chi Minh City, VN",
     "citizenship": "United States",
     "status": "Flight Software Lead • Orbital Mission Architect",
     "clearance": "Public Trust / NASA Heritage Clearance",
@@ -42,9 +42,9 @@
       }
     ],
     "social": {
-      "github": "https://github.com/nhatnguyen",
-      "linkedin": "https://linkedin.com/in/nhatnguyen-vo",
-      "email": "nhatnguyen@orbital-flight.dev",
+      "github": "https://github.com/grezil",
+      "linkedin": "https://www.linkedin.com/in/nguyenn141/",
+      "email": "grezil92@gmail.com",
       "twitter": "https://x.com/nhatnguyen_space",
       "googleScholar": "https://scholar.google.com/citations?user=NHATNGUYEN",
       "orcid": "0000-0002-8941-7721"
@@ -87,7 +87,7 @@
       "institution": "California Institute of Technology (Caltech)",
       "degree": "Ph.D. in Aerospace Engineering & Autonomous Spacecraft Systems",
       "period": "2017 — 2021",
-      "location": "Pasadena, CA",
+      "location": "Ho Chi Minh City, VN",
       "thesis": "Autonomous Real-Time Guidance, Navigation, and Control under Actuator Saturation for Low-Thrust Deep-Space SmallSats",
       "advisor": "Prof. Richard M. Thorne (AIAA Fellow, JPL Senior Research Scientist)",
       "honors": "NASA Space Technology Research Fellowship (NSTRF), Caltech Aerospace Excellence Award, Summa Cum Laude",
@@ -141,7 +141,7 @@
       "role": "Principal Flight Software & Avionics Architect",
       "organization": "Astraea Space Labs • SmallSat Missions",
       "department": "Deep Space & LEO Autonomous Missions",
-      "location": "Pasadena, CA",
+      "location": "Ho Chi Minh City, VN",
       "period": "2023 — Present",
       "badge": "Active Flight Operations",
       "summary": "Directing end-to-end flight software architecture, fault protection systems, and hardware-in-the-loop qualification for autonomous LEO Earth Observation smallsats and lunar transfer stages.",
@@ -780,7 +780,7 @@
       "period": "2023 — Present",
       "role": "Principal Flight Software & Avionics Architect",
       "organization": "Astraea Space Labs • SmallSat Missions",
-      "location": "Pasadena, CA",
+      "location": "Ho Chi Minh City, VN",
       "badge": "Mission Flight Heritage",
       "summary": "Leading the flight software architecture and hardware-in-the-loop (HIL) qualification for autonomous LEO Earth Observation smallsats.",
       "highlights": [
@@ -845,7 +845,7 @@
       "period": "2015 — 2021",
       "role": "Ph.D. & M.S. Aerospace Engineering / Flight Computing",
       "organization": "Caltech & MIT Graduate Fellowships",
-      "location": "Pasadena, CA & Cambridge, MA",
+      "location": "Ho Chi Minh City, VN & Cambridge, MA",
       "badge": "Academic Research & NASA Fellowship",
       "summary": "Dual-degree graduate with research focus on optimal low-thrust orbital trajectory design and fault-tolerant distributed flight systems.",
       "highlights": [
@@ -960,7 +960,7 @@
       "semester": "Fall 2025",
       "institution": "Caltech / Aero Department",
       "description": "Keplerian orbits, Lambert's problem, perturbation analysis, continuous-thrust trajectory optimization, and orbital rendezvous maneuvers.",
-      "instructorEmail": "nhatnguyen@orbital-flight.dev",
+      "instructorEmail": "grezil92@gmail.com",
       "githubUrl": "https://github.com/grezil/orbital-mechanics-lectures",
       "tags": [
         "Astrodynamics",
@@ -977,7 +977,7 @@
       "semester": "Spring 2025",
       "institution": "MIT Space Systems Laboratory",
       "description": "Real-time task scheduling, cyclic executives, fault detection, isolation and recovery (FDIR), CCSDS telemetry decommutation, and bare-metal Rust/C systems.",
-      "instructorEmail": "nhatnguyen@orbital-flight.dev",
+      "instructorEmail": "grezil92@gmail.com",
       "githubUrl": "https://github.com/grezil/flight-software-curriculum",
       "tags": [
         "Embedded Systems",
@@ -994,7 +994,7 @@
       "semester": "Fall 2024",
       "institution": "Space Systems Academy",
       "description": "CubeSat bus architectures, power budget analysis, thermal-vacuum testing protocols, solar array deployment, and ground station operations.",
-      "instructorEmail": "nhatnguyen@orbital-flight.dev",
+      "instructorEmail": "grezil92@gmail.com",
       "githubUrl": "https://github.com/grezil/cubesat-avionics-lab",
       "tags": [
         "Avionics",

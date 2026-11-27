@@ -269,14 +269,14 @@ const { profile } = Astro.props;
     width: 6px;
     height: 6px;
     border-radius: 50%;
-    background: #e5a96a;
-    box-shadow: 0 0 8px rgba(229, 169, 106, 0.6);
+    background: #EF4444;
+    box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
   }
 
   .pill-text {
     font-size: 0.75rem;
     font-weight: 500;
-    color: #e5a96a;
+    color: #F87171;
     letter-spacing: 0.02em;
   }
 
@@ -285,7 +285,7 @@ const { profile } = Astro.props;
     font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1.15;
-    color: #f3f4f6;
+    color: #FFFFFF;
     margin-bottom: 0.5rem;
     white-space: nowrap;
     word-break: keep-all;
@@ -382,9 +382,10 @@ const { profile } = Astro.props;
     position: relative;
     padding: 2rem;
     border-radius: 20px;
-    background: rgba(18, 21, 29, 0.84);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
+    background: linear-gradient(160deg, rgba(28, 34, 54, 0.96) 0%, rgba(22, 28, 44, 0.94) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     overflow: hidden;
   }
 
@@ -395,7 +396,7 @@ const { profile } = Astro.props;
     width: 220px;
     height: 220px;
     border-radius: 50%;
-    background: radial-gradient(circle, rgba(229, 169, 106, 0.12) 0%, transparent 70%);
+    background: radial-gradient(circle, rgba(239, 68, 68, 0.12) 0%, transparent 70%);
     pointer-events: none;
   }
 
@@ -428,7 +429,7 @@ const { profile } = Astro.props;
     height: 100%;
     object-fit: cover;
     border-radius: 18px;
-    border: 1.5px solid rgba(229, 169, 106, 0.45);
+    border: 1.5px solid rgba(239, 68, 68, 0.45);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
     display: block;
     transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
@@ -436,7 +437,7 @@ const { profile } = Astro.props;
 
   .profile-avatar-frame:hover .profile-avatar-img {
     transform: scale(1.02);
-    border-color: #E5A96A;
+    border-color: #EF4444;
   }
 
   .avatar-orbit-beacon {
@@ -460,8 +461,8 @@ const { profile } = Astro.props;
     height: 26px;
     border-radius: 50%;
     background: #12151E;
-    border: 1px solid rgba(229, 169, 106, 0.6);
-    color: #E5A96A;
+    border: 1px solid rgba(239, 68, 68, 0.6);
+    color: #F87171;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -473,8 +474,8 @@ const { profile } = Astro.props;
   }
 
   .avatar-camera-trigger:hover {
-    background: #E5A96A;
-    color: #0B0D13;
+    background: #EF4444;
+    color: #FFFFFF;
     transform: scale(1.12);
   }
 
@@ -483,8 +484,8 @@ const { profile } = Astro.props;
     width: 68px;
     height: 68px;
     border-radius: 18px;
-    background: linear-gradient(135deg, rgba(229, 169, 106, 0.2), rgba(212, 175, 55, 0.08));
-    border: 1px solid rgba(229, 169, 106, 0.35);
+    background: linear-gradient(135deg, rgba(239, 68, 68, 0.2), rgba(220, 38, 38, 0.08));
+    border: 1px solid rgba(239, 68, 68, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -495,7 +496,7 @@ const { profile } = Astro.props;
     font-size: 1.35rem;
     font-weight: 700;
     letter-spacing: -0.02em;
-    color: #e5a96a;
+    color: #F87171;
   }
 
   .orbit-mini-dot {
@@ -505,8 +506,8 @@ const { profile } = Astro.props;
     width: 8px;
     height: 8px;
     border-radius: 50%;
-    background: #e5a96a;
-    box-shadow: 0 0 10px #e5a96a;
+    background: #EF4444;
+    box-shadow: 0 0 10px #EF4444;
   }
 
   .identity-meta {
@@ -517,7 +518,7 @@ const { profile } = Astro.props;
   .meta-name {
     font-size: clamp(0.95rem, 1.4vw, 1.15rem);
     font-weight: 700;
-    color: #f3f4f6;
+    color: #FFFFFF;
     margin: 0;
     white-space: nowrap;
   }
@@ -573,7 +574,7 @@ const { profile } = Astro.props;
   .stat-mini-val {
     font-size: 1.35rem;
     font-weight: 700;
-    color: #e5a96a;
+    color: #EF4444;
     line-height: 1.2;
   }
 
@@ -626,9 +627,9 @@ const { profile } = Astro.props;
   }
 
   .channel-pill:hover {
-    background: rgba(229, 169, 106, 0.1);
-    border-color: rgba(229, 169, 106, 0.3);
-    color: #e5a96a;
+    background: rgba(239, 68, 68, 0.12);
+    border-color: rgba(239, 68, 68, 0.35);
+    color: #F87171;
     transform: translateX(3px);
   }
 </style>

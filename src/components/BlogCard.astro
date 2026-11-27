@@ -145,24 +145,27 @@ const authorRole = typeof post.author === 'object' && post.author !== null
   .blog-card {
     display: flex;
     flex-direction: column;
-    background: rgba(18, 22, 36, 0.86);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    background: linear-gradient(160deg, rgba(28, 34, 54, 0.96) 0%, rgba(22, 28, 44, 0.94) 100%);
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-top: 1px solid rgba(255, 255, 255, 0.24);
     border-radius: 16px;
     padding: 1.75rem;
     position: relative;
-    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
-    box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+    box-shadow: 0 6px 28px -4px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.08);
     height: 100%;
   }
 
-  .blog-card:hover {
+  .blog-card:hover,
+  .blog-card:focus-within {
     transform: translateY(-3px);
-    border-color: rgba(229, 169, 106, 0.35);
+    border-color: rgba(239, 68, 68, 0.5);
+    box-shadow: 0 10px 34px -4px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(239, 68, 68, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.12);
   }
 
   .blog-card.featured-card {
-    border-color: rgba(229, 169, 106, 0.25);
-    background: linear-gradient(135deg, rgba(28, 34, 56, 0.9) 0%, rgba(18, 22, 36, 0.9) 100%);
+    border-color: rgba(239, 68, 68, 0.3);
+    background: linear-gradient(135deg, rgba(32, 20, 24, 0.96) 0%, rgba(22, 28, 44, 0.96) 100%);
   }
 
   .blog-card .card-meta-top {
@@ -201,12 +204,12 @@ const authorRole = typeof post.author === 'object' && post.author !== null
 
   /* Category colors */
   .blog-card .badge-cat-fsw {
-    background: rgba(229, 169, 106, 0.12);
-    border: 1px solid rgba(229, 169, 106, 0.3);
-    color: #f3c28c;
+    background: rgba(239, 68, 68, 0.14);
+    border: 1px solid rgba(239, 68, 68, 0.35);
+    color: #FCA5A5;
   }
   .blog-card .badge-cat-fsw .pill-dot {
-    background: #e5a96a;
+    background: #EF4444;
   }
 
   .blog-card .badge-cat-orbit {
@@ -242,9 +245,9 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     text-transform: uppercase;
     letter-spacing: 0.06em;
     padding: 0.2rem 0.55rem;
-    background: rgba(245, 158, 11, 0.15);
-    border: 1px solid rgba(245, 158, 11, 0.35);
-    color: #fbbf24;
+    background: rgba(239, 68, 68, 0.15);
+    border: 1px solid rgba(239, 68, 68, 0.38);
+    color: #FCA5A5;
     border-radius: 4px;
     font-family: var(--font-mono, ui-monospace, monospace);
   }
@@ -254,7 +257,7 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     align-items: center;
     gap: 0.45rem;
     font-size: 0.8125rem;
-    color: #8e95a5;
+    color: #CBD5E1;
     font-family: var(--font-mono, ui-monospace, monospace);
   }
 
@@ -265,11 +268,11 @@ const authorRole = typeof post.author === 'object' && post.author !== null
   }
 
   .blog-card .meta-divider {
-    color: rgba(255, 255, 255, 0.2);
+    color: rgba(255, 255, 255, 0.28);
   }
 
   .blog-card .meta-readtime {
-    color: #d1d5db;
+    color: #F8FAFC;
   }
 
   /* Title */
@@ -279,7 +282,7 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     line-height: 1.35;
     letter-spacing: -0.015em;
     margin-bottom: 0.75rem;
-    color: #f3f4f6;
+    color: #FFFFFF;
   }
 
   .blog-card .title-link {
@@ -289,14 +292,14 @@ const authorRole = typeof post.author === 'object' && post.author !== null
   }
 
   .blog-card .title-link:hover {
-    color: #e5a96a;
+    color: #F87171;
   }
 
   /* Summary */
   .blog-card .blog-summary {
     font-size: 0.9375rem;
     line-height: 1.6;
-    color: #9ca3af;
+    color: #E2E8F0;
     margin-bottom: 1.25rem;
     flex-grow: 1;
     display: -webkit-box;
@@ -316,17 +319,17 @@ const authorRole = typeof post.author === 'object' && post.author !== null
   .blog-card .mini-tag {
     font-size: 0.75rem;
     font-family: var(--font-mono, ui-monospace, monospace);
-    color: #8e95a5;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #FCA5A5;
+    background: rgba(239, 68, 68, 0.14);
+    border: 1px solid rgba(239, 68, 68, 0.35);
     padding: 0.15rem 0.5rem;
     border-radius: 6px;
     transition: border-color 0.2s ease, color 0.2s ease;
   }
 
   .blog-card .mini-tag:hover {
-    border-color: rgba(229, 169, 106, 0.3);
-    color: #f3c28c;
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #FFFFFF;
   }
 
   /* Footer */
@@ -352,7 +355,7 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     height: 32px;
     border-radius: 50%;
     background: linear-gradient(135deg, #1f293d 0%, #111827 100%);
-    border: 1px solid rgba(229, 169, 106, 0.3);
+    border: 1px solid rgba(239, 68, 68, 0.35);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -360,7 +363,7 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     font-family: var(--font-mono, ui-monospace, monospace);
     font-size: 0.75rem;
     font-weight: 700;
-    color: #e5a96a;
+    color: #F87171;
   }
 
   .blog-card .avatar-beacon {
@@ -383,12 +386,12 @@ const authorRole = typeof post.author === 'object' && post.author !== null
   .blog-card .author-name {
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #f3f4f6;
+    color: #FFFFFF;
   }
 
   .blog-card .author-role {
     font-size: 0.6875rem;
-    color: #8e95a5;
+    color: #94A3B8;
   }
 
   .blog-card .action-buttons {
@@ -404,18 +407,18 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     padding: 0.38rem 0.75rem;
     border-radius: 8px;
     font-size: 0.775rem;
-    font-weight: 500;
-    color: #9ca3af;
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.09);
+    font-weight: 600;
+    color: #F8FAFC;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.22);
     cursor: pointer;
     transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   }
 
   .blog-card .quick-read-btn:hover {
-    color: #f3f4f6;
-    background: rgba(255, 255, 255, 0.1);
-    border-color: rgba(255, 255, 255, 0.2);
+    color: #FFFFFF;
+    background: rgba(239, 68, 68, 0.18);
+    border-color: rgba(239, 68, 68, 0.5);
   }
 
   .blog-card .read-article-link {
@@ -424,19 +427,19 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     gap: 0.4rem;
     font-size: 0.8125rem;
     font-weight: 600;
-    color: #e5a96a;
+    color: #FFFFFF;
     text-decoration: none;
     padding: 0.38rem 0.85rem;
     border-radius: 8px;
-    background: rgba(229, 169, 106, 0.08);
-    border: 1px solid rgba(229, 169, 106, 0.22);
+    background: rgba(239, 68, 68, 0.2);
+    border: 1px solid rgba(239, 68, 68, 0.5);
     transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 
   .blog-card .read-article-link:hover {
-    background: rgba(229, 169, 106, 0.18);
-    border-color: rgba(229, 169, 106, 0.45);
-    color: #fce7cf;
+    background: linear-gradient(135deg, #EF4444 0%, #DC2626 100%);
+    border-color: #F87171;
+    color: #FFFFFF;
     transform: translateX(2px);
   }
 

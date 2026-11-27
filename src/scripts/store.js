@@ -894,7 +894,7 @@ export function addCourse(courseData) {
     semester: courseData.semester || 'Fall 2026',
     institution: courseData.institution || 'Caltech / Aero Department',
     description: courseData.description || '',
-    instructorEmail: courseData.instructorEmail || 'nhatnguyen@orbital-flight.dev',
+    instructorEmail: courseData.instructorEmail || 'grezil92@gmail.com',
     githubUrl: courseData.githubUrl || 'https://github.com/grezil',
     tags,
     updatedAt: courseData.updatedAt || dateStr

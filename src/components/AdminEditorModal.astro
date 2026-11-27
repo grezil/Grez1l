@@ -511,7 +511,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
           <div class="form-row form-row-2">
             <div class="form-field">
               <label for="course-email-input" class="field-label">Instructor Contact Email *</label>
-              <input type="email" id="course-email-input" class="editor-input" placeholder="e.g. nhatnguyen@orbital-flight.dev" required />
+              <input type="email" id="course-email-input" class="editor-input" placeholder="e.g. grezil92@gmail.com" required />
             </div>
 
             <div class="form-field">
@@ -2312,7 +2312,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
         const expList = cv.experience || cv.timeline || [];
         const eduList = cv.education || [];
 
-        html = `<div style="text-align:center; border-bottom:1px solid #E5A96A; padding-bottom:1rem; margin-bottom:1.5rem;"><h1 style="color:#FFFFFF; font-size:1.6rem; margin-bottom:0.25rem;">${esc(p.name || 'Võ Quang Nhật Nguyên')}</h1><p style="color:#E5A96A; font-weight:600; margin:0;">${esc(p.title || 'Space Systems & Flight Software Architect')} [${esc(p.callsign || 'NHAT-NGUYEN')}]</p><p style="color:#8E95A5; font-size:0.85rem; margin-top:0.35rem;">${esc(p.location || 'Pasadena, CA')} • Clearance: ${esc(p.clearance || 'Public Trust / NASA Heritage')}</p></div><h2>EXECUTIVE BIO & HARVARD SUMMARY</h2><hr/><p>${esc(p.bio || 'Dual-specialist in aerospace engineering and deterministic real-time flight software.')}</p><h2>PROFESSIONAL APPOINTMENTS & EXPERIENCE</h2><hr/>${expList.map((e: any) => `<div style="margin-bottom:1rem;"><h3 style="color:#FFFFFF; margin-bottom:0.2rem;">${esc(e.role || 'Flight Engineer')} • <span style="color:#E5A96A;">${esc(e.organization || '')}</span></h3><p style="color:#8E95A5; font-size:0.82rem; margin:0;">${esc(e.period || '')} | ${esc(e.location || 'LEO Operations')} | <i>${esc(e.badge || '')}</i></p><p style="margin-top:0.35rem;">${esc(e.summary || '')}</p><ul>${(Array.isArray(e.highlights) ? e.highlights : [e.highlights || '']).filter(Boolean).map((h: string) => `<li>${esc(h)}</li>`).join('')}</ul></div>`).join('')}<h2>ACADEMIC BACKGROUND & DEGREES</h2><hr/>${eduList.map((ed: any) => `<div style="margin-bottom:0.85rem;"><h3 style="color:#FFFFFF; margin-bottom:0.15rem;">${esc(ed.degree || '')} — <span style="color:#E5A96A;">${esc(ed.institution || '')}</span></h3><p style="color:#8E95A5; font-size:0.82rem; margin:0;">${esc(ed.period || '')} | Honors: ${esc(ed.honors || 'High Honors')}</p>${ed.thesis ? `<p style="margin-top:0.25rem; font-style:italic;">Thesis: "${esc(ed.thesis)}"</p>` : ''}</div>`).join('')}`;
+        html = `<div style="text-align:center; border-bottom:1px solid #E5A96A; padding-bottom:1rem; margin-bottom:1.5rem;"><h1 style="color:#FFFFFF; font-size:1.6rem; margin-bottom:0.25rem;">${esc(p.name || 'Võ Quang Nhật Nguyên')}</h1><p style="color:#E5A96A; font-weight:600; margin:0;">${esc(p.title || 'Space Systems & Flight Software Architect')} [${esc(p.callsign || 'NHAT-NGUYEN')}]</p><p style="color:#8E95A5; font-size:0.85rem; margin-top:0.35rem;">${esc(p.location || 'Ho Chi Minh City, VN')} • Clearance: ${esc(p.clearance || 'Public Trust / NASA Heritage')}</p></div><h2>EXECUTIVE BIO & HARVARD SUMMARY</h2><hr/><p>${esc(p.bio || 'Dual-specialist in aerospace engineering and deterministic real-time flight software.')}</p><h2>PROFESSIONAL APPOINTMENTS & EXPERIENCE</h2><hr/>${expList.map((e: any) => `<div style="margin-bottom:1rem;"><h3 style="color:#FFFFFF; margin-bottom:0.2rem;">${esc(e.role || 'Flight Engineer')} • <span style="color:#E5A96A;">${esc(e.organization || '')}</span></h3><p style="color:#8E95A5; font-size:0.82rem; margin:0;">${esc(e.period || '')} | ${esc(e.location || 'LEO Operations')} | <i>${esc(e.badge || '')}</i></p><p style="margin-top:0.35rem;">${esc(e.summary || '')}</p><ul>${(Array.isArray(e.highlights) ? e.highlights : [e.highlights || '']).filter(Boolean).map((h: string) => `<li>${esc(h)}</li>`).join('')}</ul></div>`).join('')}<h2>ACADEMIC BACKGROUND & DEGREES</h2><hr/>${eduList.map((ed: any) => `<div style="margin-bottom:0.85rem;"><h3 style="color:#FFFFFF; margin-bottom:0.15rem;">${esc(ed.degree || '')} — <span style="color:#E5A96A;">${esc(ed.institution || '')}</span></h3><p style="color:#8E95A5; font-size:0.82rem; margin:0;">${esc(ed.period || '')} | Honors: ${esc(ed.honors || 'High Honors')}</p>${ed.thesis ? `<p style="margin-top:0.25rem; font-style:italic;">Thesis: "${esc(ed.thesis)}"</p>` : ''}</div>`).join('')}`;
       }
 
       cvWordDocCanvas.innerHTML = html;
@@ -2463,7 +2463,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
         role: 'New Engineering Role',
         organization: 'Space Agency / Lab',
         period: '2024 — Present',
-        location: 'Pasadena, CA',
+        location: 'Ho Chi Minh City, VN',
         badge: 'Flight Software',
         summary: 'Brief role overview...',
         highlights: ['Architected key avionics subsystem...', 'Reduced telemetry latency by 45%...']
