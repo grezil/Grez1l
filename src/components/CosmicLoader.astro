@@ -105,14 +105,13 @@
     visibility: hidden;
   }
 
-  /* Ambient Cosmos Glow Behind Radar */
+  /* ponytail: remove blur(60px) & stacked backdrop-filter from preloader */
   .loader-backdrop-glow {
     position: absolute;
     width: 480px;
     height: 480px;
     border-radius: 50%;
-    background: radial-gradient(circle at center, rgba(229, 169, 106, 0.08) 0%, rgba(212, 175, 55, 0.03) 45%, transparent 70%);
-    filter: blur(60px);
+    background: radial-gradient(circle at center, rgba(229, 169, 106, 0.08) 0%, rgba(212, 175, 55, 0.028) 45%, transparent 72%);
     pointer-events: none;
   }
 
@@ -125,9 +124,7 @@
     max-width: 460px;
     width: 90vw;
     padding: 2.25rem 2rem;
-    background: rgba(14, 18, 27, 0.75);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    background: rgba(14, 18, 27, 0.9);
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 24px;
     box-shadow: 
@@ -151,7 +148,6 @@
   .orbital-radar-svg {
     width: 100%;
     height: 100%;
-    filter: drop-shadow(0 0 16px rgba(229, 169, 106, 0.25));
   }
 
   .radar-ellipse-path {
@@ -184,7 +180,7 @@
 
   @keyframes beaconCenterPulse {
     0%, 100% { transform: scale(0.9); opacity: 0.8; }
-    50% { transform: scale(1.4); opacity: 1; filter: drop-shadow(0 0 6px #E5A96A); }
+    50% { transform: scale(1.4); opacity: 1; }
   }
 
   /* Identity Callout */

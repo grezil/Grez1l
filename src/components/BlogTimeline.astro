@@ -69,7 +69,7 @@ const getCategoryClass = (category = '') => {
       </div>
 
       <!-- Vertical Timeline Track -->
-      <div class="timeline-track" id="blog-timeline-track">
+      <div class="timeline-track" id="blog-timeline-track" data-static-slugs={JSON.stringify(allBlogs.map((b: any) => b.slug))}>
         {sortedInitial.map((post, idx) => {
           const author = typeof post.author === 'object' && post.author !== null 
             ? post.author 
@@ -172,7 +172,25 @@ const getCategoryClass = (category = '') => {
   (function initBlogTimelineSync() {
     const track = document.getElementById('blog-timeline-track');
     const countBadge = document.getElementById('stream-count-text');
+    const allDispatchesSpan = document.querySelector('#blog-timeline .btn-all-dispatches span');
     const LIMIT = 4;
+
+    if (!track || track.dataset.bound === '1') return;
+    track.dataset.bound = '1';
+
+    let staticSlugs = new Set<string>();
+    try {
+      staticSlugs = new Set(JSON.parse(track.dataset.staticSlugs || '[]'));
+    } catch (e) {}
+
+    function esc(str: any): string {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
 
     function getCategoryClass(category = '') {
       const cat = category.toLowerCase();
@@ -187,7 +205,7 @@ const getCategoryClass = (category = '') => {
       if (!track) return;
 
       try {
-        let blogs: any[] = [];
+        let blogs: any[] | null = null;
         if (typeof getBlogs === 'function') {
           blogs = getBlogs();
         } else {
@@ -203,13 +221,24 @@ const getCategoryClass = (category = '') => {
           }
         }
 
-        if (!blogs || blogs.length === 0) return;
+        if (!Array.isArray(blogs)) return;
+
+        if (allDispatchesSpan) {
+          allDispatchesSpan.textContent = `All Dispatches (${blogs.length})`;
+        }
+
+        if (blogs.length === 0) {
+          if (countBadge) countBadge.textContent = '0 Dispatches';
+          track.innerHTML = `<div style="text-align:center; padding:2rem; color:#8e95a5;">No technical dispatches published yet.</div>`;
+          return;
+        }
 
         // Sort latest first
         const sorted = [...blogs].sort((a, b) => {
-          const dateA = a.date || '';
-          const dateB = b.date || '';
-          return dateB.localeCompare(dateA);
+          const tA = Date.parse(a.date || '');
+          const tB = Date.parse(b.date || '');
+          if (!isNaN(tA) && !isNaN(tB) && tA !== tB) return tB - tA;
+          return String(b.date || '').localeCompare(String(a.date || ''));
         }).slice(0, LIMIT);
 
         if (countBadge) {
@@ -218,17 +247,21 @@ const getCategoryClass = (category = '') => {
 
         track.innerHTML = sorted.map((post, idx) => {
           const catClass = getCategoryClass(post.category);
-          const author = typeof post.author === 'object' && post.author !== null 
-            ? post.author 
+          const author = typeof post.author === 'object' && post.author !== null
+            ? post.author
             : { name: post.author || 'Võ Quang Nhật Nguyên', callsign: 'NHAT-NGUYEN' };
 
-          const tagsHtml = (post.tags || []).slice(0, 4).map((t: string) => `<span class="dispatch-mini-tag">#${t}</span>`).join('');
+          const tagsHtml = (Array.isArray(post.tags) ? post.tags : []).slice(0, 4).map((t: string) => `<span class="dispatch-mini-tag">#${esc(t)}</span>`).join('');
+          // ponytail: route runtime posts via /blog?post=<slug> to avoid 404
+          const postHref = staticSlugs.has(post.slug)
+            ? `/blog/${encodeURIComponent(post.slug)}`
+            : `/blog?post=${encodeURIComponent(post.slug)}`;
 
           return `
             <article 
               class="timeline-dispatch-item"
-              data-slug="${post.slug}"
-              data-id="${post.id}"
+              data-slug="${esc(post.slug)}"
+              data-id="${esc(post.id)}"
               data-index="${idx}"
             >
               <div class="timeline-axis">
@@ -243,31 +276,31 @@ const getCategoryClass = (category = '') => {
                   <div class="meta-left">
                     <span class="cat-badge ${catClass}">
                       <span class="badge-dot"></span>
-                      ${post.category || 'Flight Software'}
+                      ${esc(post.category || 'Flight Software')}
                     </span>
                     <span class="dispatch-epoch">
                       <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                       </svg>
-                      ${post.date || 'Mission Epoch'}
+                      ${esc(post.date || 'Mission Epoch')}
                     </span>
                   </div>
 
                   <div class="meta-right">
-                    <span class="read-estimate">${post.readTime || '5 min read'}</span>
+                    <span class="read-estimate">${esc(post.readTime || '5 min read')}</span>
                     <span class="order-tag">#${String(idx + 1).padStart(2, '0')}</span>
                   </div>
                 </div>
 
                 <h3 class="dispatch-title">
-                  <a href="/blog/${post.slug}" class="dispatch-title-link">
-                    ${post.title}
+                  <a href="${esc(postHref)}" class="dispatch-title-link">
+                    ${esc(post.title)}
                   </a>
                 </h3>
 
                 <p class="dispatch-summary">
-                  ${post.summary || ''}
+                  ${esc(post.summary || '')}
                 </p>
 
                 <div class="dispatch-tags">
@@ -277,10 +310,10 @@ const getCategoryClass = (category = '') => {
                 <div class="dispatch-footer">
                   <div class="author-micro">
                     <span class="author-badge-icon">NN</span>
-                    <span class="author-label">${author.name || 'Võ Quang Nhật Nguyên'} • ${author.callsign || 'NHAT-NGUYEN'}</span>
+                    <span class="author-label">${esc(author.name || 'Võ Quang Nhật Nguyên')} • ${esc(author.callsign || 'NHAT-NGUYEN')}</span>
                   </div>
 
-                  <a href="/blog/${post.slug}" class="dispatch-link-btn">
+                  <a href="${esc(postHref)}" class="dispatch-link-btn">
                     <span>Read Dispatch</span>
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                       <line x1="5" y1="12" x2="19" y2="12"></line>
@@ -303,16 +336,15 @@ const getCategoryClass = (category = '') => {
       if (e.key === 'space_portfolio_data_v1') renderTimelinePosts();
     });
 
-    // Check after brief delay for store hydration
-    setTimeout(renderTimelinePosts, 100);
+    renderTimelinePosts();
   })();
 </script>
 
-<style>
+<style is:global>
   /* ============================================================
      BLOG TIMELINE STYLES - Space Engineering Monospace Apple Aesthetic
      ============================================================ */
-  .blog-timeline-section {
+  #blog-timeline.blog-timeline-section {
     position: relative;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     font-family: var(--font-mono, 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, monospace);
@@ -385,13 +417,11 @@ const getCategoryClass = (category = '') => {
   }
 
   /* Timeline Stream Container */
-  .timeline-stream-container {
-    background: rgba(15, 18, 30, 0.6);
+  #blog-timeline .timeline-stream-container {
+    background: rgba(15, 18, 30, 0.86);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 18px;
     padding: 2rem 2.25rem;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.5);
   }
 
@@ -500,19 +530,18 @@ const getCategoryClass = (category = '') => {
   }
 
   /* Dispatch Card */
-  .dispatch-card {
-    background: rgba(22, 27, 44, 0.7);
+  #blog-timeline .dispatch-card {
+    background: rgba(22, 27, 44, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 14px;
     padding: 1.5rem 1.75rem;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.05), 0 8px 24px -4px rgba(0, 0, 0, 0.35);
-    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.25s ease, box-shadow 0.25s ease;
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
   }
 
-  .dispatch-card:hover {
+  #blog-timeline .dispatch-card:hover {
     transform: translateY(-2px);
     border-color: rgba(229, 169, 106, 0.35);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 16px 32px -6px rgba(0, 0, 0, 0.55), 0 0 16px rgba(229, 169, 106, 0.12);
   }
 
   .dispatch-meta-row {

@@ -325,11 +325,21 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
 
   let currentFilter = 'all';
 
+  function esc(str: any): string {
+    return String(str ?? '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
   function initHeatmap() {
     const grid = document.getElementById('heatmap-calendar-grid');
     const tooltip = document.getElementById('heatmap-tooltip');
     const scrollArea = document.getElementById('heatmap-scroll-area');
-    if (!grid || !tooltip) return;
+    if (!grid || !tooltip || grid.dataset.bound === '1') return;
+    grid.dataset.bound = '1';
 
     // Auto-scroll to end (most recent weeks) on mobile/overflow
     if (scrollArea) {
@@ -337,7 +347,7 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
     }
 
     // Bind filter buttons
-    const filterButtons = document.querySelectorAll('.filter-tab-btn');
+    const filterButtons = document.querySelectorAll('#habit-tracker .filter-tab-btn');
     filterButtons.forEach(btn => {
       btn.addEventListener('click', () => {
         const filter = btn.getAttribute('data-filter') || 'all';
@@ -348,19 +358,22 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
     // Tooltip event listeners
     setupTooltip(grid, tooltip);
 
-    // Reactivity to store updates
-    window.addEventListener('portfolio-data-updated', () => {
-      refreshData();
+    // Reactivity to store updates & cross-tab storage sync
+    window.addEventListener('portfolio-data-updated', refreshData);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'space_portfolio_activity_log' || e.key === 'space_portfolio_data_v1') {
+        refreshData();
+      }
     });
 
     // Run initial refresh
     refreshData();
   }
 
-  function setFilter(filter) {
+  function setFilter(filter: string) {
     currentFilter = filter;
 
-    const filterButtons = document.querySelectorAll('.filter-tab-btn');
+    const filterButtons = document.querySelectorAll('#habit-tracker .filter-tab-btn');
     filterButtons.forEach(btn => {
       const active = btn.getAttribute('data-filter') === filter;
       btn.classList.toggle('active', active);
@@ -372,8 +385,8 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
 
   function refreshData() {
     try {
-      const getHeatmapFn = window.PortfolioStore?.getActivityHeatmapData || getActivityHeatmapData;
-      const getLogFn = window.PortfolioStore?.getActivityLog || getActivityLog;
+      const getHeatmapFn = (window as any).PortfolioStore?.getActivityHeatmapData || getActivityHeatmapData;
+      const getLogFn = (window as any).PortfolioStore?.getActivityLog || getActivityLog;
 
       if (typeof getHeatmapFn !== 'function') return;
 
@@ -383,10 +396,10 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
       // Update Category Badges
       const counts = {
         all: allActivities.length,
-        blog: allActivities.filter(a => a?.type === 'blog').length,
-        cv: allActivities.filter(a => a?.type === 'cv').length,
-        course: allActivities.filter(a => a?.type === 'course').length,
-        achievement: allActivities.filter(a => a?.type === 'achievement').length
+        blog: allActivities.filter((a: any) => a?.type === 'blog').length,
+        cv: allActivities.filter((a: any) => a?.type === 'cv').length,
+        course: allActivities.filter((a: any) => a?.type === 'course').length,
+        achievement: allActivities.filter((a: any) => a?.type === 'achievement').length
       };
 
       const bAll = document.getElementById('badge-all');
@@ -418,7 +431,7 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
       // Update Summary Text
       const summaryText = document.getElementById('heatmap-summary-text');
       if (summaryText) {
-        const filterNames = {
+        const filterNames: Record<string, string> = {
           all: 'all activities',
           blog: 'blog dispatches',
           cv: 'CV revisions',
@@ -428,24 +441,36 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
         summaryText.textContent = `Displaying continuous ${filterNames[currentFilter] || 'telemetry'} across the past 52 weeks (${data.totalCount} events)`;
       }
 
-      // Update All Cells in Grid
-      const cells = document.querySelectorAll('.heatmap-cell');
-      cells.forEach(cell => {
-        const isFuture = cell.getAttribute('data-future') === 'true';
-        if (isFuture) return;
+      const now = new Date();
+      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
+      // Update All Cells in Grid (ponytail: evaluate todayStr dynamically at runtime)
+      const cells = document.querySelectorAll('#heatmap-calendar-grid .heatmap-cell');
+      cells.forEach(cell => {
         const dateStr = cell.getAttribute('data-date');
         if (!dateStr) return;
 
-        const cellInfo = data.cells[dateStr] || { count: 0, level: 0, activities: [] };
+        const isFuture = dateStr > todayStr;
+        const formattedDate = cell.getAttribute('data-formatted-date') || dateStr;
 
-        // Reset classes
+        if (isFuture) {
+          cell.className = 'heatmap-cell level-0 cell-future';
+          cell.setAttribute('data-future', 'true');
+          cell.setAttribute('data-count', '0');
+          cell.setAttribute('data-level', '0');
+          cell.setAttribute('data-activities', '[]');
+          cell.setAttribute('tabindex', '-1');
+          cell.setAttribute('aria-label', `${formattedDate}: 0 activities`);
+          return;
+        }
+
+        const cellInfo = data.cells[dateStr] || { count: 0, level: 0, activities: [] };
         cell.className = `heatmap-cell level-${cellInfo.level}`;
+        cell.setAttribute('data-future', 'false');
+        cell.setAttribute('tabindex', '0');
         cell.setAttribute('data-count', String(cellInfo.count));
         cell.setAttribute('data-level', String(cellInfo.level));
         cell.setAttribute('data-activities', JSON.stringify(cellInfo.activities || []));
-
-        const formattedDate = cell.getAttribute('data-formatted-date') || dateStr;
         cell.setAttribute('aria-label', `${formattedDate}: ${cellInfo.count} ${cellInfo.count === 1 ? 'activity' : 'activities'}`);
       });
     } catch (err) {
@@ -453,16 +478,16 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
     }
   }
 
-  function setupTooltip(grid, tooltip) {
+  function setupTooltip(grid: HTMLElement, tooltip: HTMLElement) {
     const tooltipDate = document.getElementById('tooltip-date');
     const tooltipCount = document.getElementById('tooltip-count');
     const tooltipItems = document.getElementById('tooltip-items');
 
-    function showTooltip(cell) {
+    function showTooltip(cell: Element) {
       const isFuture = cell.getAttribute('data-future') === 'true';
       const formattedDate = cell.getAttribute('data-formatted-date') || '';
       const count = parseInt(cell.getAttribute('data-count') || '0', 10);
-      let activities = [];
+      let activities: any[] = [];
       try {
         activities = JSON.parse(cell.getAttribute('data-activities') || '[]');
       } catch (e) {
@@ -486,7 +511,7 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
         } else if (activities.length === 0) {
           tooltipItems.innerHTML = '<div class="tooltip-empty">No telemetry recorded on this date.</div>';
         } else {
-          const typeBadgeMap = {
+          const typeBadgeMap: Record<string, { label: string; class: string }> = {
             blog: { label: 'Blog', class: 'tag-blog' },
             cv: { label: 'CV', class: 'tag-cv' },
             course: { label: 'Course', class: 'tag-course' },
@@ -495,7 +520,7 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
 
           tooltipItems.innerHTML = activities.slice(0, 4).map(act => {
             const conf = typeBadgeMap[act.type] || { label: 'Log', class: 'tag-default' };
-            const cleanTitle = (act.title || '').replace(/"/g, '&quot;');
+            const cleanTitle = esc(act.title || '');
             return `
               <div class="tooltip-item">
                 <span class="type-tag ${conf.class}">${conf.label}</span>
@@ -506,7 +531,6 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
         }
       }
 
-      // Positioning tooltip relative to grid / viewport
       const cellRect = cell.getBoundingClientRect();
       const card = cell.closest('.heatmap-card') || document.body;
       const cardRect = card.getBoundingClientRect();
@@ -514,7 +538,6 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
       tooltip.classList.add('is-visible');
       tooltip.setAttribute('aria-hidden', 'false');
 
-      // Calculate position
       const cellCenterX = (cellRect.left + cellRect.width / 2) - cardRect.left;
       const cellTopY = cellRect.top - cardRect.top;
 
@@ -522,7 +545,6 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
       const tooltipHeight = tooltip.offsetHeight || 90;
 
       let leftPos = cellCenterX;
-      // Clamp within card edges
       if (leftPos - tooltipWidth / 2 < 12) {
         leftPos = tooltipWidth / 2 + 12;
       } else if (leftPos + tooltipWidth / 2 > cardRect.width - 12) {
@@ -531,7 +553,6 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
 
       let topPos = cellTopY - 10;
       if (topPos - tooltipHeight < 10) {
-        // Place below cell if too close to top
         topPos = cellTopY + cellRect.height + tooltipHeight + 10;
       }
 
@@ -544,19 +565,18 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
       tooltip.setAttribute('aria-hidden', 'true');
     }
 
-    // Grid event delegation
     grid.addEventListener('mouseover', (e) => {
-      const target = e.target.closest('.heatmap-cell');
+      const target = (e.target as HTMLElement)?.closest('.heatmap-cell');
       if (target) showTooltip(target);
     });
 
     grid.addEventListener('mouseout', (e) => {
-      const target = e.target.closest('.heatmap-cell');
+      const target = (e.target as HTMLElement)?.closest('.heatmap-cell');
       if (target) hideTooltip();
     });
 
     grid.addEventListener('focusin', (e) => {
-      const target = e.target.closest('.heatmap-cell');
+      const target = (e.target as HTMLElement)?.closest('.heatmap-cell');
       if (target) showTooltip(target);
     });
 
@@ -565,7 +585,6 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
     });
   }
 
-  // Initialize on load and Astro view transitions
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initHeatmap);
   } else {
@@ -574,25 +593,23 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
   document.addEventListener('astro:page-load', initHeatmap);
 </script>
 
-<style>
+<style is:global>
   /* ==========================================================================
      CONTRIBUTION HEATMAP & HABIT TRACKER STYLES
-     Space-Apple Aesthetic: Frosted Onyx, Monospace, Telemetry Amber/Cyan
+     ponytail: global scoped under #habit-tracker, GPU-light cells & no blur lag
      ========================================================================== */
 
-  .habit-heatmap-section {
+  #habit-tracker.habit-heatmap-section {
     padding: 3rem 0;
     position: relative;
   }
 
-  .heatmap-card {
-    background: linear-gradient(135deg, rgba(16, 20, 30, 0.88), rgba(11, 13, 19, 0.95));
+  #habit-tracker .heatmap-card {
+    background: linear-gradient(135deg, rgba(16, 20, 30, 0.92), rgba(11, 13, 19, 0.96));
     border: 1px solid rgba(142, 149, 165, 0.16);
     border-radius: var(--radius-lg, 18px);
     padding: 2.25rem 2.5rem;
     box-shadow: 0 12px 40px -10px rgba(0, 0, 0, 0.55), 0 0 1px 1px rgba(255, 255, 255, 0.04);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
     position: relative;
     overflow: visible;
   }
@@ -671,7 +688,7 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
     font-size: 0.75rem;
     font-weight: 500;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
   }
 
   .filter-tab-btn:hover {
@@ -894,6 +911,7 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
     grid-auto-flow: column;
     grid-auto-columns: 13px;
     gap: 3.5px;
+    contain: layout style;
   }
 
   /* Heatmap Cells */
@@ -903,9 +921,7 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
     border-radius: 2.5px;
     outline: none;
     cursor: pointer;
-    transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1),
-                background-color 0.2s ease,
-                box-shadow 0.2s ease;
+    transition: transform 0.12s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.18s ease;
   }
 
   /* Level 0: Empty subtle slot */
@@ -918,28 +934,24 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
   .heatmap-cell.level-1 {
     background: rgba(56, 189, 248, 0.35);
     border: 1px solid rgba(56, 189, 248, 0.55);
-    box-shadow: 0 0 4px rgba(56, 189, 248, 0.25);
   }
 
   /* Level 2: Warm amber dim */
   .heatmap-cell.level-2 {
-    background: rgba(229, 169, 106, 0.5);
-    border: 1px solid rgba(229, 169, 106, 0.7);
-    box-shadow: 0 0 6px rgba(229, 169, 106, 0.35);
+    background: rgba(229, 169, 106, 0.52);
+    border: 1px solid rgba(229, 169, 106, 0.72);
   }
 
   /* Level 3: Radiant gold */
   .heatmap-cell.level-3 {
     background: #D4AF37;
     border: 1px solid #F3C78E;
-    box-shadow: 0 0 8px rgba(212, 175, 55, 0.6);
   }
 
-  /* Level 4: Intense cosmic amber with soft box-shadow */
+  /* Level 4: Intense cosmic amber */
   .heatmap-cell.level-4 {
     background: #E5A96A;
     border: 1px solid #FFF3D6;
-    box-shadow: 0 0 12px 2px rgba(229, 169, 106, 0.85);
   }
 
   /* Future cell */
@@ -953,10 +965,9 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
   /* Hover & Focus Interaction */
   .heatmap-cell:not(.cell-future):hover,
   .heatmap-cell:not(.cell-future):focus {
-    transform: scale(1.4);
+    transform: scale(1.35);
     z-index: 10;
     outline: 1.5px solid #FFFFFF;
-    box-shadow: 0 0 12px rgba(255, 255, 255, 0.65);
   }
 
   /* Heatmap Footer */
@@ -1041,19 +1052,17 @@ const consistencyRate = ((initialData.activeDaysCount / 365) * 100).toFixed(1);
     transform: translate(-50%, -100%);
     pointer-events: none;
     z-index: 9999;
-    background: rgba(14, 18, 27, 0.96);
+    background: rgba(14, 18, 27, 0.97);
     border: 1px solid rgba(229, 169, 106, 0.35);
     border-radius: 8px;
     padding: 0.75rem 0.95rem;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.75), 0 0 1px 1px rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     width: max-content;
     max-width: 340px;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.15s cubic-bezier(0.16, 1, 0.3, 1),
-                transform 0.15s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.14s cubic-bezier(0.22, 1, 0.36, 1),
+                transform 0.14s cubic-bezier(0.22, 1, 0.36, 1);
   }
 
   .heatmap-tooltip.is-visible {

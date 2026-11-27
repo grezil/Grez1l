@@ -1,6 +1,15 @@
 ---
 // src/pages/admin.astro - Dedicated Apple-grade Space Admin Mission Control Center
 import Layout from '../layouts/Layout.astro';
+import portfolioData from '../data/portfolio.json';
+import { DEFAULT_BLOGS } from '../data/defaultBlogs.js';
+
+// ponytail: compute statically built blog slugs so runtime-published posts route via /blog?post=<slug>
+const jsonBlogs = (portfolioData as any).blogs as any[] | undefined;
+const initialBlogs = (jsonBlogs && Array.isArray(jsonBlogs) && jsonBlogs.length > 0)
+  ? jsonBlogs
+  : DEFAULT_BLOGS;
+const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
 ---
 
 <Layout title="Mission Control Center | Space Engineer Admin CMS">
@@ -100,7 +109,7 @@ import Layout from '../layouts/Layout.astro';
     <!-- ============================================== -->
     <!-- VIEW 2: AUTHENTICATED MISSION CONTROL DASHBOARD-->
     <!-- ============================================== -->
-    <section id="admin-dashboard-screen" class="dashboard-container" style="display: none;">
+    <section id="admin-dashboard-screen" class="dashboard-container" data-static-slugs={JSON.stringify(staticBlogSlugs)} style="display: none;">
       <div class="dashboard-inner container">
         
         <!-- Top Mission Navigation Bar -->
@@ -376,6 +385,15 @@ import Layout from '../layouts/Layout.astro';
 
                 <div class="form-row form-row-3">
                   <div class="form-field">
+                    <label for="dash-blog-category" class="field-label">Category</label>
+                    <select id="dash-blog-category" class="editor-select">
+                      <option value="Flight Software">Flight Software</option>
+                      <option value="Orbital Mechanics">Orbital Mechanics</option>
+                      <option value="Avionics">Avionics</option>
+                      <option value="Deep Space Comms">Deep Space Comms</option>
+                    </select>
+                  </div>
+                  <div class="form-field">
                     <label for="dash-blog-date" class="field-label">Publication Date</label>
                     <input type="date" id="dash-blog-date" class="editor-input" />
                   </div>
@@ -383,10 +401,11 @@ import Layout from '../layouts/Layout.astro';
                     <label for="dash-blog-readtime" class="field-label">Read Time</label>
                     <input type="text" id="dash-blog-readtime" class="editor-input" placeholder="e.g. 5 min read" />
                   </div>
-                  <div class="form-field">
-                    <label for="dash-blog-tags" class="field-label">Category Tags (comma-separated)</label>
-                    <input type="text" id="dash-blog-tags" class="editor-input" placeholder="e.g. Flight Software, Rust, RTOS" />
-                  </div>
+                </div>
+
+                <div class="form-field">
+                  <label for="dash-blog-tags" class="field-label">Category Tags (comma-separated)</label>
+                  <input type="text" id="dash-blog-tags" class="editor-input" placeholder="e.g. Flight Software, Rust, RTOS" />
                 </div>
 
                 <div class="form-field">
@@ -704,25 +723,16 @@ import Layout from '../layouts/Layout.astro';
               <div class="panel-header-split">
                 <div>
                   <h3 class="dash-panel-title">System Operations & Data Vault</h3>
-                  <p class="dash-panel-desc">Export full JSON backups, import external data snapshots, customize admin security passkeys, or reset to defaults.</p>
+                  <p class="dash-panel-desc">Export full JSON backups, import external data snapshots, inspect access security status, or reset to defaults.</p>
                 </div>
               </div>
 
-              <!-- Passkey Management Form -->
+              <!-- Security Status Card (ponytail: auth strictly locked to single flight commander account) -->
               <div class="dash-form-card" style="margin-bottom:1.5rem;">
-                <h4 class="cv-sub-title">Update Admin Security Passkey</h4>
-                <p style="font-size:0.82rem; color:#8E95A5; margin-bottom:1rem;">Change your secret flight password.</p>
-                <form id="dash-passkey-form" class="form-row form-row-2">
-                  <div class="form-field">
-                    <label for="dash-new-passkey" class="field-label">New Passkey (min 4 chars)</label>
-                    <input type="password" id="dash-new-passkey" class="editor-input" placeholder="Enter new passkey..." required />
-                  </div>
-                  <div class="form-field" style="display:flex; align-items:flex-end;">
-                    <button type="submit" class="btn-primary-amber" style="width:100%; justify-content:center;">
-                      Update Passkey
-                    </button>
-                  </div>
-                </form>
+                <h4 class="cv-sub-title">Flight Deck Access Security</h4>
+                <p style="font-size:0.84rem; color:#8E95A5; margin:0; line-height:1.6;">
+                  Admin authentication is locked to the authorized operator account (<code style="color:#E5A96A;">admin</code>) under strict client session verification. Legacy auto-login flags are automatically purged on sign-in.
+                </p>
               </div>
 
               <!-- Backup Operations Grid -->
@@ -1850,7 +1860,6 @@ import Layout from '../layouts/Layout.astro';
     font-size: 0.9rem;
     line-height: 1.7;
     outline: none;
-    white-space: pre-wrap;
   }
 
   .word-doc-canvas:focus {
@@ -1910,34 +1919,86 @@ import Layout from '../layouts/Layout.astro';
 </style>
 
 <script>
+  import * as Store from '../scripts/store.js';
+
+  // ponytail: clean HTML escape, safe URL guard, Vietnamese NFD slugifier, and direct Store usage
+  function esc(str: any): string {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function safeUrl(url: any): string {
+    const u = String(url || '').trim();
+    if (!u) return '';
+    if (u.startsWith('https://') || u.startsWith('http://') || u.startsWith('/')) return u;
+    return '';
+  }
+
+  function slugifyText(str: any): string {
+    return String(str || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function setSelectValue(selectEl: HTMLSelectElement | null, value: string, fallback = '') {
+    if (!selectEl) return;
+    const v = String(value || fallback || '').trim();
+    if (!v) return;
+    const exists = Array.from(selectEl.options).some(opt => opt.value === v);
+    if (!exists) {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      selectEl.appendChild(opt);
+    }
+    selectEl.value = v;
+  }
+
   function setupAdminPage() {
     const authScreen = document.getElementById('admin-auth-screen');
     const dashScreen = document.getElementById('admin-dashboard-screen');
     if (!authScreen || !dashScreen) return;
+    if (dashScreen.dataset.bound === '1') return;
+    dashScreen.dataset.bound = '1';
 
-    // Helper to get store
-    async function getStore() {
-      try {
-        return await import('../scripts/store.js');
-      } catch (err) {
-        console.warn('Failed to load store module:', err);
-        return null;
-      }
+    let staticBlogSlugs = new Set<string>();
+    try {
+      const rawSlugs = dashScreen.getAttribute('data-static-slugs');
+      if (rawSlugs) staticBlogSlugs = new Set(JSON.parse(rawSlugs));
+    } catch {}
+
+    function getBlogHref(slug: string): string {
+      const s = String(slug || '').trim();
+      if (!s) return '/blog';
+      return staticBlogSlugs.has(s) ? `/blog/${encodeURIComponent(s)}` : `/blog?post=${encodeURIComponent(s)}`;
     }
 
-    // Check if user is authenticated
+    async function getStore() {
+      return Store;
+    }
+
     // ponytail: check strict session object, invalidating legacy 'true' strings
     async function checkAuth() {
-      const store = await getStore();
-      if (store && typeof store.checkAdminAuth === 'function') {
-        return store.checkAdminAuth();
+      if (typeof Store.checkAdminAuth === 'function') {
+        return Store.checkAdminAuth();
       }
       try {
         const raw = localStorage.getItem('space_portfolio_admin_session_v2');
         if (!raw) return false;
         const s = JSON.parse(raw);
         return s && s.user === 'admin' && s.authenticated === true;
-      } catch (e) {
+      } catch {
         return false;
       }
     }
@@ -1948,6 +2009,7 @@ import Layout from '../layouts/Layout.astro';
         authScreen.style.display = 'none';
         dashScreen.style.display = 'block';
         loadDashboardData();
+        applyHashRoute();
       } else {
         authScreen.style.display = 'flex';
         dashScreen.style.display = 'none';
@@ -1981,8 +2043,15 @@ import Layout from '../layouts/Layout.astro';
       if (store && typeof store.loginAdmin === 'function') {
         authResult = store.loginAdmin(enteredUser, enteredPass);
       } else {
-        // ponytail: fallback direct check for admin & NhatNguyen141
         authResult = { success: enteredUser === 'admin' && enteredPass === 'NhatNguyen141' };
+        if (authResult.success) {
+          localStorage.setItem('space_portfolio_admin_session_v2', JSON.stringify({
+            user: 'admin',
+            authenticated: true,
+            authAt: Date.now()
+          }));
+          window.dispatchEvent(new CustomEvent('portfolio-admin-auth-changed', { detail: { authenticated: true } }));
+        }
       }
 
       if (authResult.success) {
@@ -1991,22 +2060,15 @@ import Layout from '../layouts/Layout.astro';
           feedbackBox.className = 'auth-feedback is-success';
           feedbackBox.style.display = 'flex';
         }
-        localStorage.setItem('space_portfolio_admin_session_v2', JSON.stringify({
-          user: 'admin',
-          authenticated: true,
-          authAt: Date.now()
-        }));
-        localStorage.removeItem('space_portfolio_admin_session_v2');
-      localStorage.removeItem('space_portfolio_admin_auth');
+        // Clean legacy auto-auth flags only (keep space_portfolio_admin_session_v2 active!)
+        localStorage.removeItem('space_portfolio_admin_auth');
         localStorage.removeItem('astro_admin_auth');
         localStorage.removeItem('portfolio_admin_authenticated');
         localStorage.removeItem('astro_portfolio_auth');
 
-        window.dispatchEvent(new CustomEvent('portfolio-admin-auth-changed', { detail: { authenticated: true } }));
-
         setTimeout(() => {
           syncViews();
-        }, 500);
+        }, 350);
       } else {
         if (feedbackBox && feedbackMsg) {
           feedbackMsg.textContent = authResult.error || 'Tên tài khoản hoặc mật khẩu không chính xác.';
@@ -2025,13 +2087,10 @@ import Layout from '../layouts/Layout.astro';
       const store = await getStore();
       if (store && typeof store.logoutAdmin === 'function') {
         store.logoutAdmin();
+      } else {
+        localStorage.removeItem('space_portfolio_admin_session_v2');
+        window.dispatchEvent(new CustomEvent('portfolio-admin-auth-changed', { detail: { authenticated: false } }));
       }
-      localStorage.removeItem('space_portfolio_admin_session_v2');
-      localStorage.removeItem('space_portfolio_admin_auth');
-      localStorage.removeItem('astro_admin_auth');
-      localStorage.removeItem('portfolio_admin_authenticated');
-      localStorage.removeItem('astro_portfolio_auth');
-      window.dispatchEvent(new CustomEvent('portfolio-admin-auth-changed', { detail: { authenticated: false } }));
       window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       syncViews();
     });
@@ -2154,20 +2213,20 @@ import Layout from '../layouts/Layout.astro';
       }
 
       achList.innerHTML = list.map((item: any) => `
-        <div class="dash-item-card" data-id="${item.id}">
+        <div class="dash-item-card" data-id="${esc(item.id)}">
           <div class="dash-card-left">
-            <h5 class="dash-card-title">${item.title || 'Untitled'}</h5>
+            <h5 class="dash-card-title">${esc(item.title || 'Untitled')}</h5>
             <div class="dash-card-meta">
-              <span style="color:#E5A96A; font-weight:600;">${item.date || item.timeline || 'Date N/A'}</span>
+              <span style="color:#E5A96A; font-weight:600;">${esc(item.date || item.timeline || 'Date N/A')}</span>
               <span>•</span>
-              <span style="color:#00F2FE;">${item.category || 'Milestone'}</span>
-              ${item.organization ? `<span>•</span><span>${item.organization}</span>` : ''}
-              ${item.metrics ? `<span>•</span><span style="color:#34D399;">${item.metrics}</span>` : ''}
+              <span style="color:#00F2FE;">${esc(item.category || 'Milestone')}</span>
+              ${item.organization ? `<span>•</span><span>${esc(item.organization)}</span>` : ''}
+              ${item.metrics ? `<span>•</span><span style="color:#34D399;">${esc(item.metrics)}</span>` : ''}
             </div>
           </div>
           <div class="dash-card-actions">
-            <button type="button" class="btn-inv-edit" data-edit-ach="${item.id}">Edit</button>
-            <button type="button" class="btn-inv-delete" data-delete-ach="${item.id}">Delete</button>
+            <button type="button" class="btn-inv-edit" data-edit-ach="${esc(item.id)}">Edit</button>
+            <button type="button" class="btn-inv-delete" data-delete-ach="${esc(item.id)}">Delete</button>
           </div>
         </div>
       `).join('');
@@ -2181,7 +2240,7 @@ import Layout from '../layouts/Layout.astro';
             achId.value = target.id || '';
             achTitle.value = target.title || '';
             achTimeline.value = target.timeline || target.date || '';
-            achCat.value = target.category || 'Flight Heritage';
+            setSelectValue(achCat, target.category || 'Flight Heritage', 'Flight Heritage');
             achOrg.value = target.organization || '';
             achMetrics.value = target.metrics || '';
             achDesc.value = target.description || '';
@@ -2193,18 +2252,20 @@ import Layout from '../layouts/Layout.astro';
         });
       });
 
-      // Wire delete
+      // Wire delete (single store call to avoid double activity/save)
       achList.querySelectorAll('[data-delete-ach]').forEach(b => {
         b.addEventListener('click', async () => {
           const id = b.getAttribute('data-delete-ach');
           if (!confirm('Are you sure you want to delete this timeline milestone / achievement?')) return;
           const store = await getStore();
           if (store) {
-            if (typeof store.deleteTimeline === 'function') store.deleteTimeline(id);
-            if (typeof store.deleteAchievement === 'function') store.deleteAchievement(id);
+            const removed = typeof store.deleteTimeline === 'function' ? store.deleteTimeline(id) : false;
+            if (!removed && typeof store.deleteAchievement === 'function') {
+              store.deleteAchievement(id);
+            }
           }
-          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
           loadAchievements();
+          updateDashboardTelemetryStats();
         });
       });
     }
@@ -2231,10 +2292,10 @@ import Layout from '../layouts/Layout.astro';
       };
 
       if (achId.value) {
-        if (store && typeof store.updateTimeline === 'function') {
-          store.updateTimeline(achId.value, payload);
-        }
-        if (store && typeof store.updateAchievement === 'function') {
+        let updated = store && typeof store.updateTimeline === 'function'
+          ? store.updateTimeline(achId.value, payload)
+          : null;
+        if (!updated && store && typeof store.updateAchievement === 'function') {
           store.updateAchievement(achId.value, payload);
         }
       } else {
@@ -2245,9 +2306,9 @@ import Layout from '../layouts/Layout.astro';
         }
       }
 
-      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       resetAchForm();
       loadAchievements();
+      updateDashboardTelemetryStats();
       alert('Timeline milestone & achievement successfully saved to store!');
     });
 
@@ -2258,6 +2319,7 @@ import Layout from '../layouts/Layout.astro';
     const blogId = document.getElementById('dash-blog-id') as HTMLInputElement;
     const blogTitle = document.getElementById('dash-blog-title') as HTMLInputElement;
     const blogSlug = document.getElementById('dash-blog-slug') as HTMLInputElement;
+    const blogCategory = document.getElementById('dash-blog-category') as HTMLSelectElement;
     const blogDate = document.getElementById('dash-blog-date') as HTMLInputElement;
     const blogReadtime = document.getElementById('dash-blog-readtime') as HTMLInputElement;
     const blogTags = document.getElementById('dash-blog-tags') as HTMLInputElement;
@@ -2270,11 +2332,7 @@ import Layout from '../layouts/Layout.astro';
 
     blogTitle?.addEventListener('input', () => {
       if (!blogId.value && blogSlug) {
-        blogSlug.value = blogTitle.value
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/[\s_-]+/g, '-')
-          .replace(/^-+|-+$/g, '');
+        blogSlug.value = slugifyText(blogTitle.value);
       }
     });
 
@@ -2283,6 +2341,7 @@ import Layout from '../layouts/Layout.astro';
       blogId.value = '';
       blogTitle.value = '';
       blogSlug.value = '';
+      setSelectValue(blogCategory, 'Flight Software', 'Flight Software');
       blogDate.value = new Date().toISOString().split('T')[0];
       blogReadtime.value = '5 min read';
       blogTags.value = '';
@@ -2292,7 +2351,24 @@ import Layout from '../layouts/Layout.astro';
       if (sBtn) sBtn.querySelector('span')!.textContent = 'Publish Article';
     }
 
+    resetBlogForm();
     blogResetBtn?.addEventListener('click', resetBlogForm);
+
+    function startEditingBlog(target: any) {
+      if (!target) return;
+      blogId.value = target.slug || target.id || '';
+      blogTitle.value = target.title || '';
+      blogSlug.value = target.slug || '';
+      setSelectValue(blogCategory, target.category || 'Flight Software', 'Flight Software');
+      blogDate.value = target.date || '';
+      blogReadtime.value = target.readTime || '';
+      blogTags.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
+      blogExcerpt.value = target.summary || target.excerpt || '';
+      blogContent.value = target.content || '';
+      const sBtn = document.getElementById('dash-blog-submit-btn');
+      if (sBtn) sBtn.querySelector('span')!.textContent = 'Update Article';
+      blogForm?.scrollIntoView({ behavior: 'smooth' });
+    }
 
     async function loadBlogs() {
       if (!blogList) return;
@@ -2307,43 +2383,37 @@ import Layout from '../layouts/Layout.astro';
         return;
       }
 
-      blogList.innerHTML = list.map((b: any) => `
-        <div class="dash-item-card" data-id="${b.slug || b.id}">
-          <div class="dash-card-left">
-            <h5 class="dash-card-title">${b.title || 'Untitled'}</h5>
-            <div class="dash-card-meta">
-              <span style="color:#E5A96A;">${b.date || 'Recent'}</span>
-              <span>•</span>
-              <span>${b.readTime || '5 min read'}</span>
-              <span>•</span>
-              <span style="color:#38BDF8;">/${b.slug || ''}</span>
+      blogList.innerHTML = list.map((b: any) => {
+        const key = b.slug || b.id || '';
+        const href = getBlogHref(b.slug || '');
+        return `
+          <div class="dash-item-card" data-id="${esc(key)}">
+            <div class="dash-card-left">
+              <h5 class="dash-card-title">${esc(b.title || 'Untitled')}</h5>
+              <div class="dash-card-meta">
+                <span style="color:#E5A96A;">${esc(b.date || 'Recent')}</span>
+                <span>•</span>
+                <span style="color:#00F2FE;">${esc(b.category || 'Flight Software')}</span>
+                <span>•</span>
+                <span>${esc(b.readTime || '5 min read')}</span>
+                <span>•</span>
+                <span style="color:#38BDF8;">/${esc(b.slug || '')}</span>
+              </div>
+            </div>
+            <div class="dash-card-actions">
+              <a href="${esc(href)}" target="_blank" class="btn-inv-edit" style="text-decoration:none;">View</a>
+              <button type="button" class="btn-inv-edit" data-edit-blog="${esc(key)}">Edit</button>
+              <button type="button" class="btn-inv-delete" data-delete-blog="${esc(key)}">Delete</button>
             </div>
           </div>
-          <div class="dash-card-actions">
-            <a href="/blog/${b.slug}" target="_blank" class="btn-inv-edit" style="text-decoration:none;">View</a>
-            <button type="button" class="btn-inv-edit" data-edit-blog="${b.slug || b.id}">Edit</button>
-            <button type="button" class="btn-inv-delete" data-delete-blog="${b.slug || b.id}">Delete</button>
-          </div>
-        </div>
-      `).join('');
+        `;
+      }).join('');
 
       blogList.querySelectorAll('[data-edit-blog]').forEach(b => {
         b.addEventListener('click', () => {
           const id = b.getAttribute('data-edit-blog');
           const target = list.find((item: any) => item.slug === id || item.id === id);
-          if (target) {
-            blogId.value = target.slug || target.id || '';
-            blogTitle.value = target.title || '';
-            blogSlug.value = target.slug || '';
-            blogDate.value = target.date || '';
-            blogReadtime.value = target.readTime || '';
-            blogTags.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
-            blogExcerpt.value = target.summary || target.excerpt || '';
-            blogContent.value = target.content || '';
-            const sBtn = document.getElementById('dash-blog-submit-btn');
-            if (sBtn) sBtn.querySelector('span')!.textContent = 'Update Article';
-            blogForm.scrollIntoView({ behavior: 'smooth' });
-          }
+          if (target) startEditingBlog(target);
         });
       });
 
@@ -2356,6 +2426,7 @@ import Layout from '../layouts/Layout.astro';
             store.deleteBlog(id);
           }
           loadBlogs();
+          updateDashboardTelemetryStats();
         });
       });
     }
@@ -2363,9 +2434,11 @@ import Layout from '../layouts/Layout.astro';
     blogForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const store = await getStore();
+      const title = blogTitle.value.trim();
       const payload = {
-        title: blogTitle.value.trim(),
-        slug: blogSlug.value.trim(),
+        title,
+        slug: blogSlug.value.trim() || slugifyText(title),
+        category: blogCategory?.value || 'Flight Software',
         date: blogDate.value || new Date().toISOString().split('T')[0],
         readTime: blogReadtime.value.trim() || '5 min read',
         tags: blogTags.value.split(',').map(t => t.trim()).filter(Boolean),
@@ -2383,13 +2456,9 @@ import Layout from '../layouts/Layout.astro';
         }
       }
 
-      if (store && typeof store.logActivity === 'function') {
-        store.logActivity('blog', payload.title, 'Published technical mission article');
-      }
-
-      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       resetBlogForm();
       loadBlogs();
+      updateDashboardTelemetryStats();
       alert('Blog article saved and published to Mission Log!');
     });
 
@@ -2565,40 +2634,7 @@ import Layout from '../layouts/Layout.astro';
         const expList = cv.experience || cv.timeline || [];
         const eduList = cv.education || [];
 
-        html = `
-          <div style="text-align:center; border-bottom:1px solid #E5A96A; padding-bottom:1rem; margin-bottom:1.5rem;">
-            <h1 style="color:#FFFFFF; font-size:1.6rem; margin-bottom:0.25rem;">${p.name || 'Võ Quang Nhật Nguyên'}</h1>
-            <p style="color:#E5A96A; font-weight:600; margin:0;">${p.title || 'Space Systems & Flight Software Architect'} [${p.callsign || 'NHAT-NGUYEN'}]</p>
-            <p style="color:#8E95A5; font-size:0.85rem; margin-top:0.35rem;">${p.location || 'Pasadena, CA'} • Clearance: ${p.clearance || 'Public Trust / NASA Heritage'}</p>
-          </div>
-
-          <h2>EXECUTIVE BIO & HARVARD SUMMARY</h2>
-          <hr/>
-          <p>${p.bio || 'Dual-specialist in aerospace engineering and deterministic real-time flight software.'}</p>
-
-          <h2>PROFESSIONAL APPOINTMENTS & EXPERIENCE</h2>
-          <hr/>
-          ${expList.map((e: any) => `
-            <div style="margin-bottom:1rem;">
-              <h3 style="color:#FFFFFF; margin-bottom:0.2rem;">${e.role || 'Flight Engineer'} • <span style="color:#E5A96A;">${e.organization || ''}</span></h3>
-              <p style="color:#8E95A5; font-size:0.82rem; margin:0;">${e.period || ''} | ${e.location || 'LEO Operations'} | <i>${e.badge || ''}</i></p>
-              <p style="margin-top:0.35rem;">${e.summary || ''}</p>
-              <ul>
-                ${(Array.isArray(e.highlights) ? e.highlights : [e.highlights || '']).map((h: string) => `<li>${h}</li>`).join('')}
-              </ul>
-            </div>
-          `).join('')}
-
-          <h2>ACADEMIC BACKGROUND & DEGREES</h2>
-          <hr/>
-          ${eduList.map((ed: any) => `
-            <div style="margin-bottom:0.85rem;">
-              <h3 style="color:#FFFFFF; margin-bottom:0.15rem;">${ed.degree || ''} — <span style="color:#E5A96A;">${ed.institution || ''}</span></h3>
-              <p style="color:#8E95A5; font-size:0.82rem; margin:0;">${ed.period || ''} | Honors: ${ed.honors || 'High Honors'}</p>
-              ${ed.thesis ? `<p style="margin-top:0.25rem; font-style:italic;">Thesis: "${ed.thesis}"</p>` : ''}
-            </div>
-          `).join('')}
-        `;
+        html = `<div style="text-align:center; border-bottom:1px solid #E5A96A; padding-bottom:1rem; margin-bottom:1.5rem;"><h1 style="color:#FFFFFF; font-size:1.6rem; margin-bottom:0.25rem;">${esc(p.name || 'Võ Quang Nhật Nguyên')}</h1><p style="color:#E5A96A; font-weight:600; margin:0;">${esc(p.title || 'Space Systems & Flight Software Architect')} [${esc(p.callsign || 'NHAT-NGUYEN')}]</p><p style="color:#8E95A5; font-size:0.85rem; margin-top:0.35rem;">${esc(p.location || 'Pasadena, CA')} • Clearance: ${esc(p.clearance || 'Public Trust / NASA Heritage')}</p></div><h2>EXECUTIVE BIO & HARVARD SUMMARY</h2><hr/><p>${esc(p.bio || 'Dual-specialist in aerospace engineering and deterministic real-time flight software.')}</p><h2>PROFESSIONAL APPOINTMENTS & EXPERIENCE</h2><hr/>${expList.map((e: any) => `<div style="margin-bottom:1rem;"><h3 style="color:#FFFFFF; margin-bottom:0.2rem;">${esc(e.role || 'Flight Engineer')} • <span style="color:#E5A96A;">${esc(e.organization || '')}</span></h3><p style="color:#8E95A5; font-size:0.82rem; margin:0;">${esc(e.period || '')} | ${esc(e.location || 'LEO Operations')} | <i>${esc(e.badge || '')}</i></p><p style="margin-top:0.35rem;">${esc(e.summary || '')}</p><ul>${(Array.isArray(e.highlights) ? e.highlights : [e.highlights || '']).filter(Boolean).map((h: string) => `<li>${esc(h)}</li>`).join('')}</ul></div>`).join('')}<h2>ACADEMIC BACKGROUND & DEGREES</h2><hr/>${eduList.map((ed: any) => `<div style="margin-bottom:0.85rem;"><h3 style="color:#FFFFFF; margin-bottom:0.15rem;">${esc(ed.degree || '')} — <span style="color:#E5A96A;">${esc(ed.institution || '')}</span></h3><p style="color:#8E95A5; font-size:0.82rem; margin:0;">${esc(ed.period || '')} | Honors: ${esc(ed.honors || 'High Honors')}</p>${ed.thesis ? `<p style="margin-top:0.25rem; font-style:italic;">Thesis: "${esc(ed.thesis)}"</p>` : ''}</div>`).join('')}`;
       }
 
       dashWordDocCanvas.innerHTML = html;
@@ -2616,11 +2652,7 @@ import Layout from '../layouts/Layout.astro';
         store.updateCVData('cvDocumentHtml', html);
       }
 
-      if (store && typeof store.logActivity === 'function') {
-        store.logActivity('cv', 'Word Document CV', 'Synced Harvard Word document canvas');
-      }
-
-      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+      updateDashboardTelemetryStats();
       alert('Word Document CV saved and synchronized successfully!');
     });
 
@@ -2662,30 +2694,30 @@ import Layout from '../layouts/Layout.astro';
           <div class="form-row form-row-2">
             <div class="form-field">
               <label class="field-label">Role Title</label>
-              <input type="text" class="editor-input role-input" value="${exp.role || ''}" />
+              <input type="text" class="editor-input role-input" value="${esc(exp.role || '')}" />
             </div>
             <div class="form-field">
               <label class="field-label">Organization</label>
-              <input type="text" class="editor-input org-input" value="${exp.organization || ''}" />
+              <input type="text" class="editor-input org-input" value="${esc(exp.organization || '')}" />
             </div>
           </div>
           <div class="form-row form-row-2" style="margin-top:0.5rem;">
             <div class="form-field">
               <label class="field-label">Period / Dates</label>
-              <input type="text" class="editor-input period-input" value="${exp.period || ''}" />
+              <input type="text" class="editor-input period-input" value="${esc(exp.period || '')}" />
             </div>
             <div class="form-field">
               <label class="field-label">Badge / Subsystem</label>
-              <input type="text" class="editor-input badge-input" value="${exp.badge || ''}" />
+              <input type="text" class="editor-input badge-input" value="${esc(exp.badge || '')}" />
             </div>
           </div>
           <div class="form-field" style="margin-top:0.5rem;">
             <label class="field-label">Role Summary</label>
-            <textarea rows="2" class="editor-textarea summary-input">${exp.summary || ''}</textarea>
+            <textarea rows="2" class="editor-textarea summary-input">${esc(exp.summary || '')}</textarea>
           </div>
           <div class="form-field" style="margin-top:0.5rem;">
             <label class="field-label">Harvard Action Highlights (one per line)</label>
-            <textarea rows="3" class="editor-textarea highlights-input">${Array.isArray(exp.highlights) ? exp.highlights.join('\n') : (exp.highlights || '')}</textarea>
+            <textarea rows="3" class="editor-textarea highlights-input">${esc(Array.isArray(exp.highlights) ? exp.highlights.join('\n') : (exp.highlights || ''))}</textarea>
           </div>
         </div>
       `).join('');
@@ -2707,26 +2739,26 @@ import Layout from '../layouts/Layout.astro';
           <div class="form-row form-row-2">
             <div class="form-field">
               <label class="field-label">Degree Title</label>
-              <input type="text" class="editor-input deg-input" value="${edu.degree || ''}" />
+              <input type="text" class="editor-input deg-input" value="${esc(edu.degree || '')}" />
             </div>
             <div class="form-field">
               <label class="field-label">Institution</label>
-              <input type="text" class="editor-input inst-input" value="${edu.institution || ''}" />
+              <input type="text" class="editor-input inst-input" value="${esc(edu.institution || '')}" />
             </div>
           </div>
           <div class="form-row form-row-2" style="margin-top:0.5rem;">
             <div class="form-field">
               <label class="field-label">Period / Year</label>
-              <input type="text" class="editor-input yr-input" value="${edu.period || ''}" />
+              <input type="text" class="editor-input yr-input" value="${esc(edu.period || '')}" />
             </div>
             <div class="form-field">
               <label class="field-label">Honors / GPA</label>
-              <input type="text" class="editor-input honors-input" value="${edu.honors || ''}" />
+              <input type="text" class="editor-input honors-input" value="${esc(edu.honors || '')}" />
             </div>
           </div>
           <div class="form-field" style="margin-top:0.5rem;">
             <label class="field-label">Thesis Title</label>
-            <input type="text" class="editor-input thesis-input" value="${edu.thesis || ''}" />
+            <input type="text" class="editor-input thesis-input" value="${esc(edu.thesis || '')}" />
           </div>
         </div>
       `).join('');
@@ -2767,10 +2799,11 @@ import Layout from '../layouts/Layout.astro';
       e.preventDefault();
       const store = await getStore();
 
-      // Read current state from inputs
+      // ponytail: preserve existing metadata (tags, location, advisor, gpa, courses) when saving CV form
       const expItems = cvExpContainer?.querySelectorAll('.repeater-item') || [];
       const updatedExp: any[] = [];
-      expItems.forEach(item => {
+      expItems.forEach((item, idx) => {
+        const base = currentExp[idx] || {};
         const role = (item.querySelector('.role-input') as HTMLInputElement)?.value || '';
         const organization = (item.querySelector('.org-input') as HTMLInputElement)?.value || '';
         const period = (item.querySelector('.period-input') as HTMLInputElement)?.value || '';
@@ -2778,18 +2811,19 @@ import Layout from '../layouts/Layout.astro';
         const summary = (item.querySelector('.summary-input') as HTMLTextAreaElement)?.value || '';
         const highlightsText = (item.querySelector('.highlights-input') as HTMLTextAreaElement)?.value || '';
         const highlights = highlightsText.split('\n').map(h => h.trim()).filter(Boolean);
-        updatedExp.push({ role, organization, period, badge, summary, highlights });
+        updatedExp.push({ ...base, role, organization, period, badge, summary, highlights });
       });
 
       const eduItems = cvEduContainer?.querySelectorAll('.repeater-item') || [];
       const updatedEdu: any[] = [];
-      eduItems.forEach(item => {
+      eduItems.forEach((item, idx) => {
+        const base = currentEdu[idx] || {};
         const degree = (item.querySelector('.deg-input') as HTMLInputElement)?.value || '';
         const institution = (item.querySelector('.inst-input') as HTMLInputElement)?.value || '';
         const period = (item.querySelector('.yr-input') as HTMLInputElement)?.value || '';
         const honors = (item.querySelector('.honors-input') as HTMLInputElement)?.value || '';
         const thesis = (item.querySelector('.thesis-input') as HTMLInputElement)?.value || '';
-        updatedEdu.push({ degree, institution, period, honors, thesis });
+        updatedEdu.push({ ...base, degree, institution, period, honors, thesis });
       });
 
       const currentAvatar = (dashAvatarPreviewImg && dashAvatarPreviewImg.style.display !== 'none' ? dashAvatarPreviewImg.src : '') || (store && typeof store.getProfileAvatar === 'function' ? store.getProfileAvatar() : '');
@@ -2814,11 +2848,8 @@ import Layout from '../layouts/Layout.astro';
         store.updateCVData(updatedCV);
       }
 
-      if (store && typeof store.logActivity === 'function') {
-        store.logActivity('cv', 'Harvard CV Dossier', 'Updated executive credentials & experience');
-      }
-
-      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+      loadCV();
+      updateDashboardTelemetryStats();
       alert('My CV profile, appointments, and education successfully updated!');
     });
 
@@ -2874,26 +2905,29 @@ import Layout from '../layouts/Layout.astro';
         return;
       }
 
-      courseList.innerHTML = list.map((item: any) => `
-        <div class="dash-item-card" data-id="${item.id}">
+      courseList.innerHTML = list.map((item: any) => {
+        const gh = safeUrl(item.githubUrl);
+        return `
+        <div class="dash-item-card" data-id="${esc(item.id)}">
           <div class="dash-card-left">
             <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
-              <span style="background:rgba(229,169,106,0.15); color:#E5A96A; border:1px solid rgba(229,169,106,0.3); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700;">${item.code || 'COURSE'}</span>
-              <h5 class="dash-card-title" style="margin:0;">${item.title || 'Untitled'}</h5>
+              <span style="background:rgba(229,169,106,0.15); color:#E5A96A; border:1px solid rgba(229,169,106,0.3); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700;">${esc(item.code || 'COURSE')}</span>
+              <h5 class="dash-card-title" style="margin:0;">${esc(item.title || 'Untitled')}</h5>
             </div>
             <div class="dash-card-meta">
-              <span style="color:#E5A96A; font-weight:600;">${item.semester || ''}</span>
-              ${item.institution ? `<span>•</span><span>${item.institution}</span>` : ''}
-              ${item.instructorEmail ? `<span>•</span><span>${item.instructorEmail}</span>` : ''}
-              ${item.githubUrl ? `<span>•</span><a href="${item.githubUrl}" target="_blank" rel="noopener noreferrer" style="color:#60A5FA; text-decoration:underline;">GitHub ↗</a>` : ''}
+              <span style="color:#E5A96A; font-weight:600;">${esc(item.semester || '')}</span>
+              ${item.institution ? `<span>•</span><span>${esc(item.institution)}</span>` : ''}
+              ${item.instructorEmail ? `<span>•</span><span>${esc(item.instructorEmail)}</span>` : ''}
+              ${gh ? `<span>•</span><a href="${esc(gh)}" target="_blank" rel="noopener noreferrer" style="color:#60A5FA; text-decoration:underline;">GitHub ↗</a>` : ''}
             </div>
           </div>
           <div class="dash-card-actions">
-            <button type="button" class="btn-inv-edit" data-edit-course="${item.id}">Edit</button>
-            <button type="button" class="btn-inv-delete" data-delete-course="${item.id}">Delete</button>
+            <button type="button" class="btn-inv-edit" data-edit-course="${esc(item.id)}">Edit</button>
+            <button type="button" class="btn-inv-delete" data-delete-course="${esc(item.id)}">Delete</button>
           </div>
         </div>
-      `).join('');
+      `;
+      }).join('');
 
       // Wire edit
       courseList.querySelectorAll('[data-edit-course]').forEach(b => {
@@ -2925,17 +2959,9 @@ import Layout from '../layouts/Layout.astro';
           const store = await getStore();
           if (store && typeof store.deleteCourse === 'function') {
             store.deleteCourse(id);
-          } else {
-            const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
-            const courses = (fullData.courses || []).filter((c: any) => c.id !== id);
-            fullData.courses = courses;
-            if (store && typeof store.saveData === 'function') store.saveData(fullData);
           }
-          if (store && typeof store.logActivity === 'function') {
-            store.logActivity('course', 'Course Archive Updated', 'Removed course material');
-          }
-          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
           loadCourses();
+          updateDashboardTelemetryStats();
         });
       });
     }
@@ -2944,7 +2970,7 @@ import Layout from '../layouts/Layout.astro';
       e.preventDefault();
       const code = courseCode.value.trim();
       const title = courseTitle.value.trim();
-      const id = courseId.value || `course-${code.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'item'}-${Date.now()}`;
+      const id = courseId.value || `course-${slugifyText(code) || 'item'}-${Date.now()}`;
       const payload = {
         id,
         code,
@@ -2962,36 +2988,16 @@ import Layout from '../layouts/Layout.astro';
       if (courseId.value) {
         if (store && typeof store.updateCourse === 'function') {
           store.updateCourse(id, payload);
-        } else {
-          const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
-          const courses = fullData.courses || [];
-          const idx = courses.findIndex((c: any) => c.id === id);
-          if (idx >= 0) courses[idx] = { ...courses[idx], ...payload };
-          else courses.push(payload);
-          fullData.courses = courses;
-          if (store && typeof store.saveData === 'function') store.saveData(fullData);
-        }
-        if (store && typeof store.logActivity === 'function') {
-          store.logActivity('course', title, 'Updated syllabus & course materials');
         }
       } else {
         if (store && typeof store.addCourse === 'function') {
           store.addCourse(payload);
-        } else {
-          const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
-          const courses = fullData.courses || [];
-          courses.unshift(payload);
-          fullData.courses = courses;
-          if (store && typeof store.saveData === 'function') store.saveData(fullData);
-        }
-        if (store && typeof store.logActivity === 'function') {
-          store.logActivity('course', title, 'Published syllabus & materials');
         }
       }
 
-      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       resetCourseForm();
       loadCourses();
+      updateDashboardTelemetryStats();
       alert('Course archive successfully saved and published!');
     });
 
@@ -3001,23 +3007,6 @@ import Layout from '../layouts/Layout.astro';
     const exportBtn = document.getElementById('dash-export-btn');
     const importInput = document.getElementById('dash-import-file') as HTMLInputElement;
     const resetBtn = document.getElementById('dash-reset-btn');
-    const passkeyForm = document.getElementById('dash-passkey-form');
-    const newPasskeyInput = document.getElementById('dash-new-passkey') as HTMLInputElement;
-
-    passkeyForm?.addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const store = await getStore();
-      const val = newPasskeyInput?.value?.trim() || '';
-      if (store && typeof store.updateAdminPasskey === 'function') {
-        const res = store.updateAdminPasskey(val);
-        if (res.success) {
-          alert('Passkey updated successfully! Remember your new passkey: ' + val);
-          newPasskeyInput.value = '';
-        } else {
-          alert(res.error || 'Failed to update passkey');
-        }
-      }
-    });
 
     exportBtn?.addEventListener('click', async () => {
       const store = await getStore();
@@ -3107,15 +3096,61 @@ import Layout from '../layouts/Layout.astro';
       updateDashboardTelemetryStats();
     }
 
+    function applyHashRoute() {
+      const hash = window.location.hash || '';
+      if (!hash) return;
+      if (hash === '#compose') {
+        switchDashTab('dash-tab-blog');
+        resetBlogForm();
+        blogForm?.scrollIntoView({ behavior: 'smooth' });
+      } else if (hash.startsWith('#edit-blog-')) {
+        const targetSlug = decodeURIComponent(hash.slice('#edit-blog-'.length));
+        switchDashTab('dash-tab-blog');
+        const list = typeof Store.getBlogs === 'function' ? Store.getBlogs() : [];
+        const match = list.find((b: any) => b.slug === targetSlug || b.id === targetSlug);
+        if (match) startEditingBlog(match);
+      } else if (hash === '#courses') {
+        switchDashTab('dash-tab-courses');
+      } else if (hash === '#cv' || hash === '#profile') {
+        switchDashTab('dash-tab-cv');
+      } else if (hash === '#achievements' || hash === '#timeline') {
+        switchDashTab('dash-tab-achievements');
+      } else if (hash === '#system' || hash === '#backup') {
+        switchDashTab('dash-tab-system');
+      }
+    }
+
+    (window as any).__adminPageActive = {
+      syncViews,
+      loadDashboardData,
+      applyHashRoute,
+      isDashVisible: () => dashScreen.style.display !== 'none'
+    };
+
+    if (!(window as any).__adminWindowBound) {
+      (window as any).__adminWindowBound = true;
+      window.addEventListener('portfolio-data-updated', () => {
+        const active = (window as any).__adminPageActive;
+        if (active && active.isDashVisible()) active.loadDashboardData();
+      });
+      window.addEventListener('portfolio-admin-auth-changed', () => {
+        const active = (window as any).__adminPageActive;
+        if (active) active.syncViews();
+      });
+      window.addEventListener('hashchange', () => {
+        const active = (window as any).__adminPageActive;
+        if (active && active.isDashVisible()) active.applyHashRoute();
+      });
+      window.addEventListener('storage', (e) => {
+        const active = (window as any).__adminPageActive;
+        if (!active) return;
+        if (e.key === 'space_portfolio_admin_session_v2') active.syncViews();
+        else if (e.key === 'space_portfolio_data_v1' && active.isDashVisible()) active.loadDashboardData();
+      });
+    }
+
     // Initial load
     syncViews();
-
-    // Listen to reactive updates
-    window.addEventListener('portfolio-data-updated', () => {
-      if (dashScreen.style.display !== 'none') {
-        loadDashboardData();
-      }
-    });
   }
 
   if (document.readyState === 'loading') {
@@ -3123,5 +3158,8 @@ import Layout from '../layouts/Layout.astro';
   } else {
     setupAdminPage();
   }
-  document.addEventListener('astro:page-load', setupAdminPage);
+  if (!(window as any).__adminAstroHooked) {
+    (window as any).__adminAstroHooked = true;
+    document.addEventListener('astro:page-load', setupAdminPage);
+  }
 </script>

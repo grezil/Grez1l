@@ -136,8 +136,8 @@
     gap: 0.35rem;
     padding: 0.65rem 0.45rem;
     background: rgba(14, 18, 27, 0.92);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
     border: 1px solid rgba(255, 255, 255, 0.14);
     border-radius: 9999px;
     box-shadow: 
@@ -225,7 +225,7 @@
     color: #C8CFDB;
     text-decoration: none;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 
   .dock-btn:hover {
@@ -279,8 +279,7 @@
     top: 50%;
     bottom: auto;
     transform: translateY(-50%) translateX(-4px);
-    background: rgba(15, 18, 26, 0.95);
-    backdrop-filter: blur(12px);
+    background: rgba(15, 18, 26, 0.96);
     border: 1px solid rgba(255, 255, 255, 0.14);
     color: #F3F4F6;
     padding: 0.35rem 0.65rem;
@@ -289,7 +288,7 @@
     white-space: nowrap;
     opacity: 0;
     pointer-events: none;
-    transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: opacity 0.2s cubic-bezier(0.22, 1, 0.36, 1), transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     box-shadow: 0 4px 16px rgba(0, 0, 0, 0.6);
     z-index: 9999;
   }
@@ -318,8 +317,7 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.6rem 1.1rem;
-    background: rgba(14, 18, 27, 0.95);
-    backdrop-filter: blur(20px);
+    background: rgba(14, 18, 27, 0.96);
     border: 1px solid rgba(229, 169, 106, 0.3);
     border-radius: 9999px;
     color: #F3F4F6;
@@ -416,9 +414,9 @@
     syncDockVisibility();
 
     // Listen for auth changes
-    window.addEventListener('portfolio-admin-auth-changed', () => {
-      syncDockVisibility();
-    });
+    window.addEventListener('portfolio-admin-auth-changed', syncDockVisibility);
+    window.addEventListener('admin-auth-changed', syncDockVisibility);
+    window.addEventListener('storage', syncDockVisibility);
 
     // Toast notification handler
     window.addEventListener('portfolio-admin-toast', (e: any) => {

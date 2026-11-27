@@ -57,11 +57,12 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
       </div>
 
       <div class="action-bar-right">
-        {/* Word Document Editor Trigger Button */}
+        {/* Word Document Editor Trigger Button (Admin only) */}
         <button
           type="button"
           class="btn-word-editor-trigger"
           id="btn-open-word-editor"
+          style="display: none;"
           title="Open Word-style Document Editor (Rich formatting studio)"
           aria-label="Open Word-style CV Editor"
         >
@@ -146,11 +147,12 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
             <div class="cv-avatar-monogram" id="cv-avatar-monogram" aria-hidden="true">
               {profile.monogram || "NN"}
             </div>
-            {/* Quick edit overlay for admin photo customizer */}
+            {/* Quick edit overlay for admin photo customizer (Admin only) */}
             <button
               type="button"
               class="cv-avatar-edit-overlay no-print"
               id="cv-avatar-edit-trigger"
+              style="display: none;"
               title="Customize profile photo (Upload file or enter URL via Admin)"
               aria-label="Customize profile photo"
             >
@@ -432,7 +434,7 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
 </div>
 
 <script>
-  import { getCVData, subscribe } from '../scripts/store.js';
+  import { getCVData, subscribe, checkAdminAuth } from '../scripts/store.js';
 
   function setupHarvardCV() {
     const root = document.getElementById('harvard-cv-root');
@@ -444,7 +446,28 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
     const avatarEditBtn = document.getElementById('cv-avatar-edit-trigger');
     const wordEditBtn = document.getElementById('btn-open-word-editor');
 
-    if (!root || !sheet) return;
+    if (!root || !sheet || root.dataset.bound === '1') return;
+    root.dataset.bound = '1';
+
+    function esc(str: any): string {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function safeUrl(raw: any, fallback = ''): string {
+      const s = String(raw || '').trim();
+      return /^https?:\/\//i.test(s) ? s : fallback;
+    }
+
+    function syncAdminButtons() {
+      const isAdmin = typeof checkAdminAuth === 'function' ? checkAdminAuth() : false;
+      if (wordEditBtn) wordEditBtn.style.display = isAdmin ? 'inline-flex' : 'none';
+      if (avatarEditBtn) avatarEditBtn.style.display = isAdmin ? 'flex' : 'none';
+    }
 
     // 1. Theme toggle handlers
     function setTheme(mode: 'paper' | 'dark') {
@@ -470,26 +493,31 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
       window.print();
     });
 
-    // 3. Avatar customization & Word editor click handlers
+    // 3. Avatar customization & Word editor click handlers (only trigger editor if authed)
     avatarEditBtn?.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'profile' } }));
-      window.dispatchEvent(new CustomEvent('open-admin-login'));
+      if (typeof checkAdminAuth === 'function' && checkAdminAuth()) {
+        window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'profile' } }));
+      } else {
+        window.dispatchEvent(new CustomEvent('open-admin-login'));
+      }
     });
 
     wordEditBtn?.addEventListener('click', () => {
-      window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'cv' } }));
-      window.dispatchEvent(new CustomEvent('open-admin-login'));
+      if (typeof checkAdminAuth === 'function' && checkAdminAuth()) {
+        window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'cv' } }));
+      } else {
+        window.dispatchEvent(new CustomEvent('open-admin-login'));
+      }
     });
 
     // 4. Reactive Store Synchronization
     function updateDOMFromStore(cvData: any) {
       if (!cvData) return;
 
-      // Update Profile Header & Avatar
       const profile = cvData.profile || {};
       const nameEl = document.getElementById('cv-name');
       if (nameEl && profile.name) {
-        nameEl.innerHTML = `${profile.name} <span class="cv-alt-name">(${profile.englishName || 'Nhat Nguyen Vo'})</span>`;
+        nameEl.innerHTML = `${esc(profile.name)} <span class="cv-alt-name">(${esc(profile.englishName || 'Nhat Nguyen Vo')})</span>`;
       }
 
       const crewBadge = document.querySelector('.cv-crew-badge');
@@ -498,8 +526,8 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
       }
 
       const monogramEl = document.getElementById('cv-avatar-monogram');
-      if (monogramEl && profile.monogram) {
-        monogramEl.textContent = profile.monogram;
+      if (monogramEl) {
+        monogramEl.textContent = profile.monogram || 'NN';
       }
 
       const callsignEl = document.querySelector('.cv-callsign-tag span');
@@ -510,10 +538,16 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
       const titleEl = document.getElementById('cv-title');
       if (titleEl && profile.title) titleEl.textContent = profile.title;
 
-      // Update Profile Avatar
-      const avatarImg = document.getElementById('cv-avatar-img') as HTMLImageElement;
-      if (avatarImg && profile.avatar) {
-        avatarImg.src = profile.avatar;
+      // Update Profile Avatar with graceful monogram fallback
+      const avatarImg = document.getElementById('cv-avatar-img') as HTMLImageElement | null;
+      if (avatarImg) {
+        if (profile.avatar && String(profile.avatar).trim()) {
+          avatarImg.src = profile.avatar;
+          avatarImg.style.display = 'block';
+          avatarImg.onerror = () => { avatarImg.style.display = 'none'; };
+        } else {
+          avatarImg.style.display = 'none';
+        }
       }
 
       // Update Word-style Rich Document Canvas
@@ -531,9 +565,9 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
       const affilEl = document.getElementById('cv-affiliations');
       if (affilEl) {
         affilEl.innerHTML = `
-          <span class="affil-item">${profile.academicAffiliation || "Caltech Space Radiation Lab • AIAA Associate Fellow"}</span>
+          <span class="affil-item">${esc(profile.academicAffiliation || "Caltech Space Radiation Lab • AIAA Associate Fellow")}</span>
           <span class="affil-sep">•</span>
-          <span class="affil-clearance">${profile.clearance || "Public Trust / NASA Heritage Clearance"}</span>
+          <span class="affil-clearance">${esc(profile.clearance || "Public Trust / NASA Heritage Clearance")}</span>
         `;
       }
 
@@ -546,13 +580,13 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
       const githubEl = document.getElementById('cv-github');
       if (githubEl && profile.social?.github) {
         githubEl.textContent = profile.social.github.replace(/^https?:\/\//, '');
-        githubEl.setAttribute('href', profile.social.github);
+        githubEl.setAttribute('href', safeUrl(profile.social.github, '#'));
       }
 
       const linkedinEl = document.getElementById('cv-linkedin');
       if (linkedinEl && profile.social?.linkedin) {
         linkedinEl.textContent = profile.social.linkedin.replace(/^https?:\/\//, '');
-        linkedinEl.setAttribute('href', profile.social.linkedin);
+        linkedinEl.setAttribute('href', safeUrl(profile.social.linkedin, '#'));
       }
 
       const citizenshipEl = document.getElementById('cv-citizenship');
@@ -572,84 +606,119 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
       const eduListEl = document.getElementById('cv-education-list');
       if (eduListEl && Array.isArray(cvData.education)) {
         eduListEl.innerHTML = cvData.education.map((edu: any) => `
-          <div class="cv-entry edu-entry" data-id="${edu.id || ''}">
+          <div class="cv-entry edu-entry" data-id="${esc(edu.id || '')}">
             <div class="cv-entry-row">
-              <span class="cv-entry-org">${edu.institution || ''}</span>
-              <span class="cv-entry-right cv-entry-location">${edu.location || ''}</span>
+              <span class="cv-entry-org">${esc(edu.institution || '')}</span>
+              <span class="cv-entry-right cv-entry-location">${esc(edu.location || '')}</span>
             </div>
             <div class="cv-entry-row sub-row">
-              <span class="cv-entry-role italic">${edu.degree || ''}</span>
-              <span class="cv-entry-right cv-entry-date">${edu.period || ''}</span>
+              <span class="cv-entry-role italic">${esc(edu.degree || '')}</span>
+              <span class="cv-entry-right cv-entry-date">${esc(edu.period || '')}</span>
             </div>
             ${edu.thesis ? `
               <div class="cv-entry-detail">
-                <span class="detail-label">Dissertation/Thesis:</span> <em>"${edu.thesis}"</em>
-                ${edu.advisor ? `<span class="detail-advisor"> (Advisor: ${edu.advisor})</span>` : ''}
+                <span class="detail-label">Dissertation/Thesis:</span> <em>"${esc(edu.thesis)}"</em>
+                ${edu.advisor ? `<span class="detail-advisor"> (Advisor: ${esc(edu.advisor)})</span>` : ''}
               </div>
             ` : ''}
             ${edu.honors ? `
               <div class="cv-entry-detail">
-                <span class="detail-label">Honors:</span> ${edu.honors}
-                ${edu.gpa ? `<span class="detail-gpa"> • Cumulative G.P.A.: ${edu.gpa}</span>` : ''}
+                <span class="detail-label">Honors:</span> ${esc(edu.honors)}
+                ${edu.gpa ? `<span class="detail-gpa"> • Cumulative G.P.A.: ${esc(edu.gpa)}</span>` : ''}
               </div>
             ` : ''}
-            ${edu.relevantCourses && edu.relevantCourses.length > 0 ? `
+            ${Array.isArray(edu.relevantCourses) && edu.relevantCourses.length > 0 ? `
               <div class="cv-entry-detail courses-detail">
-                <span class="detail-label">Selected Coursework:</span> ${edu.relevantCourses.join(' • ')}
+                <span class="detail-label">Selected Coursework:</span> ${edu.relevantCourses.map((c: string) => esc(c)).join(' • ')}
               </div>
             ` : ''}
           </div>
         `).join('');
       }
 
-      // Update Experience Section (Preserves rich formatting from Word editor)
+      // Update Experience Section (Preserves tags & highlights)
       const expListEl = document.getElementById('cv-experience-list');
       if (expListEl && Array.isArray(cvData.experience)) {
-        expListEl.innerHTML = cvData.experience.map((exp: any) => `
-          <div class="cv-entry exp-entry" data-id="${exp.id || ''}">
-            <div class="cv-entry-row">
-              <span class="cv-entry-org">${exp.organization || ''}</span>
-              <span class="cv-entry-right cv-entry-location">${exp.location || ''}</span>
+        expListEl.innerHTML = cvData.experience.map((exp: any) => {
+          const highlights = Array.isArray(exp.highlights)
+            ? exp.highlights
+            : (typeof exp.highlights === 'string' && exp.highlights.trim() ? exp.highlights.split('\n').filter(Boolean) : []);
+          const tags = Array.isArray(exp.tags) ? exp.tags : [];
+          return `
+            <div class="cv-entry exp-entry" data-id="${esc(exp.id || '')}">
+              <div class="cv-entry-row">
+                <span class="cv-entry-org">${esc(exp.organization || '')}</span>
+                <span class="cv-entry-right cv-entry-location">${esc(exp.location || '')}</span>
+              </div>
+              <div class="cv-entry-row sub-row">
+                <span class="cv-entry-role italic">
+                  ${esc(exp.role || '')} ${exp.department ? `(${esc(exp.department)})` : ''}
+                </span>
+                <span class="cv-entry-right cv-entry-date">${esc(exp.period || '')}</span>
+              </div>
+              ${exp.summary ? `<p class="cv-entry-summary">${esc(exp.summary)}</p>` : ''}
+              ${highlights.length > 0 ? `
+                <ul class="cv-bullet-list">
+                  ${highlights.map((h: string) => `<li class="cv-bullet-item">${esc(h)}</li>`).join('')}
+                </ul>
+              ` : ''}
+              ${tags.length > 0 ? `
+                <div class="cv-entry-tags no-print">
+                  <span class="tags-label">Systems:</span>
+                  ${tags.map((t: string) => `<span class="cv-mini-pill">${esc(t)}</span>`).join('')}
+                </div>
+              ` : ''}
             </div>
-            <div class="cv-entry-row sub-row">
-              <span class="cv-entry-role italic">
-                ${exp.role || ''} ${exp.department ? `(${exp.department})` : ''}
-              </span>
-              <span class="cv-entry-right cv-entry-date">${exp.period || ''}</span>
-            </div>
-            ${exp.summary ? `<p class="cv-entry-summary">${exp.summary}</p>` : ''}
-            ${exp.highlights && exp.highlights.length > 0 ? `
-              <ul class="cv-bullet-list">
-                ${exp.highlights.map((h: string) => `<li class="cv-bullet-item">${h}</li>`).join('')}
-              </ul>
-            ` : ''}
-          </div>
-        `).join('');
+          `;
+        }).join('');
       }
 
-      // Update Missions Section
+      // Update Missions Section (Preserves subsystems & metrics)
       const misListEl = document.getElementById('cv-missions-list');
       if (misListEl && Array.isArray(cvData.missions)) {
         misListEl.innerHTML = cvData.missions.map((m: any) => `
-          <div class="cv-entry mission-entry" data-id="${m.id || ''}">
+          <div class="cv-entry mission-entry" data-id="${esc(m.id || '')}">
             <div class="cv-entry-row">
               <span class="cv-entry-org">
-                ${m.name || ''} <span class="mission-code">[${m.codeName || ''}]</span>
+                ${esc(m.name || '')} <span class="mission-code">[${esc(m.codeName || '')}]</span>
               </span>
-              <span class="cv-entry-right cv-entry-date">${m.launchDate || ''}</span>
+              <span class="cv-entry-right cv-entry-date">${esc(m.launchDate || '')}</span>
             </div>
             <div class="cv-entry-row sub-row">
               <span class="cv-entry-role italic">
-                Role: ${m.role || ''} • Vehicle: ${m.launchVehicle || ''} • Orbit: ${m.orbit || ''}
+                Role: ${esc(m.role || '')} • Vehicle: ${esc(m.launchVehicle || '')} • Orbit: ${esc(m.orbit || '')}
               </span>
-              <span class="cv-entry-right status-badge-inline">${m.status || ''}</span>
+              <span class="cv-entry-right status-badge-inline">${esc(m.status || '')}</span>
             </div>
-            <p class="cv-entry-summary">${m.missionHighlights || ''}</p>
-            ${m.subsystems && m.subsystems.length > 0 ? `
+            <p class="cv-entry-summary">${esc(m.missionHighlights || '')}</p>
+            ${Array.isArray(m.subsystems) && m.subsystems.length > 0 ? `
               <div class="cv-entry-detail">
-                <span class="detail-label">Flight Subsystems Owned:</span> ${m.subsystems.join(' • ')}
+                <span class="detail-label">Flight Subsystems Owned:</span> ${m.subsystems.map((s: string) => esc(s)).join(' • ')}
               </div>
             ` : ''}
+            ${Array.isArray(m.metrics) && m.metrics.length > 0 ? `
+              <div class="cv-entry-metrics">
+                ${m.metrics.map((met: any) => `<span class="cv-metric-chip"><strong>${esc(met.label)}:</strong> ${esc(met.value)}</span>`).join('')}
+              </div>
+            ` : ''}
+          </div>
+        `).join('');
+      }
+
+      // Update Publications Section
+      const pubListEl = document.getElementById('cv-publications-list');
+      if (pubListEl && Array.isArray(cvData.publications)) {
+        pubListEl.innerHTML = cvData.publications.map((pub: any, idx: number) => `
+          <div class="cv-entry pub-entry" data-id="${esc(pub.id || '')}">
+            <div class="pub-citation">
+              <span class="pub-index">[${idx + 1}]</span>
+              <span class="pub-authors">${esc(pub.authors || '')}</span>
+              <span class="pub-year">(${esc(pub.year || '')}).</span>
+              <span class="pub-title">"${esc(pub.title || '')}."</span>
+              <span class="pub-venue"><em>${esc(pub.venue || '')}</em>.</span>
+              ${pub.doi ? `<a href="${esc(safeUrl(pub.url || `https://doi.org/${pub.doi}`, '#'))}" target="_blank" rel="noopener noreferrer" class="pub-doi contact-link">DOI: ${esc(pub.doi)}</a>` : ''}
+            </div>
+            ${pub.abstract ? `<p class="pub-abstract no-print-optional">${esc(pub.abstract)}</p>` : ''}
           </div>
         `).join('');
       }
@@ -658,18 +727,30 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
       const achListEl = document.getElementById('cv-achievements-list');
       if (achListEl && Array.isArray(cvData.achievements)) {
         achListEl.innerHTML = cvData.achievements.map((ach: any) => `
-          <div class="cv-entry ach-entry" data-id="${ach.id || ''}">
+          <div class="cv-entry ach-entry" data-id="${esc(ach.id || '')}">
             <div class="cv-entry-row">
-              <span class="cv-entry-org">${ach.title || ''}</span>
-              <span class="cv-entry-right cv-entry-date">${ach.date || ach.timeline || ''}</span>
+              <span class="cv-entry-org">${esc(ach.title || '')}</span>
+              <span class="cv-entry-right cv-entry-date">${esc(ach.date || ach.timeline || '')}</span>
             </div>
             <div class="cv-entry-row sub-row">
               <span class="cv-entry-role italic">
-                ${ach.organization || ''} ${ach.metrics ? `• [${ach.metrics}]` : ''}
+                ${esc(ach.organization || '')} ${ach.metrics ? `• [${esc(ach.metrics)}]` : ''}
               </span>
-              <span class="cv-entry-right ach-category-tag">${ach.category || ''}</span>
+              <span class="cv-entry-right ach-category-tag">${esc(ach.category || '')}</span>
             </div>
-            ${ach.description ? `<p class="cv-entry-summary">${ach.description}</p>` : ''}
+            ${ach.description ? `<p class="cv-entry-summary">${esc(ach.description)}</p>` : ''}
+          </div>
+        `).join('');
+      }
+
+      // Update Skills Section
+      const skillsListEl = document.getElementById('cv-skills-list');
+      if (skillsListEl && Array.isArray(cvData.skills)) {
+        skillsListEl.innerHTML = cvData.skills.map((cat: any) => `
+          <div class="cv-skill-group">
+            <span class="skill-category-name">${esc(cat.category || '')}:</span>
+            <span class="skill-tags-string">${Array.isArray(cat.items) ? cat.items.map((i: any) => esc(i.name)).join(', ') : (Array.isArray(cat.tags) ? cat.tags.map((t: string) => esc(t)).join(', ') : '')}</span>
+            ${cat.summary ? `<div class="skill-group-summary">${esc(cat.summary)}</div>` : ''}
           </div>
         `).join('');
       }
@@ -680,6 +761,10 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
         setTimeout(() => syncPill.classList.remove('flash-sync'), 1200);
       }
     }
+
+    syncAdminButtons();
+    window.addEventListener('portfolio-admin-auth-changed', syncAdminButtons);
+    window.addEventListener('storage', syncAdminButtons);
 
     // Initialize from client store if localStorage contains custom edits
     try {
@@ -702,15 +787,17 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
   } else {
     setupHarvardCV();
   }
+  document.addEventListener('astro:page-load', setupHarvardCV);
 </script>
 
-<style>
+<style is:global>
   /* ==========================================================================
      HARVARD ACADEMIC & TECHNICAL CV STYLES (MONOSPACE FLIGHT DOSSIER)
      Pure monospace architecture using SF Mono / JetBrains Mono / Fira Code.
+     ponytail: global scoped under #harvard-cv-root so CSR updates preserve styles
      ========================================================================== */
 
-  .harvard-cv-wrapper {
+  #harvard-cv-root.harvard-cv-wrapper {
     width: 100%;
     display: flex;
     flex-direction: column;
@@ -723,7 +810,7 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
   /* --------------------------------------------------------------------------
      Action Controls Bar (Screen-only)
      -------------------------------------------------------------------------- */
-  .cv-action-bar {
+  #harvard-cv-root .cv-action-bar {
     width: 100%;
     max-width: 960px;
     display: flex;
@@ -733,11 +820,9 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
     gap: 1rem;
     margin-bottom: 1.75rem;
     padding: 0.85rem 1.25rem;
-    background: rgba(18, 22, 32, 0.88);
+    background: rgba(18, 22, 32, 0.9);
     border: 1px solid rgba(142, 149, 165, 0.22);
     border-radius: 12px;
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
     z-index: 10;
     font-family: var(--font-mono, monospace) !important;
@@ -835,7 +920,7 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
     padding: 0.4rem 0.85rem;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease, border-color 0.2s ease;
   }
 
   .btn-word-editor-trigger:hover {
@@ -867,7 +952,7 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
     padding: 0.35rem 0.65rem;
     border-radius: 6px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
   }
 
   .theme-toggle-btn:hover {
@@ -896,12 +981,12 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
     font-weight: 600;
     cursor: pointer;
     box-shadow: 0 4px 14px rgba(229, 169, 106, 0.3);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s ease;
   }
 
   .btn-cv-print:hover {
     transform: translateY(-1px);
-    box-shadow: 0 6px 18px rgba(229, 169, 106, 0.45);
+    opacity: 0.94;
   }
 
   .kbd-badge {
@@ -1148,7 +1233,7 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
     bottom: 0;
     left: 0;
     right: 0;
-    background: rgba(11, 13, 19, 0.85);
+    background: rgba(11, 13, 19, 0.88);
     color: var(--amber, #E5A96A);
     border: none;
     padding: 0.3rem 0.25rem;
@@ -1160,10 +1245,9 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
     font-size: 0.65rem;
     font-weight: 700;
     cursor: pointer;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
-    transition: background-color 0.2s ease, opacity 0.2s ease;
-    opacity: 0.9;
+    z-index: 2;
+    transition: background-color 0.2s ease, opacity 0.2s ease, color 0.2s ease;
+    opacity: 0.92;
   }
 
   .cv-avatar-edit-overlay:hover {

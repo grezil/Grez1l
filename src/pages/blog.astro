@@ -21,7 +21,8 @@ const categories = [
 
 const totalArticles = initialBlogs.length;
 const totalCourses = ((portfolioData as any).courses || []).length || 3;
-const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/).length || 500), 0);
+const totalUpdates = (portfolioData as any).profile?.telemetryStats?.[0]?.value || '64';
+const staticBlogSlugs = initialBlogs.map((b) => b.slug);
 ---
 
 <Layout 
@@ -59,7 +60,7 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
           <div class="telemetry-bar">
             <div class="telemetry-stat">
               <span class="stat-label">SITE UPDATES</span>
-              <span class="stat-val text-amber" id="stat-updates-count">64 Updates</span>
+              <span class="stat-val text-amber" id="stat-updates-count">{totalUpdates} Updates</span>
             </div>
             <div class="telemetry-divider"></div>
             <div class="telemetry-stat">
@@ -138,7 +139,7 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
         </div>
 
         <!-- Blog Posts Grid -->
-        <div class="blog-grid" id="blog-grid">
+        <div class="blog-grid" id="blog-grid" data-static-slugs={JSON.stringify(staticBlogSlugs)}>
           {initialBlogs.map((post, idx) => (
             <BlogCard post={post} featured={post.featured || idx === 0} />
           ))}
@@ -224,13 +225,20 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
   import { renderMarkdown } from '../scripts/markdown.js';
 
   // Client-side reactive blog store & filtering controller
-  (function initBlogController() {
+  function initBlogController() {
+    const grid = document.getElementById('blog-grid');
+    if (!grid || grid.dataset.bound === '1') return;
+    grid.dataset.bound = '1';
+
     let currentCategory = 'all';
     let searchQuery = '';
-    let blogList = [];
+    let blogList: any[] = [];
+    let staticSlugs = new Set<string>();
+    try {
+      staticSlugs = new Set(JSON.parse(grid.dataset.staticSlugs || '[]'));
+    } catch (e) {}
 
     // Elements
-    const grid = document.getElementById('blog-grid');
     const searchInput = document.getElementById('blog-search-input') as HTMLInputElement | null;
     const clearSearchBtn = document.getElementById('clear-search-btn');
     const segmentButtons = document.querySelectorAll('.segment-btn');
@@ -241,7 +249,6 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     const emptyResetBtn = document.getElementById('empty-reset-btn');
     const statTotalCount = document.getElementById('stat-total-count');
     const statUpdatesCount = document.getElementById('stat-updates-count');
-    const statArchivesCount = document.getElementById('stat-archives-count');
     const statCoursesCount = document.getElementById('stat-courses-count');
     const adminComposeBtn = document.getElementById('admin-compose-btn');
 
@@ -260,30 +267,37 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     const modalArticleMarkdown = document.getElementById('modal-article-markdown');
     const modalFooterTags = document.getElementById('modal-footer-tags');
 
-    // 1. Fetch live blogs from store or localStorage
+    function esc(str: any): string {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // 1. Fetch live blogs from store or localStorage (ponytail: respect [] when user deleted all)
     function loadBlogs(): any[] {
       try {
         if (typeof getBlogs === 'function') {
           const storeBlogs = getBlogs();
-          if (Array.isArray(storeBlogs) && storeBlogs.length > 0) {
+          if (Array.isArray(storeBlogs)) {
             return storeBlogs;
           }
         }
 
-        // Direct check window.PortfolioStore
         const store = (window as any).PortfolioStore;
         if (store && typeof store.getBlogs === 'function') {
           const storeBlogs = store.getBlogs();
-          if (Array.isArray(storeBlogs) && storeBlogs.length > 0) {
+          if (Array.isArray(storeBlogs)) {
             return storeBlogs;
           }
         }
 
-        // Fallback check localStorage directly
         const rawData = localStorage.getItem('space_portfolio_data_v1') || localStorage.getItem('space_portfolio_data');
         if (rawData) {
           const parsedData = JSON.parse(rawData);
-          if (parsedData && Array.isArray(parsedData.blogs) && parsedData.blogs.length > 0) {
+          if (parsedData && Array.isArray(parsedData.blogs)) {
             return parsedData.blogs;
           }
         }
@@ -294,9 +308,16 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
       return DEFAULT_BLOGS;
     }
 
-    // 2. Open Quick View Reader Modal
-    function openReader(post: any) {
-      if (!readerModal) return;
+    function getPostHref(post: any): string {
+      if (staticSlugs.has(post.slug)) {
+        return `/blog/${encodeURIComponent(post.slug)}`;
+      }
+      return `/blog?post=${encodeURIComponent(post.slug)}`;
+    }
+
+    // 2. Open Quick View / Runtime Article Reader Modal
+    function openReader(post: any, updateUrl = true) {
+      if (!readerModal || !post) return;
 
       if (modalCategoryPill) {
         modalCategoryPill.textContent = post.category || 'Flight Software';
@@ -304,13 +325,25 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
       if (modalDate) modalDate.textContent = post.date || 'Mission Epoch';
       if (modalReadtime) modalReadtime.textContent = post.readTime || '5 min read';
       if (modalArticleTitle) modalArticleTitle.textContent = post.title || 'Untitled Dispatch';
-      
+
       const author = typeof post.author === 'object' && post.author !== null ? post.author : { name: post.author || 'Võ Quang Nhật Nguyên', title: 'Flight Software Lead' };
       if (modalAuthorName) modalAuthorName.textContent = author.name || 'Võ Quang Nhật Nguyên';
       if (modalAuthorTitle) modalAuthorTitle.textContent = author.role || author.title || 'Lead Flight Software Engineer';
 
       if (modalFullLink) {
-        modalFullLink.href = `/blog/${post.slug}`;
+        const isStatic = staticSlugs.has(post.slug);
+        if (isStatic) {
+          modalFullLink.href = `/blog/${encodeURIComponent(post.slug)}`;
+          modalFullLink.dataset.mode = 'navigate';
+          const span = modalFullLink.querySelector('span');
+          if (span) span.textContent = 'Full Page';
+        } else {
+          // ponytail: runtime-created post uses ?post=slug to prevent 404 on static hosts
+          modalFullLink.href = `/blog?post=${encodeURIComponent(post.slug)}`;
+          modalFullLink.dataset.mode = 'copy';
+          const span = modalFullLink.querySelector('span');
+          if (span) span.textContent = 'Copy Link';
+        }
       }
 
       if (modalArticleMarkdown) {
@@ -318,7 +351,17 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
       }
 
       if (modalFooterTags) {
-        modalFooterTags.innerHTML = (post.tags || []).map((t: string) => `<span class="reader-footer-tag">#${t}</span>`).join('');
+        const tags = Array.isArray(post.tags) ? post.tags : [];
+        modalFooterTags.innerHTML = tags.map((t: string) => `<span class="reader-footer-tag">#${esc(t)}</span>`).join('');
+      }
+
+      if (updateUrl && post.slug) {
+        try {
+          const nextUrl = `/blog?post=${encodeURIComponent(post.slug)}`;
+          if (window.location.pathname + window.location.search !== nextUrl) {
+            window.history.pushState({ postSlug: post.slug }, '', nextUrl);
+          }
+        } catch (e) {}
       }
 
       readerModal.classList.add('is-open');
@@ -326,11 +369,16 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
       document.body.style.overflow = 'hidden';
     }
 
-    function closeReader() {
+    function closeReader(updateUrl = true) {
       if (!readerModal) return;
       readerModal.classList.remove('is-open');
       readerModal.setAttribute('aria-hidden', 'true');
       document.body.style.overflow = '';
+      if (updateUrl && new URLSearchParams(window.location.search).has('post')) {
+        try {
+          window.history.replaceState(null, '', '/blog');
+        } catch (e) {}
+      }
     }
 
     // 3. Render client cards dynamically (for additions/edits)
@@ -344,10 +392,10 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
         if (typeof getDashboardStats === 'function') {
           const stats = getDashboardStats();
           if (stats) {
-            if (statUpdatesCount && stats.updatesCount) {
+            if (statUpdatesCount && typeof stats.updatesCount === 'number') {
               statUpdatesCount.textContent = `${stats.updatesCount} Updates`;
             }
-            if (statCoursesCount && typeof stats.coursesCount !== 'undefined') {
+            if (statCoursesCount && typeof stats.coursesCount === 'number') {
               statCoursesCount.textContent = `${stats.coursesCount} Courses`;
             }
           }
@@ -359,14 +407,13 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
       const normalizedSearch = searchQuery.toLowerCase().trim();
 
       const filtered = blogList.filter(post => {
-        // Category check
         if (currentCategory !== 'all') {
           const cat = (post.category || '').toLowerCase();
-          const postTags = (post.tags || []).map((t: string) => t.toLowerCase());
-          
+          const postTags = (Array.isArray(post.tags) ? post.tags : []).map((t: string) => String(t).toLowerCase());
+
           let matches = false;
           if (currentCategory === 'flight-software') {
-            matches = cat.includes('flight') || cat.includes('software') || cat.includes('rust') || postTags.some(t => t.includes('flight') || t.includes('software') || t.includes('rust'));
+            matches = cat.includes('flight') || cat.includes('software') || cat.includes('rust') || postTags.some(t => t.includes('flight') || t.includes('software') || t.includes('rust') || t.includes('rtos'));
           } else if (currentCategory === 'orbital-mechanics') {
             matches = cat.includes('orbit') || cat.includes('astrodynamics') || cat.includes('gnc') || cat.includes('dynamics') || postTags.some(t => t.includes('orbit') || t.includes('astrodynamics') || t.includes('propagator') || t.includes('gnc'));
           } else if (currentCategory === 'avionics') {
@@ -379,11 +426,10 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
           if (!matches) return false;
         }
 
-        // Search check
         if (normalizedSearch) {
           const matchTitle = (post.title || '').toLowerCase().includes(normalizedSearch);
           const matchSummary = (post.summary || '').toLowerCase().includes(normalizedSearch);
-          const matchTags = (post.tags || []).some((t: string) => t.toLowerCase().includes(normalizedSearch));
+          const matchTags = (Array.isArray(post.tags) ? post.tags : []).some((t: string) => String(t).toLowerCase().includes(normalizedSearch));
           const matchContent = (post.content || '').toLowerCase().includes(normalizedSearch);
           if (!matchTitle && !matchSummary && !matchTags && !matchContent) return false;
         }
@@ -391,7 +437,6 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
         return true;
       });
 
-      // Update Filter Status Info
       if (filterStatusRow && filterCountText) {
         if (currentCategory !== 'all' || normalizedSearch) {
           filterStatusRow.style.display = 'flex';
@@ -401,11 +446,23 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
         }
       }
 
-      // Render cards into grid
       if (grid) {
         if (filtered.length === 0) {
           grid.style.display = 'none';
-          if (emptyState) emptyState.style.display = 'flex';
+          if (emptyState) {
+            emptyState.style.display = 'flex';
+            const emptyTitle = emptyState.querySelector('.empty-title');
+            const emptyText = emptyState.querySelector('.empty-text');
+            if (blogList.length === 0) {
+              if (emptyTitle) emptyTitle.textContent = 'No Orbital Dispatches Published';
+              if (emptyText) emptyText.textContent = 'All blog articles have been removed. Log in as Admin to compose and publish a new technical dispatch.';
+              if (emptyResetBtn) emptyResetBtn.style.display = 'none';
+            } else {
+              if (emptyTitle) emptyTitle.textContent = 'No Orbital Dispatches Found';
+              if (emptyText) emptyText.textContent = 'No technical articles match the specified telemetry filter or search query. Try relaxing your parameters.';
+              if (emptyResetBtn) emptyResetBtn.style.display = 'inline-flex';
+            }
+          }
         } else {
           grid.style.display = 'grid';
           if (emptyState) emptyState.style.display = 'none';
@@ -419,20 +476,24 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
             else if (lowCat.includes('comms') || lowCat.includes('ground')) catClass = 'badge-cat-comms';
 
             const author = typeof post.author === 'object' && post.author !== null ? post.author : { name: post.author || 'Võ Quang Nhật Nguyên', role: 'Flight Software Architect' };
-            const tagsHtml = (post.tags || []).map((t: string) => `<span class="mini-tag">#${t}</span>`).join('');
+            const tags = Array.isArray(post.tags) ? post.tags : [];
+            const tagsHtml = tags.map((t: string) => `<span class="mini-tag">#${esc(t)}</span>`).join('');
             const featuredClass = (post.featured || idx === 0) ? 'featured-card' : '';
+            const isStatic = staticSlugs.has(post.slug);
+            const postHref = getPostHref(post);
+            const runtimeAttr = isStatic ? '' : `data-action="quick-read" data-post-slug="${esc(post.slug)}"`;
 
             return `
               <article 
                 class="blog-card card ${featuredClass}" 
-                data-slug="${post.slug}"
-                data-id="${post.id}"
+                data-slug="${esc(post.slug)}"
+                data-id="${esc(post.id)}"
               >
                 <div class="card-meta-top">
                   <div class="category-wrapper">
                     <span class="cat-pill ${catClass}">
                       <span class="pill-dot"></span>
-                      ${primaryCat}
+                      ${esc(primaryCat)}
                     </span>
                     ${(post.featured || idx === 0) ? '<span class="featured-badge">Featured Dispatch</span>' : ''}
                   </div>
@@ -442,18 +503,18 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
                         <circle cx="12" cy="12" r="10"></circle>
                         <polyline points="12 6 12 12 16 14"></polyline>
                       </svg>
-                      ${post.date || 'Mission Epoch'}
+                      ${esc(post.date || 'Mission Epoch')}
                     </span>
                     <span class="meta-divider">•</span>
-                    <span class="meta-readtime">${post.readTime || '5 min read'}</span>
+                    <span class="meta-readtime">${esc(post.readTime || '5 min read')}</span>
                   </div>
                 </div>
 
                 <h3 class="blog-title">
-                  <a href="/blog/${post.slug}" class="title-link">${post.title}</a>
+                  <a href="${esc(postHref)}" class="title-link" ${runtimeAttr}>${esc(post.title)}</a>
                 </h3>
 
-                <p class="blog-summary">${post.summary || ''}</p>
+                <p class="blog-summary">${esc(post.summary || '')}</p>
 
                 <div class="blog-tags">${tagsHtml}</div>
 
@@ -464,21 +525,21 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
                       <span class="avatar-letter">NN</span>
                     </div>
                     <div class="author-info">
-                      <span class="author-name">${author.name || 'Võ Quang Nhật Nguyên'}</span>
-                      <span class="author-role">${author.role || author.title || 'Lead Flight Software Engineer'}</span>
+                      <span class="author-name">${esc(author.name || 'Võ Quang Nhật Nguyên')}</span>
+                      <span class="author-role">${esc(author.role || author.title || 'Lead Flight Software Engineer')}</span>
                     </div>
                   </div>
 
                   <div class="action-buttons">
-                    <button type="button" class="quick-read-btn btn-sm" data-action="quick-read" data-post-slug="${post.slug}">
+                    <button type="button" class="quick-read-btn btn-sm" data-action="quick-read" data-post-slug="${esc(post.slug)}">
                       <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z"></path>
                         <circle cx="12" cy="12" r="3"></circle>
                       </svg>
                       Quick View
                     </button>
-                    <a href="/blog/${post.slug}" class="read-article-link">
-                      <span>Full Article</span>
+                    <a href="${esc(postHref)}" class="read-article-link" ${runtimeAttr}>
+                      <span>${isStatic ? 'Full Article' : 'Read Article'}</span>
                       <svg class="arrow-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                         <line x1="5" y1="12" x2="19" y2="12"></line>
                         <polyline points="12 5 19 12 12 19"></polyline>
@@ -564,7 +625,6 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     if (resetFilterBtn) resetFilterBtn.addEventListener('click', resetAllFilters);
     if (emptyResetBtn) emptyResetBtn.addEventListener('click', resetAllFilters);
 
-    // Keyboard shortcut / for search
     window.addEventListener('keydown', (e) => {
       if (e.key === '/' && document.activeElement !== searchInput && !(document.activeElement instanceof HTMLInputElement || document.activeElement instanceof HTMLTextAreaElement)) {
         e.preventDefault();
@@ -574,10 +634,10 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
       }
     });
 
-    // Delegated click for Quick Read & Copy Code buttons
     document.addEventListener('click', async (e) => {
       const target = (e.target as HTMLElement).closest('[data-action="quick-read"]');
       if (target) {
+        e.preventDefault();
         const slug = target.getAttribute('data-post-slug');
         if (slug) {
           const currentList = loadBlogs();
@@ -610,42 +670,78 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
       }
     });
 
-    if (modalCloseBtn) modalCloseBtn.addEventListener('click', closeReader);
-    if (modalFooterClose) modalFooterClose.addEventListener('click', closeReader);
-    if (readerBackdrop) readerBackdrop.addEventListener('click', closeReader);
+    if (modalFullLink) {
+      modalFullLink.addEventListener('click', async (e) => {
+        if (modalFullLink.dataset.mode === 'copy') {
+          e.preventDefault();
+          const url = modalFullLink.href;
+          try {
+            if (navigator.clipboard) await navigator.clipboard.writeText(url);
+            const span = modalFullLink.querySelector('span');
+            if (span) {
+              span.textContent = 'Copied!';
+              setTimeout(() => { span.textContent = 'Copy Link'; }, 1800);
+            }
+          } catch (err) {}
+        }
+      });
+    }
 
-    // Compose Button Action
+    if (modalCloseBtn) modalCloseBtn.addEventListener('click', () => closeReader());
+    if (modalFooterClose) modalFooterClose.addEventListener('click', () => closeReader());
+    if (readerBackdrop) readerBackdrop.addEventListener('click', () => closeReader());
+
     if (adminComposeBtn) {
       adminComposeBtn.addEventListener('click', () => {
-        // Trigger admin composer modal or navigate to /admin#compose
-        window.dispatchEvent(new CustomEvent('open-admin-blog-modal'));
-        if (!(window as any).hasAdminModalOpen) {
+        const editorModal = document.getElementById('admin-editor-modal');
+        if (editorModal) {
+          window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'blog' } }));
+        } else {
           window.location.href = '/admin#compose';
         }
       });
     }
 
-    // Reactive listener for updates from store.js
     window.addEventListener('portfolio-data-updated', () => {
       renderCards();
       checkAdminState();
     });
+    window.addEventListener('portfolio-admin-auth-changed', checkAdminState);
+    window.addEventListener('storage', () => {
+      renderCards();
+      checkAdminState();
+    });
+
+    window.addEventListener('popstate', () => {
+      const slug = new URLSearchParams(window.location.search).get('post');
+      if (slug) {
+        const target = loadBlogs().find(p => p.slug === slug);
+        if (target) openReader(target, false);
+      } else {
+        closeReader(false);
+      }
+    });
 
     // Check URL parameters for direct article reader view: /blog?post=slug
-    const urlParams = new URLSearchParams(window.location.search);
-    const postParam = urlParams.get('post');
+    const postParam = new URLSearchParams(window.location.search).get('post');
     if (postParam) {
-      const initialList = loadBlogs();
-      const target = initialList.find(p => p.slug === postParam);
+      const target = loadBlogs().find(p => p.slug === postParam);
       if (target) {
-        openReader(target);
+        openReader(target, false);
       }
     }
 
     // Initial render & admin check
     renderCards();
     checkAdminState();
-  })();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initBlogController);
+  } else {
+    initBlogController();
+  }
+  document.addEventListener('astro:page-load', initBlogController);
 </script>
 
 <style>
@@ -683,7 +779,7 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     border-radius: 8px;
     background: rgba(255, 255, 255, 0.04);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, color 0.2s ease;
   }
 
   .back-home-link:hover {
@@ -767,9 +863,8 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     align-items: center;
     gap: 1.5rem;
     flex-wrap: wrap;
-    background: rgba(18, 22, 36, 0.7);
+    background: rgba(18, 22, 36, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
-    backdrop-filter: blur(16px);
     border-radius: 12px;
     padding: 1rem 1.5rem;
   }
@@ -818,11 +913,10 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
 
   .segmented-control {
     display: inline-flex;
-    background: rgba(18, 22, 36, 0.75);
+    background: rgba(18, 22, 36, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 4px;
     border-radius: 12px;
-    backdrop-filter: blur(16px);
     overflow-x: auto;
     max-width: 100%;
     scrollbar-width: none;
@@ -834,14 +928,14 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
 
   .segment-btn {
     background: transparent;
-    border: none;
+    border: 1px solid transparent;
     color: #9ca3af;
     font-size: 0.84rem;
     font-weight: 500;
     padding: 0.5rem 1.15rem;
     border-radius: 8px;
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: color 0.18s ease, background-color 0.18s ease, border-color 0.18s ease;
     white-space: nowrap;
     font-family: var(--font-sans, inherit);
   }
@@ -943,13 +1037,12 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     border-radius: 8px;
     border: none;
     cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 4px 14px rgba(229, 169, 106, 0.25);
+    transition: transform 0.2s ease, opacity 0.2s ease;
   }
 
   .admin-compose-action:hover {
     transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(229, 169, 106, 0.4);
+    opacity: 0.94;
   }
 
   .filter-status-row {
@@ -1210,13 +1303,15 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     font-family: var(--font-mono, ui-monospace, monospace);
   }
 
-  /* Reader Typography */
+  /* Reader Typography (matches markdown.js output classes) */
   .reader-markdown-content {
     color: #d1d5db;
     font-size: 1.025rem;
     line-height: 1.75;
   }
 
+  :global(.reader-markdown-content .article-h1),
+  :global(.reader-markdown-content .article-h2),
   :global(.reader-h2) {
     font-size: 1.4rem;
     font-weight: 700;
@@ -1227,6 +1322,7 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     padding-bottom: 0.4rem;
   }
 
+  :global(.reader-markdown-content .article-h3),
   :global(.reader-h3) {
     font-size: 1.15rem;
     font-weight: 600;
@@ -1234,10 +1330,13 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     margin: 1.5rem 0 0.75rem;
   }
 
+  :global(.reader-markdown-content .article-p),
   :global(.reader-p) {
     margin-bottom: 1.25rem;
   }
 
+  :global(.reader-markdown-content .article-ul),
+  :global(.reader-markdown-content .article-ol),
   :global(.reader-ul) {
     margin: 1rem 0 1.5rem 0.5rem;
     list-style: none;
@@ -1246,6 +1345,8 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     gap: 0.5rem;
   }
 
+  :global(.reader-markdown-content .article-li),
+  :global(.reader-markdown-content .article-oli),
   :global(.reader-li) {
     display: flex;
     align-items: flex-start;
@@ -1254,11 +1355,19 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     color: #d1d5db;
   }
 
+  :global(.reader-markdown-content .li-bullet),
   :global(.reader-bullet) {
     color: #e5a96a;
     font-weight: 700;
   }
 
+  :global(.reader-markdown-content .oli-num) {
+    color: #e5a96a;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    font-weight: 600;
+  }
+
+  :global(.reader-markdown-content .mission-callout-box),
   :global(.reader-callout) {
     background: rgba(229, 169, 106, 0.08);
     border: 1px solid rgba(229, 169, 106, 0.25);
@@ -1268,16 +1377,19 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     margin: 1.5rem 0;
   }
 
+  :global(.reader-markdown-content .callout-badge-title),
   :global(.callout-header) {
     display: flex;
     align-items: center;
     gap: 0.5rem;
     color: #e5a96a;
     font-size: 0.875rem;
+    font-weight: 600;
     margin-bottom: 0.45rem;
     font-family: var(--font-mono, ui-monospace, monospace);
   }
 
+  :global(.reader-markdown-content .callout-indicator-dot),
   :global(.callout-beacon) {
     width: 6px;
     height: 6px;
@@ -1285,12 +1397,28 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     background: #e5a96a;
   }
 
+  :global(.reader-markdown-content .callout-content-text),
   :global(.callout-body) {
     font-size: 0.9375rem;
     color: #e5e7eb;
     line-height: 1.6;
   }
 
+  :global(.reader-markdown-content .mission-blockquote) {
+    border-left: 3px solid rgba(229, 169, 106, 0.4);
+    padding-left: 1rem;
+    color: #cbd5e1;
+    margin: 1.25rem 0;
+  }
+
+  :global(.reader-markdown-content .mission-hr) {
+    border: none;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.08);
+    margin: 1.75rem 0;
+  }
+
+  :global(.reader-markdown-content .code-block-container),
   :global(.reader-code-wrapper) {
     background: #0d101d;
     border: 1px solid rgba(255, 255, 255, 0.1);
@@ -1299,6 +1427,7 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     margin: 1.5rem 0;
   }
 
+  :global(.reader-markdown-content .code-block-header),
   :global(.code-header) {
     display: flex;
     align-items: center;
@@ -1311,12 +1440,50 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     color: #8e95a5;
   }
 
+  :global(.reader-markdown-content .code-header-left) {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  :global(.reader-markdown-content .code-dot) {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+  }
+  :global(.reader-markdown-content .code-dot.red) { background: #ef4444; }
+  :global(.reader-markdown-content .code-dot.yellow) { background: #f59e0b; }
+  :global(.reader-markdown-content .code-dot.green) { background: #10b981; }
+
+  :global(.reader-markdown-content .code-lang-label),
   :global(.code-lang) {
     text-transform: uppercase;
     color: #e5a96a;
     font-weight: 600;
+    margin-left: 0.35rem;
   }
 
+  :global(.reader-markdown-content .copy-code-btn) {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.55rem;
+    font-size: 0.72rem;
+    font-family: var(--font-mono, ui-monospace, monospace);
+    color: #9ca3af;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: color 0.15s ease, background-color 0.15s ease, border-color 0.15s ease;
+  }
+
+  :global(.reader-markdown-content .copy-code-btn.copied) {
+    color: #10b981;
+    border-color: rgba(16, 185, 129, 0.4);
+  }
+
+  :global(.reader-markdown-content .code-pre),
   :global(.reader-pre) {
     padding: 1.25rem;
     overflow-x: auto;
@@ -1326,6 +1493,7 @@ const totalWords = initialBlogs.reduce((acc, p) => acc + (p.content?.split(/\s+/
     color: #e2e8f0;
   }
 
+  :global(.reader-markdown-content .inline-code),
   :global(.reader-inline-code) {
     background: rgba(255, 255, 255, 0.08);
     border: 1px solid rgba(255, 255, 255, 0.12);

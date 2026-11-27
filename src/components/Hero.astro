@@ -141,14 +141,14 @@ const { profile } = Astro.props;
                 <span class="avatar-orbit-beacon" aria-hidden="true"></span>
               </div>
 
-              <!-- Camera Edit Trigger -->
+              <!-- ponytail: Camera Edit Trigger visible only when authenticated as admin -->
               <button
                 type="button"
                 class="avatar-camera-trigger"
                 id="avatar-camera-trigger"
                 title="Customize Profile Avatar (Admin)"
                 aria-label="Customize Profile Avatar"
-                data-admin-login-trigger="profile-avatar"
+                style="display: none;"
               >
                 <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"></path>
@@ -377,13 +377,12 @@ const { profile } = Astro.props;
     position: relative;
   }
 
+  /* ponytail: remove stacked backdrop-filter on executive card */
   .executive-card {
     position: relative;
     padding: 2rem;
     border-radius: 20px;
-    background: rgba(18, 21, 29, 0.75);
-    backdrop-filter: blur(24px);
-    -webkit-backdrop-filter: blur(24px);
+    background: rgba(18, 21, 29, 0.84);
     border: 1px solid rgba(255, 255, 255, 0.08);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.35);
     overflow: hidden;
@@ -430,9 +429,9 @@ const { profile } = Astro.props;
     object-fit: cover;
     border-radius: 18px;
     border: 1.5px solid rgba(229, 169, 106, 0.45);
-    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5), 0 0 14px rgba(229, 169, 106, 0.2);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45);
     display: block;
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
   }
 
   .profile-avatar-frame:hover .profile-avatar-img {
@@ -467,8 +466,8 @@ const { profile } = Astro.props;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.6), 0 0 8px rgba(229, 169, 106, 0.25);
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.55);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease, color 0.2s ease;
     z-index: 4;
     padding: 0;
   }
@@ -476,8 +475,7 @@ const { profile } = Astro.props;
   .avatar-camera-trigger:hover {
     background: #E5A96A;
     color: #0B0D13;
-    transform: scale(1.15);
-    box-shadow: 0 4px 16px rgba(229, 169, 106, 0.6);
+    transform: scale(1.12);
   }
 
   .avatar-monogram {
@@ -624,7 +622,7 @@ const { profile } = Astro.props;
     color: #d1d5db;
     font-size: 0.78125rem;
     text-decoration: none;
-    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 
   .channel-pill:hover {
@@ -701,14 +699,33 @@ const { profile } = Astro.props;
       }
     }
 
+    function isAdminAuthed() {
+      try {
+        const raw = localStorage.getItem('space_portfolio_admin_session_v2');
+        if (!raw) return false;
+        const s = JSON.parse(raw);
+        return Boolean(s && s.user === 'admin' && s.authenticated === true);
+      } catch (err) {
+        return false;
+      }
+    }
+
+    function syncAvatarEditVisibility() {
+      if (!cameraBtn) return;
+      cameraBtn.style.display = isAdminAuthed() ? 'flex' : 'none';
+    }
+
     function syncAll() {
       syncAvatar();
       syncDashboardStats();
+      syncAvatarEditVisibility();
     }
 
     syncAll();
     window.addEventListener('portfolio-data-updated', syncAll);
     window.addEventListener('profile-avatar-updated', syncAvatar);
+    window.addEventListener('portfolio-admin-auth-changed', syncAvatarEditVisibility);
+    window.addEventListener('admin-auth-changed', syncAvatarEditVisibility);
     window.addEventListener('storage', syncAll);
 
     if (cameraBtn) {
@@ -716,28 +733,10 @@ const { profile } = Astro.props;
         e.preventDefault();
         e.stopPropagation();
 
-        // ponytail: verify admin session before opening editor
-        let isAuthed = false;
-        try {
-          const raw = localStorage.getItem('space_portfolio_admin_session_v2');
-          if (raw) {
-            const s = JSON.parse(raw);
-            isAuthed = Boolean(s && s.user === 'admin' && s.authenticated === true);
-          }
-        } catch (err) {}
-
-        if (isAuthed) {
+        if (isAdminAuthed()) {
           window.dispatchEvent(new CustomEvent('open-admin-editor', { detail: { tab: 'profile' } }));
         } else {
-          const loginModal = document.getElementById('admin-login-modal');
-          if (loginModal) {
-            loginModal.classList.add('is-open', 'is-active');
-            loginModal.setAttribute('aria-hidden', 'false');
-            const userInput = loginModal.querySelector('input[type="text"]') as HTMLInputElement;
-            if (userInput) setTimeout(() => userInput.focus(), 150);
-          } else {
-            window.location.href = '/admin#profile';
-          }
+          window.dispatchEvent(new CustomEvent('open-admin-login'));
         }
       });
     }

@@ -12,8 +12,8 @@
   --bg-onyx: #0B0D13;
   --bg-onyx-subtle: #10131B;
   --bg-onyx-elevated: #161A26;
-  --bg-card: rgba(18, 22, 32, 0.65);
-  --bg-card-hover: rgba(26, 32, 47, 0.78);
+  --bg-card: rgba(18, 22, 32, 0.82);
+  --bg-card-hover: rgba(26, 32, 47, 0.88);
   --bg-card-solid: #131722;
   --bg-dock: rgba(16, 20, 30, 0.82);
   --bg-modal: rgba(14, 18, 27, 0.94);
@@ -73,17 +73,16 @@
   --radius-pill: 9999px;
 
   /* Glassmorphism & Shadows */
-  --blur-frosted: 20px;
-  --blur-ambient: 32px;
+  --blur-frosted: 16px;
+  --blur-ambient: 24px;
   --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
   --glass-card-shadow: 0 4px 24px -1px rgba(0, 0, 0, 0.35);
   --glow-amber-box: 0 0 24px -4px rgba(229, 169, 106, 0.3);
 
   /* Transitions */
-  --transition-fast: 0.18s cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-smooth: 0.32s cubic-bezier(0.16, 1, 0.3, 1);
-  --transition-bounce: 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  --scroll-blur: 0px;
+  --transition-fast: 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-smooth: 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+  --transition-bounce: 0.35s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 /* ==========================================================================
@@ -106,14 +105,6 @@ html {
   letter-spacing: -0.011em;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-}
-
-/* Apple Kinetic Glass Reactivity on Scroll */
-body.is-scrolling .floating-dock-pill {
-  backdrop-filter: blur(32px) saturate(200%);
-  -webkit-backdrop-filter: blur(32px) saturate(200%);
-  border-color: rgba(229, 169, 106, 0.45);
-  box-shadow: 0 20px 44px -8px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.18);
 }
 
 body, button, input, textarea, select, optgroup {
@@ -187,55 +178,31 @@ code, pre, .mono {
    APPLE-GRADE FROSTED GLASS & CARD COMPONENTS
    ========================================================================== */
 
+/* ponytail: remove heavy stacked backdrop-filter & hover box-shadow repaints on cards */
 .frosted-glass {
   background: var(--bg-card);
-  backdrop-filter: blur(var(--blur-frosted));
-  -webkit-backdrop-filter: blur(var(--blur-frosted));
   border: 1px solid var(--border-frosted);
   border-radius: var(--radius-lg);
   box-shadow: var(--glass-card-shadow);
 }
 
-.glass-card {
+.glass-card,
+.card {
   background: var(--bg-card);
-  backdrop-filter: blur(var(--blur-frosted));
-  -webkit-backdrop-filter: blur(var(--blur-frosted));
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   padding: 1.75rem;
-  transition: transform var(--transition-smooth), 
-              border-color var(--transition-smooth), 
-              box-shadow var(--transition-smooth),
-              background var(--transition-smooth);
   position: relative;
   overflow: hidden;
   box-shadow: var(--glass-card-shadow);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.glass-card:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-active);
-  transform: translateY(-3px);
-  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), var(--glow-amber-box);
-}
-
-/* Card compatibility class */
-.card {
-  background: var(--bg-card);
-  backdrop-filter: blur(var(--blur-frosted));
-  -webkit-backdrop-filter: blur(var(--blur-frosted));
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-lg);
-  padding: 1.75rem;
-  transition: transform var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
-  position: relative;
-  overflow: hidden;
-}
-
+.glass-card:hover,
 .card:hover {
-  transform: translateY(-3px);
-  border-color: var(--amber-border);
-  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), 0 0 20px -5px rgba(229, 169, 106, 0.2);
+  border-color: rgba(229, 169, 106, 0.32);
+  transform: translateY(-2px);
 }
 
 /* ==========================================================================
@@ -246,9 +213,7 @@ code, pre, .mono {
   display: inline-flex;
   align-items: center;
   padding: 4px;
-  background: rgba(22, 26, 38, 0.85);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: rgba(22, 26, 38, 0.92);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-pill);
   gap: 2px;
@@ -269,7 +234,7 @@ code, pre, .mono {
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: color 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
   text-decoration: none;
   white-space: nowrap;
 }
@@ -309,7 +274,7 @@ code, pre, .mono {
   background: var(--titanium-dim);
   border: 1px solid var(--border-subtle);
   color: var(--text-secondary);
-  transition: all var(--transition-fast);
+  transition: border-color var(--transition-fast), color var(--transition-fast);
 }
 
 .pill-badge:hover {
@@ -388,13 +353,13 @@ code, pre, .mono {
   height: 6px;
   background: var(--telemetry-green);
   border-radius: 50%;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.45);
   animation: telemetry-beacon 2s ease-in-out infinite;
 }
 
 @keyframes telemetry-beacon {
-  0% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-  50% { transform: scale(1.15); opacity: 1; box-shadow: 0 0 0 4px rgba(16, 185, 129, 0); }
-  100% { transform: scale(0.9); opacity: 0.7; box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+  0%, 100% { transform: scale(0.9); opacity: 0.7; }
+  50% { transform: scale(1.15); opacity: 1; }
 }
 
 /* ==========================================================================
@@ -412,7 +377,7 @@ code, pre, .mono {
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   border: 1px solid transparent;
   font-family: var(--font-mono);
   line-height: 1.25;
@@ -437,7 +402,7 @@ code, pre, .mono {
   background: linear-gradient(135deg, #E5A96A 0%, #D4AF37 100%);
   color: #0B0D13;
   font-weight: 600;
-  box-shadow: 0 4px 16px rgba(229, 169, 106, 0.25), inset 0 1px 0 rgba(255, 255, 255, 0.25);
+  box-shadow: 0 4px 16px rgba(229, 169, 106, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.25);
   border: 1px solid rgba(229, 169, 106, 0.4);
 }
 
@@ -446,13 +411,11 @@ code, pre, .mono {
   background: linear-gradient(135deg, #ECC08A 0%, #DFC052 100%);
   color: #0B0D13;
   transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(229, 169, 106, 0.4);
 }
 
 .btn-primary:active,
 .btn-apple-primary:active {
   transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(229, 169, 106, 0.2);
 }
 
 /* Secondary Frosted Button */
@@ -461,8 +424,6 @@ code, pre, .mono {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-ivory);
   border: 1px solid var(--border-subtle);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
 }
 
 .btn-secondary:hover,
@@ -486,7 +447,6 @@ code, pre, .mono {
   background: var(--amber-dim);
   border-color: var(--amber);
   color: var(--amber-light);
-  box-shadow: 0 0 16px rgba(229, 169, 106, 0.25);
   transform: translateY(-2px);
 }
 
@@ -654,7 +614,7 @@ code, pre, .mono {
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease, color 0.2s ease;
 }
 
 .space-modal-close:hover {
@@ -696,9 +656,7 @@ code, pre, .mono {
 
 .space-toast {
   pointer-events: auto;
-  background: rgba(16, 20, 30, 0.92);
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
+  background: rgba(16, 20, 30, 0.95);
   border: 1px solid var(--border-subtle);
   border-left: 3px solid var(--amber);
   border-radius: var(--radius-md);
@@ -916,29 +874,24 @@ button:active {
 }
 
 .profile-avatar-img {
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .profile-avatar-wrapper:hover .profile-avatar-img {
   transform: scale(1.025);
 }
 
-/* Rule 5: A linked card lifts 2px with subtle glow */
-.glass-card,
-.card,
+/* Rule 5: A linked card lifts 2px with crisp border highlight (GPU-only transform/border) */
 .achievement-card,
 .dispatch-card {
-  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.25s ease,
-              box-shadow 0.25s ease;
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
-.glass-card:hover,
 .achievement-card:hover,
 .dispatch-card:hover {
   transform: translateY(-2px);
-  border-color: rgba(229, 169, 106, 0.28);
-  box-shadow: 0 12px 32px -4px rgba(0, 0, 0, 0.5), 0 0 16px -2px rgba(229, 169, 106, 0.12);
+  border-color: rgba(229, 169, 106, 0.32);
 }
 
 /* Rule 3: One section per screen on desktop */
@@ -978,8 +931,7 @@ button:active {
   .floating-bottom-dock,
   .admin-floating-dock,
   .admin-dock-container,
-  .space-toast-container,
-  #admin-header-trigger {
+  .space-toast-container {
     display: none !important;
   }
 
@@ -1036,22 +988,19 @@ button:active {
   gap: 0.35rem;
   padding: 0.45rem 0.65rem;
   background: rgba(14, 18, 27, 0.88);
-  backdrop-filter: blur(28px) saturate(180%);
-  -webkit-backdrop-filter: blur(28px) saturate(180%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 9999px;
   box-shadow: 
     0 16px 40px -6px rgba(0, 0, 0, 0.75),
     0 0 0 1px rgba(229, 169, 106, 0.15),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease;
 }
 
 .floating-dock-pill:hover {
-  box-shadow: 
-    0 20px 48px -6px rgba(0, 0, 0, 0.85),
-    0 0 16px rgba(229, 169, 106, 0.25),
-    inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  border-color: rgba(229, 169, 106, 0.28);
 }
 
 .dock-nav-item {
@@ -1067,7 +1016,7 @@ button:active {
   background: transparent;
   border: 1px solid transparent;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   white-space: nowrap;
   user-select: none;
 }

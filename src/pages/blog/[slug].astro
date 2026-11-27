@@ -207,18 +207,25 @@ const renderedHtml = renderMarkdown(post.content || post.summary || '');
 
 <script>
   import { renderMarkdown } from '../../scripts/markdown.js';
+  import { getBlogBySlug, getBlogs, checkAdminAuth } from '../../scripts/store.js';
 
-  (function initArticleReader() {
-    const slug = document.querySelector('[data-article-slug]')?.getAttribute('data-article-slug');
+  function initArticleReader() {
+    const pageRoot = document.querySelector('[data-article-slug]') as HTMLElement | null;
+    if (!pageRoot || pageRoot.dataset.bound === '1') return;
+    pageRoot.dataset.bound = '1';
+
+    const slug = pageRoot.getAttribute('data-article-slug');
+    const articleId = pageRoot.getAttribute('data-article-id');
     const progressBar = document.getElementById('reading-progress');
     const toast = document.getElementById('telemetry-toast');
     const toastMsg = document.getElementById('toast-message');
     const shareBtn = document.getElementById('share-dispatch-btn');
-    const adminEditLink = document.getElementById('admin-edit-link');
+    const adminEditLink = document.getElementById('admin-edit-link') as HTMLAnchorElement | null;
 
     // DOM Elements for live hydration
     const titleEl = document.getElementById('article-title');
     const summaryEl = document.getElementById('article-summary');
+    const catPillEl = document.getElementById('article-cat-pill');
     const catTextEl = document.getElementById('article-cat-text');
     const dateEl = document.getElementById('article-date');
     const readTimeEl = document.getElementById('article-readtime');
@@ -226,6 +233,23 @@ const renderedHtml = renderMarkdown(post.content || post.summary || '');
     const authorRoleEl = document.getElementById('article-author-role');
     const contentEl = document.getElementById('article-content');
     const tagsListEl = document.getElementById('article-tags-list');
+
+    function esc(str: any): string {
+      return String(str ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    function getCategoryClass(category = '') {
+      const cat = category.toLowerCase();
+      if (cat.includes('orbit') || cat.includes('dynamics') || cat.includes('astrodynamics') || cat.includes('gnc')) return 'badge-cat-orbit';
+      if (cat.includes('avionics') || cat.includes('fdir') || cat.includes('hardware')) return 'badge-cat-avionics';
+      if (cat.includes('comms') || cat.includes('ground') || cat.includes('optical') || cat.includes('sdr') || cat.includes('packet')) return 'badge-cat-comms';
+      return 'badge-cat-fsw';
+    }
 
     // 1. Reading Progress Bar
     function updateProgress() {
@@ -288,45 +312,59 @@ const renderedHtml = renderMarkdown(post.content || post.summary || '');
       }
     });
 
-    // 5. Live Store Hydration: check if post was updated in localStorage
+    // 5. Live Store Hydration: hydrate edits OR detect deletion cleanly
     function checkLiveStoreUpdate() {
-      if (!slug) return;
+      if (!slug && !articleId) return;
       try {
-        const store = (window as any).PortfolioStore;
-        let post = null;
+        let post = getBlogBySlug(slug) || (articleId ? getBlogBySlug(articleId) : null);
 
-        if (store && typeof store.getBlogBySlug === 'function') {
-          post = store.getBlogBySlug(slug);
-        } else {
-          const raw = localStorage.getItem('space_portfolio_data_v1') || localStorage.getItem('space_portfolio_data');
-          if (raw) {
-            const parsed = JSON.parse(raw);
-            if (parsed && Array.isArray(parsed.blogs)) {
-              post = parsed.blogs.find((b: any) => b.slug === slug || b.id === slug);
+        if (!post && typeof getBlogs === 'function') {
+          const allBlogs = getBlogs();
+          // ponytail: if post was deleted in localStorage, show clean archived message instead of stale SSR
+          if (Array.isArray(allBlogs) && !allBlogs.some((b: any) => b.slug === slug || b.id === articleId)) {
+            if (titleEl) titleEl.textContent = 'Dispatch Archived / Removed';
+            if (summaryEl) summaryEl.textContent = 'This technical article was removed or archived from the Mission Log.';
+            if (contentEl) {
+              contentEl.innerHTML = `<div class="mission-callout-box"><div class="callout-badge-title"><span class="callout-indicator-dot"></span><span class="callout-label">DISPATCH NOT IN ACTIVE STORE</span></div><div class="callout-content-text">This article has been deleted from the local portfolio store. <a href="/blog" style="color:#e5a96a;text-decoration:underline;">Return to Blog Archive →</a></div></div>`;
             }
+            if (tagsListEl) tagsListEl.innerHTML = '';
+            return;
           }
         }
 
         if (post) {
+          document.title = `${post.title} | Space Engineering Journal`;
           if (titleEl && post.title) titleEl.textContent = post.title;
-          if (summaryEl && post.summary) summaryEl.textContent = post.summary;
+          if (summaryEl) {
+            summaryEl.textContent = post.summary || '';
+            summaryEl.style.display = post.summary ? 'block' : 'none';
+          }
           if (catTextEl && post.category) catTextEl.textContent = post.category;
-          if (dateEl && post.date) dateEl.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${post.date}`;
+          if (catPillEl && post.category) {
+            catPillEl.className = `cat-pill ${getCategoryClass(post.category)}`;
+          }
+          if (dateEl && post.date) {
+            dateEl.innerHTML = `<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg>${esc(post.date)}`;
+          }
           if (readTimeEl && post.readTime) readTimeEl.textContent = post.readTime;
-          
+
           if (post.author) {
             const authName = typeof post.author === 'object' ? post.author.name : post.author;
             const authRole = typeof post.author === 'object' ? (post.author.role || post.author.title) : 'Flight Software Architect';
-            if (authorNameEl) authorNameEl.textContent = authName;
-            if (authorRoleEl) authorRoleEl.textContent = authRole;
+            if (authorNameEl && authName) authorNameEl.textContent = authName;
+            if (authorRoleEl && authRole) authorRoleEl.textContent = authRole;
           }
 
-          if (contentEl && post.content) {
-            contentEl.innerHTML = renderMarkdown(post.content);
+          if (contentEl) {
+            contentEl.innerHTML = renderMarkdown(post.content || post.summary || '');
           }
 
           if (tagsListEl && Array.isArray(post.tags)) {
-            tagsListEl.innerHTML = post.tags.map((t: string) => `<span class="tag-pill">#${t}</span>`).join('');
+            tagsListEl.innerHTML = post.tags.map((t: string) => `<span class="tag-pill">#${esc(t)}</span>`).join('');
+          }
+
+          if (adminEditLink) {
+            adminEditLink.href = `/admin#edit-blog-${encodeURIComponent(post.slug || slug || '')}`;
           }
         }
       } catch (e) {
@@ -337,18 +375,7 @@ const renderedHtml = renderMarkdown(post.content || post.summary || '');
     // 6. Check Admin Auth to show Edit link
     function checkAdminState() {
       try {
-        const store = (window as any).PortfolioStore;
-        let isAdmin = false;
-        if (store && typeof store.checkAdminAuth === 'function') {
-          isAdmin = store.checkAdminAuth();
-        } else {
-          const raw = localStorage.getItem('space_portfolio_admin_session_v2');
-          if (raw) {
-            const s = JSON.parse(raw);
-            isAdmin = Boolean(s && s.user === 'admin' && s.authenticated === true);
-          }
-        }
-
+        const isAdmin = typeof checkAdminAuth === 'function' ? checkAdminAuth() : false;
         if (adminEditLink) {
           adminEditLink.style.display = isAdmin ? 'inline-flex' : 'none';
         }
@@ -357,8 +384,13 @@ const renderedHtml = renderMarkdown(post.content || post.summary || '');
       }
     }
 
-    // React to store updates
+    // React to store & cross-tab updates
     window.addEventListener('portfolio-data-updated', () => {
+      checkLiveStoreUpdate();
+      checkAdminState();
+    });
+    window.addEventListener('portfolio-admin-auth-changed', checkAdminState);
+    window.addEventListener('storage', () => {
       checkLiveStoreUpdate();
       checkAdminState();
     });
@@ -366,7 +398,14 @@ const renderedHtml = renderMarkdown(post.content || post.summary || '');
     // Run on startup
     checkLiveStoreUpdate();
     checkAdminState();
-  })();
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initArticleReader);
+  } else {
+    initArticleReader();
+  }
+  document.addEventListener('astro:page-load', initArticleReader);
 </script>
 
 <style>
@@ -473,9 +512,8 @@ const renderedHtml = renderMarkdown(post.content || post.summary || '');
 
   /* Article Header Card */
   .article-header-card {
-    background: rgba(18, 22, 36, 0.7);
+    background: rgba(18, 22, 36, 0.86);
     border: 1px solid rgba(255, 255, 255, 0.09);
-    backdrop-filter: blur(20px);
     border-radius: 18px;
     padding: 2.25rem 2.5rem;
     margin-bottom: 2.5rem;
@@ -932,10 +970,10 @@ const renderedHtml = renderMarkdown(post.content || post.summary || '');
     gap: 0.35rem;
     padding: 1.5rem;
     border-radius: 14px;
-    background: rgba(18, 22, 36, 0.6);
+    background: rgba(18, 22, 36, 0.82);
     border: 1px solid rgba(255, 255, 255, 0.08);
     text-decoration: none;
-    transition: all 0.2s ease;
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, background-color 0.2s ease;
   }
 
   .nav-card:hover {

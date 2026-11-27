@@ -227,10 +227,13 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
 
 <!-- Client Script for Search, Filter, Copy, and Store Reactivity -->
 <script>
+  import { getCourses } from '../scripts/store.js';
+
   // Self-contained client controller for CourseArchive
   function initCourseArchive() {
     const grid = document.getElementById('courses-grid');
-    if (!grid) return;
+    if (!grid || grid.dataset.bound === '1') return;
+    grid.dataset.bound = '1';
 
     let coursesData: any[] = [];
     try {
@@ -243,15 +246,23 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
     const clearBtn = document.getElementById('course-search-clear');
     const emptyState = document.getElementById('courses-empty-state');
     const statusMeta = document.getElementById('course-filter-stats');
-    const countAll = document.getElementById('count-all');
     const btnReset = document.getElementById('btn-reset-course-filters');
 
     let activeFilter = 'all';
     let searchQuery = '';
 
-    // Load reactive courses from window.PortfolioStore or localStorage
+    function safeUrl(raw: any): string {
+      const s = String(raw || '').trim();
+      return /^https?:\/\//i.test(s) ? s : '#';
+    }
+
+    // Load reactive courses from store.js / window.PortfolioStore / localStorage
     function getStoredCourses(): any[] {
       try {
+        if (typeof getCourses === 'function') {
+          const list = getCourses();
+          if (Array.isArray(list)) return list;
+        }
         if ((window as any).PortfolioStore?.getCourses) {
           const list = (window as any).PortfolioStore.getCourses();
           if (Array.isArray(list)) return list;
@@ -417,7 +428,7 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
               </div>
 
               <div class="course-repo-action">
-                <a href="${escapeHtml(course.githubUrl || '#')}" target="_blank" rel="noopener noreferrer" class="btn-course-github" title="Open ${escapeHtml(course.code)} files & syllabus on GitHub">
+                <a href="${escapeHtml(safeUrl(course.githubUrl))}" target="_blank" rel="noopener noreferrer" class="btn-course-github" title="Open ${escapeHtml(course.code || '')} files & syllabus on GitHub">
                   <svg class="octocat-icon" width="16" height="16" viewBox="0 0 24 24" fill="currentColor">
                     <path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
                   </svg>
@@ -542,8 +553,9 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
   document.addEventListener('astro:page-load', initCourseArchive);
 </script>
 
-<style>
-  .course-archive-section {
+<style is:global>
+  /* ponytail: global scoped under #courses so dynamic innerHTML cards retain full styles without blur lag */
+  #courses.course-archive-section {
     padding: 3.5rem 0 4.5rem;
     position: relative;
   }
@@ -559,26 +571,23 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
     gap: 1rem;
   }
 
-  .course-search-bar {
+  #courses .course-search-bar {
     position: relative;
     display: flex;
     align-items: center;
     max-width: 680px;
     width: 100%;
     margin: 0 auto;
-    background: rgba(18, 22, 32, 0.7);
+    background: rgba(18, 22, 32, 0.85);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 9999px;
     padding: 0.5rem 1rem 0.5rem 1.25rem;
-    backdrop-filter: blur(16px);
-    -webkit-backdrop-filter: blur(16px);
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.2s ease;
   }
 
-  .course-search-bar:focus-within {
+  #courses .course-search-bar:focus-within {
     border-color: rgba(229, 169, 106, 0.45);
-    background: rgba(22, 27, 40, 0.9);
-    box-shadow: 0 0 20px rgba(229, 169, 106, 0.15);
+    background: rgba(22, 27, 40, 0.95);
   }
 
   .search-icon {
@@ -689,24 +698,21 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
   }
 
   /* Course Card */
-  .course-card {
+  #courses .course-card {
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 1.75rem;
     border-radius: 18px;
-    background: rgba(18, 22, 32, 0.65);
+    background: rgba(18, 22, 32, 0.86);
     border: 1px solid rgba(142, 149, 165, 0.14);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     position: relative;
   }
 
-  .course-card:hover {
+  #courses .course-card:hover {
     transform: translateY(-3px);
     border-color: rgba(229, 169, 106, 0.38);
-    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.5), 0 0 24px -4px rgba(229, 169, 106, 0.2);
   }
 
   /* Course Card Header */
@@ -913,7 +919,7 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
     gap: 0.5rem;
   }
 
-  .btn-course-github {
+  #courses .btn-course-github {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -927,16 +933,14 @@ const allTags = Array.from(new Set(courses.flatMap(c => c.tags || []))).slice(0,
     text-decoration: none;
     font-size: 0.8125rem;
     font-weight: 500;
-    transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
   }
 
-  .btn-course-github:hover {
+  #courses .btn-course-github:hover {
     background: linear-gradient(180deg, rgba(229, 169, 106, 0.2) 0%, rgba(229, 169, 106, 0.08) 100%);
     border-color: rgba(229, 169, 106, 0.45);
     color: #E5A96A;
     transform: translateY(-1px);
-    box-shadow: 0 4px 14px rgba(229, 169, 106, 0.2);
   }
 
   .octocat-icon {

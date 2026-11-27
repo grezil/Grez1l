@@ -109,7 +109,9 @@ const { timeline = [] } = Astro.props;
 </section>
 
 <script>
-  // ponytail: reactive timeline client hydration from PortfolioStore / localStorage
+  import { getTimeline } from '../scripts/store.js';
+
+  // ponytail: reactive timeline client hydration from store.js with deduplicated listeners
   function escapeHtml(str: any): string {
     if (!str) return '';
     return String(str)
@@ -124,28 +126,11 @@ const { timeline = [] } = Astro.props;
     const container = document.getElementById('timeline-entries');
     if (!container) return;
 
-    let entries: any[] = [];
-    // Read from PortfolioStore or localStorage
-    if (typeof window !== 'undefined' && (window as any).PortfolioStore && typeof (window as any).PortfolioStore.getTimeline === 'function') {
-      entries = (window as any).PortfolioStore.getTimeline();
-    } else {
-      try {
-        const raw = localStorage.getItem('space_portfolio_data_v1');
-        if (raw) {
-          const parsed = JSON.parse(raw);
-          if (Array.isArray(parsed.timeline)) {
-            entries = parsed.timeline;
-          } else if (Array.isArray(parsed.experience)) {
-            entries = parsed.experience;
-          }
-        }
-      } catch (e) {
-        console.warn('Failed to parse timeline from localStorage:', e);
-      }
-    }
+    const hasStorage = !!localStorage.getItem('space_portfolio_data_v1');
+    const entries = getTimeline();
 
     // If storage has no record at all yet, keep SSR initial markup
-    if (!localStorage.getItem('space_portfolio_data_v1') && entries.length === 0) {
+    if (!hasStorage && entries.length === 0) {
       return;
     }
 
@@ -244,8 +229,9 @@ const { timeline = [] } = Astro.props;
     }).join('');
   }
 
-  // Bind reactive lifecycle hooks
-  if (typeof window !== 'undefined') {
+  // ponytail: deduplicated reactive lifecycle hooks for timeline updates
+  if (typeof window !== 'undefined' && !(window as any).__timelineListenersBound) {
+    (window as any).__timelineListenersBound = true;
     window.addEventListener('DOMContentLoaded', renderDynamicTimeline);
     window.addEventListener('astro:page-load', renderDynamicTimeline);
     window.addEventListener('portfolio-data-updated', renderDynamicTimeline);
@@ -254,10 +240,10 @@ const { timeline = [] } = Astro.props;
         renderDynamicTimeline();
       }
     });
+  }
 
-    if (document.readyState === 'complete' || document.readyState === 'interactive') {
-      renderDynamicTimeline();
-    }
+  if (typeof document !== 'undefined' && (document.readyState === 'complete' || document.readyState === 'interactive')) {
+    renderDynamicTimeline();
   }
 </script>
 
@@ -351,16 +337,14 @@ const { timeline = [] } = Astro.props;
     50% { transform: scale(1.35); opacity: 1; }
   }
 
-  /* Timeline Card */
+  /* Timeline Card — ponytail: GPU-friendly hover (no backdrop-filter or box-shadow repaint) */
   .timeline-card {
     padding: 2rem;
-    background: rgba(18, 22, 33, 0.72);
+    background: rgba(18, 22, 33, 0.9);
     border: 1px solid var(--border-subtle);
     border-radius: 16px;
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 8px 24px -4px rgba(0, 0, 0, 0.4);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
-    transition: transform var(--transition-smooth), border-color var(--transition-smooth), box-shadow var(--transition-smooth);
+    transition: transform var(--transition-smooth), border-color var(--transition-smooth);
   }
 
   .timeline-item.is-active .timeline-card {
@@ -371,7 +355,6 @@ const { timeline = [] } = Astro.props;
   .timeline-card:hover {
     transform: translateY(-2px);
     border-color: rgba(229, 169, 106, 0.35);
-    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.09), 0 16px 36px -8px rgba(0, 0, 0, 0.55), 0 0 16px rgba(229, 169, 106, 0.12);
   }
 
   .card-meta {

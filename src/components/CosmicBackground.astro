@@ -214,15 +214,15 @@
     z-index: 0;
     overflow: hidden;
     background-color: #0B0D13;
+    contain: layout style paint;
   }
 
-  /* Deep Space Ambient Nebulae (Pure GPU Composite) */
+  /* ponytail: soft radial-gradient nebulae without expensive full-screen CSS blur(80px) */
   .nebula-layer {
     position: absolute;
     border-radius: 50%;
-    filter: blur(80px);
     pointer-events: none;
-    will-change: transform, opacity;
+    contain: layout style paint;
   }
 
   .nebula-1 {
@@ -230,7 +230,7 @@
     left: 55%;
     width: 60vw;
     height: 55vh;
-    background: radial-gradient(ellipse at center, rgba(229, 169, 106, 0.055) 0%, rgba(212, 175, 55, 0.02) 45%, transparent 70%);
+    background: radial-gradient(ellipse at center, rgba(229, 169, 106, 0.05) 0%, rgba(212, 175, 55, 0.018) 45%, transparent 72%);
   }
 
   .nebula-2 {
@@ -238,7 +238,7 @@
     left: -10%;
     width: 50vw;
     height: 60vh;
-    background: radial-gradient(ellipse at center, rgba(26, 36, 62, 0.45) 0%, rgba(14, 20, 36, 0.2) 50%, transparent 75%);
+    background: radial-gradient(ellipse at center, rgba(26, 36, 62, 0.42) 0%, rgba(14, 20, 36, 0.16) 52%, transparent 76%);
   }
 
   .nebula-3 {
@@ -246,7 +246,7 @@
     right: -10%;
     width: 45vw;
     height: 45vh;
-    background: radial-gradient(circle at center, rgba(142, 149, 165, 0.04) 0%, transparent 65%);
+    background: radial-gradient(circle at center, rgba(142, 149, 165, 0.035) 0%, transparent 68%);
   }
 
   /* Starfield Canvas */
@@ -280,8 +280,7 @@
     left: 0;
     width: 100%;
     height: 120px;
-    background: radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.16) 0%, rgba(37, 99, 235, 0.08) 40%, rgba(14, 20, 36, 0.02) 75%, transparent 100%);
-    filter: blur(24px);
+    background: radial-gradient(ellipse at 50% 0%, rgba(56, 189, 248, 0.14) 0%, rgba(37, 99, 235, 0.07) 42%, rgba(14, 20, 36, 0.015) 75%, transparent 100%);
   }
 
   .earth-ozone-line {
@@ -291,8 +290,7 @@
     width: 90%;
     height: 2px;
     background: linear-gradient(90deg, transparent 0%, rgba(56, 189, 248, 0.35) 25%, rgba(147, 197, 253, 0.5) 50%, rgba(56, 189, 248, 0.35) 75%, transparent 100%);
-    filter: blur(1px);
-    box-shadow: 0 0 16px rgba(56, 189, 248, 0.4);
+    box-shadow: 0 0 12px rgba(56, 189, 248, 0.35);
   }
 
   .earth-curvature-body {
@@ -338,11 +336,9 @@
     align-items: center;
     gap: 0.5rem;
     padding: 0.25rem 0.75rem;
-    background: rgba(14, 18, 27, 0.75);
+    background: rgba(14, 18, 27, 0.88);
     border: 1px solid rgba(142, 149, 165, 0.16);
     border-radius: 9999px;
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
   }
 
   .hud-live-dot {
@@ -414,7 +410,7 @@
   }
 
   .satellite-svg {
-    filter: drop-shadow(0 4px 14px rgba(0, 0, 0, 0.6));
+    display: block;
   }
 
   /* Solar Specular Reflection Animation */
@@ -437,7 +433,7 @@
     }
   }
 
-  /* Telemetry Beacon Blinking LED */
+  /* Telemetry Beacon Blinking LED (GPU-only transform/opacity) */
   .satellite-beacon {
     position: absolute;
     top: 15px;
@@ -446,19 +442,18 @@
     height: 6px;
     border-radius: 50%;
     background: #E5A96A;
-    box-shadow: 0 0 10px #E5A96A, 0 0 20px rgba(229, 169, 106, 0.7);
+    box-shadow: 0 0 10px rgba(229, 169, 106, 0.75);
     animation: beacon-flash 1.6s ease-in-out infinite;
   }
 
   @keyframes beacon-flash {
     0%, 100% {
-      opacity: 0.2;
+      opacity: 0.25;
       transform: scale(0.85);
     }
     50% {
       opacity: 1;
-      transform: scale(1.4);
-      box-shadow: 0 0 14px #E5A96A, 0 0 28px rgba(229, 169, 106, 0.9);
+      transform: scale(1.35);
     }
   }
 
@@ -472,13 +467,11 @@
     align-items: center;
     gap: 4px;
     padding: 2px 7px;
-    background: rgba(14, 18, 27, 0.85);
+    background: rgba(14, 18, 27, 0.92);
     border: 1px solid rgba(142, 149, 165, 0.2);
     border-radius: 9999px;
-    backdrop-filter: blur(8px);
-    -webkit-backdrop-filter: blur(8px);
     white-space: nowrap;
-    opacity: 0.7;
+    opacity: 0.75;
     transition: opacity 0.2s ease;
   }
 
@@ -553,7 +546,7 @@
 </style>
 
 <script>
-  // High-Performance 60FPS Ambient Starfield with Visibility Throttling
+  // ponytail: DPR-capped (~1.5), 30fps-throttled starfield with visibility pause and zero save/restore overhead
   (function initCosmicStarfield() {
     const canvas = document.getElementById('cosmic-starfield') as HTMLCanvasElement;
     if (!canvas) return;
@@ -566,7 +559,6 @@
       y: number;
       baseRadius: number;
       alpha: number;
-      targetAlpha: number;
       twinkleSpeed: number;
       phase: number;
       tint: 'ivory' | 'amber' | 'titanium';
@@ -577,29 +569,27 @@
     let width = 0;
     let height = 0;
     let animId = 0;
-    let isVisible = true;
+    let isVisible = document.visibilityState === 'visible';
+    let lastRenderTime = 0;
+    const FRAME_INTERVAL = 1000 / 30;
 
-    // Check prefers-reduced-motion
     const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
     function resize() {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
+      const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
       width = window.innerWidth;
       height = window.innerHeight;
 
       canvas.width = Math.floor(width * dpr);
       canvas.height = Math.floor(height * dpr);
-      ctx.scale(dpr, dpr);
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
       initStars();
-      if (prefersReducedMotion) {
-        renderStatic();
-      }
+      renderStatic();
     }
 
     function initStars() {
-      // Density: ~1 star per 3200 sq pixels, bounded between 160 and 380
-      const starCount = Math.floor(Math.min(Math.max((width * height) / 3400, 160), 380));
+      const starCount = Math.floor(Math.min(Math.max((width * height) / 4800, 110), 220));
       stars = [];
 
       for (let i = 0; i < starCount; i++) {
@@ -610,19 +600,16 @@
         let baseAlpha = 0.35 + Math.random() * 0.4;
 
         if (rand > 0.94) {
-          // Bright navigation stars with diffraction spike
           tint = Math.random() > 0.5 ? 'amber' : 'ivory';
           isBright = true;
-          baseRadius = 1.6 + Math.random() * 0.6;
+          baseRadius = 1.6 + Math.random() * 0.5;
           baseAlpha = 0.8 + Math.random() * 0.2;
         } else if (rand > 0.70) {
-          // Mid-range stars
           tint = rand > 0.85 ? 'amber' : 'titanium';
           baseRadius = 1.0 + Math.random() * 0.4;
           baseAlpha = 0.5 + Math.random() * 0.35;
         } else {
-          // Distant micro stars
-          baseRadius = 0.5 + Math.random() * 0.4;
+          baseRadius = 0.5 + Math.random() * 0.35;
           baseAlpha = 0.25 + Math.random() * 0.3;
         }
 
@@ -631,7 +618,6 @@
           y: Math.random() * height,
           baseRadius,
           alpha: baseAlpha,
-          targetAlpha: baseAlpha,
           twinkleSpeed: 0.015 + Math.random() * 0.025,
           phase: Math.random() * Math.PI * 2,
           tint,
@@ -648,23 +634,28 @@
     }
 
     function drawStar(star: Star, currentAlpha: number) {
-      ctx.save();
-      ctx.globalAlpha = Math.max(0.1, Math.min(currentAlpha, 1));
+      const alpha = Math.max(0.1, Math.min(currentAlpha, 1));
+      const fillStyle =
+        star.tint === 'amber' ? '#E5A96A' :
+        star.tint === 'titanium' ? '#B6BAC6' : '#F3F4F6';
 
-      let fillStyle = '#F3F4F6';
-      if (star.tint === 'amber') fillStyle = '#E5A96A';
-      else if (star.tint === 'titanium') fillStyle = '#B6BAC6';
-
+      ctx.globalAlpha = alpha;
       ctx.fillStyle = fillStyle;
+
+      if (star.baseRadius < 0.9) {
+        const size = star.baseRadius * 1.8;
+        ctx.fillRect(star.x - size * 0.5, star.y - size * 0.5, size, size);
+        return;
+      }
+
       ctx.beginPath();
       ctx.arc(star.x, star.y, star.baseRadius, 0, Math.PI * 2);
       ctx.fill();
 
-      // Subtle 4-point cross diffraction flare on bright navigation stars
       if (star.isBright) {
         ctx.strokeStyle = fillStyle;
         ctx.lineWidth = 0.6;
-        ctx.globalAlpha = currentAlpha * 0.45;
+        ctx.globalAlpha = alpha * 0.45;
 
         const spikeLen = star.baseRadius * 3.8;
         ctx.beginPath();
@@ -674,50 +665,45 @@
         ctx.lineTo(star.x, star.y + spikeLen);
         ctx.stroke();
       }
-
-      ctx.restore();
     }
 
-    function render() {
+    function render(now = performance.now()) {
       if (!isVisible) return;
+      animId = requestAnimationFrame(render);
+
+      if (lastRenderTime && now - lastRenderTime < FRAME_INTERVAL) return;
+      const dtFactor = lastRenderTime ? Math.min((now - lastRenderTime) / 16.667, 3) : 1;
+      lastRenderTime = now;
 
       ctx.clearRect(0, 0, width, height);
 
       for (let i = 0; i < stars.length; i++) {
         const star = stars[i];
-        star.phase += star.twinkleSpeed;
-        // Smooth sine wave twinkling modulation
-        const mod = (Math.sin(star.phase) + 1) * 0.5; // 0 to 1
+        star.phase += star.twinkleSpeed * dtFactor;
+        const mod = (Math.sin(star.phase) + 1) * 0.5;
         const currentAlpha = star.alpha * (0.65 + mod * 0.5);
-
         drawStar(star, currentAlpha);
       }
-
-      animId = requestAnimationFrame(render);
     }
 
-    // Visibility change handler (save battery and CPU when tab hidden)
     document.addEventListener('visibilitychange', () => {
       isVisible = document.visibilityState === 'visible';
+      cancelAnimationFrame(animId);
       if (isVisible && !prefersReducedMotion) {
-        cancelAnimationFrame(animId);
-        render();
-      } else {
-        cancelAnimationFrame(animId);
+        lastRenderTime = 0;
+        animId = requestAnimationFrame(render);
       }
     });
 
-    // Resize handler with debounce
     let resizeTimer: number;
     window.addEventListener('resize', () => {
       clearTimeout(resizeTimer);
       resizeTimer = window.setTimeout(resize, 150);
     }, { passive: true });
 
-    // Initial setup
     resize();
-    if (!prefersReducedMotion) {
-      render();
+    if (isVisible && !prefersReducedMotion) {
+      animId = requestAnimationFrame(render);
     }
   })();
 </script>

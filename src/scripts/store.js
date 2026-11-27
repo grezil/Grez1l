@@ -39,8 +39,9 @@ function formatDate(d) {
 }
 
 // In-memory fallback / cache
+// ponytail: align initial revision count with portfolio.json telemetryStats
 let memoryData = deepClone(defaultPortfolioData);
-let memoryUpdateCount = 24;
+let memoryUpdateCount = parseInt(defaultPortfolioData?.profile?.telemetryStats?.[0]?.value, 10) || 64;
 
 /**
  * Get current website update / revision count
@@ -51,7 +52,7 @@ export function getUpdateCount() {
   }
   try {
     const raw = localStorage.getItem(UPDATES_KEY);
-    if (!raw) {
+    if (raw === null) {
       localStorage.setItem(UPDATES_KEY, String(memoryUpdateCount));
       return memoryUpdateCount;
     }
@@ -66,13 +67,12 @@ export function getUpdateCount() {
  * Increment website update count by 1 and persist
  */
 export function incrementUpdateCount() {
-  memoryUpdateCount += 1;
+  // ponytail: read current persisted count before incrementing so 1 call = +1
+  const next = getUpdateCount() + 1;
+  memoryUpdateCount = next;
   if (isBrowser) {
     try {
-      const current = getUpdateCount();
-      const next = current + 1;
       localStorage.setItem(UPDATES_KEY, String(next));
-      memoryUpdateCount = next;
     } catch (err) {
       console.error('Failed to increment update count:', err);
     }
@@ -124,8 +124,12 @@ export function getData() {
       } catch (e) {}
     }
 
-    // Ensure courses and activities exist in parsed data from local storage
+    // Ensure core collections exist in parsed data without resurrecting explicitly emptied [] arrays
     let needsResave = false;
+    if (!Array.isArray(parsed.blogs)) {
+      parsed.blogs = deepClone(defaultPortfolioData.blogs || []);
+      needsResave = true;
+    }
     if (!Array.isArray(parsed.courses)) {
       parsed.courses = deepClone(defaultPortfolioData.courses || []);
       needsResave = true;
@@ -238,12 +242,15 @@ export function notifySubscribers() {
 }
 
 /**
- * Helper to slugify strings for URLs and IDs
+ * Helper to slugify strings for URLs and IDs (Unicode/Vietnamese safe)
  */
 export function slugify(text) {
-  if (!text) return `entry-${Date.now()}`;
-  return text
+  // ponytail: NFD normalize + Vietnamese d/D mapping + non-empty fallback
+  const normalized = (text || '')
     .toString()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[đĐ]/g, 'd')
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '-')
@@ -251,6 +258,60 @@ export function slugify(text) {
     .replace(/\-\-+/g, '-')
     .replace(/^-+/, '')
     .replace(/-+$/, '');
+  return normalized || `entry-${Date.now()}`;
+}
+
+// ponytail: shared array/date/activity helpers to avoid duplicate parsing & double event storms
+function parseTags(val, fallback = []) {
+  if (Array.isArray(val)) return val.map((s) => String(s).trim()).filter(Boolean);
+  if (typeof val === 'string' && val.trim()) {
+    return val.split(',').map((s) => s.trim()).filter(Boolean);
+  }
+  return [...fallback];
+}
+
+function parseLines(val, fallback = []) {
+  if (Array.isArray(val)) return val.map((s) => String(s).trim()).filter(Boolean);
+  if (typeof val === 'string' && val.trim()) {
+    return val.split('\n').map((s) => s.trim()).filter(Boolean);
+  }
+  return [...fallback];
+}
+
+function uniqueBlogSlug(baseSlug, blogs, excludeIndex = -1) {
+  let candidate = baseSlug;
+  let counter = 2;
+  const hasSlug = (s) => blogs.some((b, idx) => idx !== excludeIndex && b.slug === s);
+  while (hasSlug(candidate)) {
+    candidate = `${baseSlug}-${counter++}`;
+  }
+  return candidate;
+}
+
+function appendActivityToState(current, type, title, detail = '', customDate = null) {
+  const validDate = customDate && /^\d{4}-\d{2}-\d{2}$/.test(String(customDate).trim())
+    ? String(customDate).trim()
+    : null;
+  const dateStr = validDate || formatDate(new Date());
+  const newActivity = {
+    id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
+    date: dateStr,
+    type: type || 'blog',
+    title: title || 'Telemetry Update',
+    detail: detail || ''
+  };
+  const existing = getActivityLog();
+  const updatedActivities = [newActivity, ...existing];
+  current.activities = updatedActivities;
+  memoryData.activities = updatedActivities;
+  if (isBrowser) {
+    try {
+      localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(updatedActivities));
+    } catch (err) {
+      console.error('Failed to persist activity log:', err);
+    }
+  }
+  return newActivity;
 }
 
 /**
@@ -278,8 +339,8 @@ export function updateProfileAvatar(dataUrlOrUrl) {
   const current = getData();
   if (!current.profile) current.profile = {};
   current.profile.avatar = dataUrlOrUrl;
+  appendActivityToState(current, 'cv', 'Updated Profile Avatar', 'New mission portrait uploaded');
   saveData(current);
-  logActivity('cv', 'Updated Profile Avatar', 'New mission portrait uploaded');
   return dataUrlOrUrl;
 }
 
@@ -298,8 +359,8 @@ export function updateCVDocumentHtml(html) {
   const current = getData();
   if (!current.profile) current.profile = {};
   current.profile.cvDocumentHtml = html;
+  appendActivityToState(current, 'cv', 'Updated CV Document', 'Word-style document revised');
   saveData(current);
-  logActivity('cv', 'Updated CV Document', 'Word-style document revised');
   return html;
 }
 
@@ -335,20 +396,28 @@ export function updateCVData(sectionOrFull, maybeData) {
   const current = getData();
 
   if (typeof sectionOrFull === 'string' && maybeData !== undefined) {
-    // Section-specific update
-    current[sectionOrFull] = maybeData;
-    // ponytail: keep experience and timeline synced
+    // ponytail: merge profile objects to avoid wiping social, telemetryStats, or cvDocumentHtml
+    if (sectionOrFull === 'profile' && typeof maybeData === 'object' && maybeData !== null) {
+      current.profile = { ...(current.profile || {}), ...maybeData };
+    } else if (sectionOrFull === 'cvDocumentHtml') {
+      if (!current.profile) current.profile = {};
+      current.profile.cvDocumentHtml = maybeData;
+    } else {
+      current[sectionOrFull] = maybeData;
+    }
     if (sectionOrFull === 'experience' && Array.isArray(maybeData)) {
       current.timeline = deepClone(maybeData);
     } else if (sectionOrFull === 'timeline' && Array.isArray(maybeData)) {
       current.experience = deepClone(maybeData);
     }
   } else if (typeof sectionOrFull === 'object' && sectionOrFull !== null) {
-    // Multi-section merge
     Object.keys(sectionOrFull).forEach((key) => {
-      current[key] = sectionOrFull[key];
+      if (key === 'profile' && typeof sectionOrFull.profile === 'object' && sectionOrFull.profile !== null) {
+        current.profile = { ...(current.profile || {}), ...sectionOrFull.profile };
+      } else {
+        current[key] = sectionOrFull[key];
+      }
     });
-    // ponytail: keep experience and timeline synced
     if (sectionOrFull.experience && !sectionOrFull.timeline) {
       current.timeline = deepClone(sectionOrFull.experience);
     } else if (sectionOrFull.timeline && !sectionOrFull.experience) {
@@ -356,9 +425,9 @@ export function updateCVData(sectionOrFull, maybeData) {
     }
   }
 
-  saveData(current);
   const sectionLabel = typeof sectionOrFull === 'string' ? sectionOrFull : 'Dossier';
-  logActivity('cv', `CV Updated: ${sectionLabel}`, 'Modified academic credentials & records');
+  appendActivityToState(current, 'cv', `CV Updated: ${sectionLabel}`, 'Modified academic credentials & records');
+  saveData(current);
   return getCVData();
 }
 
@@ -395,21 +464,19 @@ export function addAchievement(achievement) {
   if (!Array.isArray(current.timeline)) current.timeline = [];
 
   const newId = achievement.id || `ach-${Date.now()}`;
+  const tags = parseTags(achievement.tags);
   const newAch = {
+    ...achievement,
     id: newId,
     title: achievement.title || achievement.role || 'Untitled Achievement',
     date: achievement.date || achievement.period || achievement.timeline || new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-    timeline: achievement.timeline || achievement.period || achievement.date || new Date().toISOString().split('T')[0],
+    timeline: achievement.timeline || achievement.period || achievement.date || formatDate(new Date()),
     organization: achievement.organization || 'Astraea Space Labs',
     category: achievement.category || achievement.badge || 'Technical Achievement',
     metrics: achievement.metrics || achievement.location || '',
     description: achievement.description || achievement.summary || '',
-    tags: Array.isArray(achievement.tags)
-      ? achievement.tags
-      : (typeof achievement.tags === 'string' && achievement.tags.trim() ? achievement.tags.split(',').map(s => s.trim()).filter(Boolean) : []),
-    ...achievement
+    tags
   };
-  newAch.id = newId;
 
   current.achievements.unshift(newAch);
 
@@ -424,15 +491,13 @@ export function addAchievement(achievement) {
       location: newAch.metrics || 'Flight Operations',
       badge: newAch.category || 'Flight Heritage',
       summary: newAch.description || newAch.title,
-      highlights: Array.isArray(newAch.highlights)
-        ? newAch.highlights
-        : (newAch.description ? [newAch.description] : [newAch.metrics || 'Verified milestone on record']),
+      highlights: parseLines(newAch.highlights, newAch.description ? [newAch.description] : [newAch.metrics || 'Verified milestone on record']),
       tags: newAch.tags
     });
   }
 
+  appendActivityToState(current, 'achievement', newAch.title, newAch.organization || 'Conferred milestone', newAch.timeline || null);
   saveData(current);
-  logActivity('achievement', newAch.title, newAch.organization || 'Conferred milestone', newAch.timeline || null);
   return newAch;
 }
 
@@ -445,15 +510,16 @@ export function updateAchievement(id, updated) {
 
   const index = current.achievements.findIndex((a) => a.id === id);
   if (index === -1) {
-    // If not found in achievements, try updating timeline
     return updateTimeline(id, updated);
   }
 
   const existing = current.achievements[index];
+  const tags = updated.tags !== undefined ? parseTags(updated.tags) : (existing.tags || []);
   current.achievements[index] = {
     ...existing,
     ...updated,
-    id // Preserve original ID
+    id,
+    tags
   };
 
   // ponytail: also update matching entry in timeline
@@ -468,15 +534,13 @@ export function updateAchievement(id, updated) {
         badge: updated.category || updated.badge || current.timeline[tIdx].badge,
         location: updated.metrics || updated.location || current.timeline[tIdx].location,
         summary: updated.description || updated.summary || current.timeline[tIdx].summary,
-        tags: updated.tags !== undefined
-          ? (Array.isArray(updated.tags) ? updated.tags : String(updated.tags).split(',').map(s => s.trim()).filter(Boolean))
-          : current.timeline[tIdx].tags
+        tags
       };
     }
   }
 
+  appendActivityToState(current, 'achievement', updated.title || current.achievements[index].title || 'Milestone Updated', 'Modified milestone details');
   saveData(current);
-  logActivity('achievement', updated.title || current.achievements[index].title || 'Milestone Updated', 'Modified milestone details');
   return current.achievements[index];
 }
 
@@ -493,7 +557,6 @@ export function deleteAchievement(id) {
     current.achievements = current.achievements.filter((a) => a.id !== id);
     if (current.achievements.length !== originalLength) changed = true;
 
-    // ponytail: also remove from timeline
     if (Array.isArray(current.timeline)) {
       const origTimelineLen = current.timeline.length;
       current.timeline = current.timeline.filter(t => t.id !== id && (!target || t.role !== target.title));
@@ -501,16 +564,18 @@ export function deleteAchievement(id) {
     }
   }
 
-  // Also remove from timeline directly if ID matches timeline entry
   if (Array.isArray(current.timeline)) {
     const origTimelineLen = current.timeline.length;
     current.timeline = current.timeline.filter(t => t.id !== id && `timeline-${slugify(t.role || t.period)}` !== id && slugify(t.role || t.period) !== id);
     if (current.timeline.length !== origTimelineLen) changed = true;
   }
 
+  if (Array.isArray(current.experience)) {
+    current.experience = current.experience.filter(e => e.id !== id && `timeline-${slugify(e.role || e.period)}` !== id && slugify(e.role || e.period) !== id);
+  }
+
   if (changed) {
     saveData(current);
-    logActivity('achievement', 'Milestone Removed', 'Deleted from record');
     return true;
   }
   return false;
@@ -549,18 +614,13 @@ export function addTimeline(entry) {
     location: entry.location || entry.metrics || 'Flight Operations',
     badge: entry.badge || entry.category || 'Flight Heritage',
     summary: entry.summary || entry.description || '',
-    highlights: Array.isArray(entry.highlights)
-      ? entry.highlights
-      : (typeof entry.highlights === 'string' && entry.highlights.trim() ? entry.highlights.split('\n').map(s => s.trim()).filter(Boolean) : (entry.description ? [entry.description] : [])),
-    tags: Array.isArray(entry.tags)
-      ? entry.tags
-      : (typeof entry.tags === 'string' && entry.tags.trim() ? entry.tags.split(',').map(s => s.trim()).filter(Boolean) : [])
+    highlights: parseLines(entry.highlights, entry.description ? [entry.description] : []),
+    tags: parseTags(entry.tags)
   };
 
   current.timeline.unshift(normalized);
   current.experience.unshift(normalized);
 
-  // Sync to achievements if not present
   if (!Array.isArray(current.achievements)) current.achievements = [];
   const existingAchIdx = current.achievements.findIndex(a => a.id === newId || a.title === normalized.role);
   if (existingAchIdx === -1) {
@@ -577,8 +637,8 @@ export function addTimeline(entry) {
     });
   }
 
+  appendActivityToState(current, 'achievement', normalized.role, normalized.organization || 'Timeline record added', normalized.period || null);
   saveData(current);
-  logActivity('achievement', normalized.role, normalized.organization || 'Timeline record added', normalized.period || null);
   return normalized;
 }
 
@@ -605,12 +665,8 @@ export function updateTimeline(id, patch) {
       badge: patch.badge || patch.category || existing.badge,
       location: patch.location || patch.metrics || existing.location,
       summary: patch.summary || patch.description || existing.summary,
-      highlights: patch.highlights !== undefined
-        ? (Array.isArray(patch.highlights) ? patch.highlights : String(patch.highlights).split('\n').map(s => s.trim()).filter(Boolean))
-        : existing.highlights,
-      tags: patch.tags !== undefined
-        ? (Array.isArray(patch.tags) ? patch.tags : String(patch.tags).split(',').map(s => s.trim()).filter(Boolean))
-        : existing.tags
+      highlights: patch.highlights !== undefined ? parseLines(patch.highlights) : existing.highlights,
+      tags: patch.tags !== undefined ? parseTags(patch.tags) : existing.tags
     };
     current.timeline[idx] = updated;
 
@@ -638,8 +694,8 @@ export function updateTimeline(id, patch) {
       }
     }
 
+    appendActivityToState(current, 'achievement', updated.role || 'Timeline Milestone Updated', 'Modified timeline milestone details');
     saveData(current);
-    logActivity('achievement', updated.role || 'Timeline Milestone Updated', 'Modified timeline milestone details');
     return updated;
   }
 
@@ -652,8 +708,11 @@ export function updateTimeline(id, patch) {
 export function deleteTimeline(id) {
   const current = getData();
   let changed = false;
+  let removedRole = '';
 
   if (Array.isArray(current.timeline)) {
+    const target = current.timeline.find(t => t.id === id || `timeline-${slugify(t.role || t.period)}` === id || slugify(t.role || t.period) === id);
+    if (target) removedRole = target.role || '';
     const origLen = current.timeline.length;
     current.timeline = current.timeline.filter(t => t.id !== id && `timeline-${slugify(t.role || t.period)}` !== id && slugify(t.role || t.period) !== id);
     if (current.timeline.length !== origLen) changed = true;
@@ -665,13 +724,12 @@ export function deleteTimeline(id) {
 
   if (Array.isArray(current.achievements)) {
     const origAchLen = current.achievements.length;
-    current.achievements = current.achievements.filter(a => a.id !== id);
+    current.achievements = current.achievements.filter(a => a.id !== id && (!removedRole || a.title !== removedRole));
     if (current.achievements.length !== origAchLen) changed = true;
   }
 
   if (changed) {
     saveData(current);
-    logActivity('achievement', 'Timeline Milestone Removed', 'Deleted from flight heritage record');
     return true;
   }
   return false;
@@ -688,9 +746,10 @@ export function getBlogs() {
   const current = getData();
   const blogs = current.blogs || [];
   return [...blogs].sort((a, b) => {
-    const dateA = a.date || '';
-    const dateB = b.date || '';
-    return dateB.localeCompare(dateA);
+    const tA = Date.parse(a.date || '');
+    const tB = Date.parse(b.date || '');
+    if (!isNaN(tA) && !isNaN(tB) && tA !== tB) return tB - tA;
+    return String(b.date || '').localeCompare(String(a.date || ''));
   });
 }
 
@@ -707,39 +766,39 @@ export function getBlogBySlug(slugOrId) {
  */
 export function addBlog(blog) {
   const current = getData();
-  if (!current.blogs) current.blogs = [];
+  if (!Array.isArray(current.blogs)) current.blogs = [];
 
   const title = blog.title || 'Untitled Space Engineering Note';
-  const slug = blog.slug ? slugify(blog.slug) : slugify(title);
+  const baseSlug = blog.slug ? slugify(blog.slug) : slugify(title);
+  const slug = uniqueBlogSlug(baseSlug, current.blogs);
   const content = blog.content || '';
   const readTime = blog.readTime || calculateReadTime(content);
-  const now = new Date();
-  const dateStr = blog.date || formatDate(now);
+  const dateStr = blog.date || formatDate(new Date());
+  const tags = parseTags(blog.tags, ['Aerospace', 'Flight Software']);
+  const summary = blog.summary || blog.excerpt || (content.length > 150 ? content.slice(0, 150) + '...' : content);
+  const id = blog.id || `post-${Date.now()}`;
 
   const newPost = {
-    id: blog.id || `post-${Date.now()}`,
-    slug: slug,
-    title: title,
+    ...blog,
+    id,
+    slug,
+    title,
     date: dateStr,
-    readTime: readTime,
+    readTime,
     category: blog.category || 'Flight Software',
-    tags: Array.isArray(blog.tags) ? blog.tags : (blog.tags ? [blog.tags] : ['Aerospace', 'Flight Software']),
+    tags,
     author: blog.author || {
       name: current.profile?.name || 'VO QUANG NHAT NGUYEN',
       role: current.profile?.title || 'Flight Software Architect',
       callsign: current.profile?.callsign || 'NHAT-NGUYEN'
     },
-    summary: blog.summary || (content.length > 150 ? content.slice(0, 150) + '...' : content),
-    content: content,
-    ...blog,
-    // Ensure slug and id are prioritized
-    id: blog.id || `post-${Date.now()}`,
-    slug: slug
+    summary,
+    content
   };
 
   current.blogs.unshift(newPost);
+  appendActivityToState(current, 'blog', newPost.title, newPost.summary || 'Published technical dispatch', newPost.date || null);
   saveData(current);
-  logActivity('blog', newPost.title, newPost.summary || 'Published technical dispatch', newPost.date || null);
   return newPost;
 }
 
@@ -748,25 +807,31 @@ export function addBlog(blog) {
  */
 export function updateBlog(slugOrId, updated) {
   const current = getData();
-  if (!current.blogs) return null;
+  if (!Array.isArray(current.blogs)) return null;
 
   const index = current.blogs.findIndex((b) => b.slug === slugOrId || b.id === slugOrId);
   if (index === -1) return null;
 
   const existing = current.blogs[index];
   const newContent = updated.content !== undefined ? updated.content : existing.content;
-  const newReadTime = updated.readTime || (updated.content ? calculateReadTime(newContent) : existing.readTime);
-  const newSlug = updated.slug ? slugify(updated.slug) : (updated.title && updated.title !== existing.title ? slugify(updated.title) : existing.slug);
+  const newReadTime = updated.readTime || (updated.content !== undefined ? calculateReadTime(newContent) : existing.readTime);
+  // ponytail: preserve existing slug when omitted so static /blog/<slug> links don't break on title typo fixes
+  const rawSlug = updated.slug && updated.slug.trim() ? slugify(updated.slug) : (existing.slug || slugify(updated.title || existing.title));
+  const newSlug = uniqueBlogSlug(rawSlug, current.blogs, index);
+  const tags = updated.tags !== undefined ? parseTags(updated.tags, existing.tags || []) : (existing.tags || []);
 
   current.blogs[index] = {
     ...existing,
     ...updated,
+    id: existing.id || updated.id,
     slug: newSlug,
-    readTime: newReadTime
+    readTime: newReadTime,
+    tags,
+    category: updated.category || existing.category || 'Flight Software'
   };
 
+  appendActivityToState(current, 'blog', current.blogs[index].title || 'Blog Updated', 'Revised technical dispatch');
   saveData(current);
-  logActivity('blog', updated.title || current.blogs[index].title || 'Blog Updated', 'Revised technical dispatch');
   return current.blogs[index];
 }
 
@@ -775,7 +840,7 @@ export function updateBlog(slugOrId, updated) {
  */
 export function deleteBlog(slugOrId) {
   const current = getData();
-  if (!current.blogs) return false;
+  if (!Array.isArray(current.blogs)) return false;
 
   const originalLength = current.blogs.length;
   current.blogs = current.blogs.filter((b) => b.slug !== slugOrId && b.id !== slugOrId);
@@ -815,17 +880,14 @@ export function getCourseById(idOrCode) {
  */
 export function addCourse(courseData) {
   const current = getData();
-  if (!current.courses) current.courses = [];
+  if (!Array.isArray(current.courses)) current.courses = [];
 
-  const now = new Date();
-  const dateStr = formatDate(now);
+  const dateStr = formatDate(new Date());
   const id = courseData.id || `course-${slugify(courseData.code || courseData.title || Date.now())}`;
-
-  const tags = Array.isArray(courseData.tags)
-    ? courseData.tags
-    : (typeof courseData.tags === 'string' ? courseData.tags.split(',').map(t => t.trim()).filter(Boolean) : []);
+  const tags = parseTags(courseData.tags);
 
   const newCourse = {
+    ...courseData,
     id,
     code: courseData.code || 'ENG 100',
     title: courseData.title || 'Untitled Aerospace Course',
@@ -835,15 +897,12 @@ export function addCourse(courseData) {
     instructorEmail: courseData.instructorEmail || 'nhatnguyen@orbital-flight.dev',
     githubUrl: courseData.githubUrl || 'https://github.com/grezil',
     tags,
-    updatedAt: courseData.updatedAt || dateStr,
-    ...courseData,
-    id,
-    tags
+    updatedAt: courseData.updatedAt || dateStr
   };
 
   current.courses.unshift(newCourse);
+  appendActivityToState(current, 'course', newCourse.title, 'Published syllabus & materials');
   saveData(current);
-  logActivity('course', newCourse.title, 'Published syllabus & materials');
   return newCourse;
 }
 
@@ -852,14 +911,12 @@ export function addCourse(courseData) {
  */
 export function updateCourse(id, patch) {
   const current = getData();
-  if (!current.courses) return null;
+  if (!Array.isArray(current.courses)) return null;
 
   const index = current.courses.findIndex((c) => c.id === id);
   if (index === -1) return null;
 
-  const tags = patch.tags !== undefined
-    ? (Array.isArray(patch.tags) ? patch.tags : (typeof patch.tags === 'string' ? patch.tags.split(',').map(t => t.trim()).filter(Boolean) : []))
-    : current.courses[index].tags;
+  const tags = patch.tags !== undefined ? parseTags(patch.tags) : (current.courses[index].tags || []);
 
   current.courses[index] = {
     ...current.courses[index],
@@ -869,8 +926,8 @@ export function updateCourse(id, patch) {
     updatedAt: patch.updatedAt || formatDate(new Date())
   };
 
+  appendActivityToState(current, 'course', current.courses[index].title || 'Course Updated', 'Updated syllabus or materials');
   saveData(current);
-  logActivity('course', patch.title || current.courses[index].title || 'Course Updated', 'Updated syllabus or materials');
   return current.courses[index];
 }
 
@@ -886,7 +943,6 @@ export function deleteCourse(id) {
 
   if (current.courses.length !== originalLength) {
     saveData(current);
-    logActivity('course', 'Course Archive Removed', 'Deleted syllabus & materials');
     return true;
   }
   return false;
@@ -904,9 +960,9 @@ export function getActivityLog() {
   if (isBrowser) {
     try {
       const raw = localStorage.getItem(ACTIVITY_LOG_KEY);
-      if (raw) {
+      if (raw !== null) {
         const parsed = JSON.parse(raw);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           return parsed;
         }
       }
@@ -916,7 +972,7 @@ export function getActivityLog() {
   }
 
   const current = getData();
-  const fallback = (current.activities && current.activities.length > 0)
+  const fallback = Array.isArray(current.activities)
     ? current.activities
     : (defaultPortfolioData.activities || []);
 
@@ -939,57 +995,12 @@ export function getActivityLog() {
  * @param {string} [customDate] - Format YYYY-MM-DD
  */
 export function logActivity(type, title, detail = '', customDate = null) {
-  const dateStr = customDate || formatDate(new Date());
-  const newActivity = {
-    id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
-    date: dateStr,
-    type: type || 'blog',
-    title: title || 'Telemetry Update',
-    detail: detail || ''
-  };
-
-  const activities = getActivityLog();
-  const updatedActivities = [newActivity, ...activities];
-
-  if (isBrowser) {
-    try {
-      localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(updatedActivities));
-    } catch (err) {
-      console.error('Failed to persist activity log:', err);
-    }
-  }
-
-  // Also synchronize in main storage
+  const validDate = customDate && /^\d{4}-\d{2}-\d{2}$/.test(String(customDate).trim())
+    ? String(customDate).trim()
+    : null;
   const current = getData();
-  current.activities = updatedActivities;
-  memoryData.activities = updatedActivities;
-  if (isBrowser) {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(current));
-    } catch (e) {}
-  }
-
-  // Increment website update count
-  incrementUpdateCount();
-
-  // Dispatch reactive event
-  if (isBrowser) {
-    try {
-      window.dispatchEvent(
-        new CustomEvent(EVENT_NAME, {
-          detail: {
-            ...current,
-            activities: updatedActivities,
-            latestActivity: newActivity
-          },
-          bubbles: true
-        })
-      );
-    } catch (err) {
-      console.error('Failed to dispatch activity event:', err);
-    }
-  }
-
+  const newActivity = appendActivityToState(current, type, title, detail, validDate);
+  saveData(current);
   return newActivity;
 }
 
@@ -1179,6 +1190,7 @@ export function getActivityHeatmapData(targetYear = null, typeFilter = 'all') {
     currentStreak,
     longestStreak,
     activeDaysCount,
+    todayStr,
     startDate: formatDate(startDate),
     endDate: formatDate(endDate)
   };
@@ -1316,6 +1328,11 @@ export function importDataJSON(jsonString) {
     if (!parsed.profile || typeof parsed !== 'object') {
       throw new Error('Invalid portfolio JSON schema');
     }
+    if (isBrowser && Array.isArray(parsed.activities)) {
+      try {
+        localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(parsed.activities));
+      } catch (e) {}
+    }
     saveData(parsed);
     return { success: true, data: parsed };
   } catch (err) {
@@ -1327,15 +1344,16 @@ export function importDataJSON(jsonString) {
  * Reset all data to bundled default portfolio.json and clear auth
  */
 export function resetToDefaults() {
+  const defaultRev = parseInt(defaultPortfolioData?.profile?.telemetryStats?.[0]?.value, 10) || 64;
   memoryData = deepClone(defaultPortfolioData);
-  memoryUpdateCount = 24;
+  memoryUpdateCount = defaultRev;
 
   if (isBrowser) {
     try {
       localStorage.removeItem(STORAGE_KEY);
       localStorage.removeItem(AUTH_KEY);
       localStorage.removeItem(ACTIVITY_LOG_KEY);
-      localStorage.setItem(UPDATES_KEY, '24');
+      localStorage.setItem(UPDATES_KEY, String(defaultRev));
     } catch (err) {
       console.error('Error resetting localStorage:', err);
     }

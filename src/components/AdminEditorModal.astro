@@ -1,9 +1,18 @@
 ---
 // AdminEditorModal.astro - Comprehensive Apple-style Content Management Modal
-// Handles: Achievements & Timeline, Blog Composer, Harvard CV Content, Backup/Restore
+// Handles: Achievements & Timeline, Blog Composer, Harvard CV Content, Courses, Backup/Restore
+import portfolioData from '../data/portfolio.json';
+import { DEFAULT_BLOGS } from '../data/defaultBlogs.js';
+
+// ponytail: pass statically generated slugs so runtime posts link to /blog?post=<slug>
+const jsonBlogs = (portfolioData as any).blogs as any[] | undefined;
+const initialBlogs = (jsonBlogs && Array.isArray(jsonBlogs) && jsonBlogs.length > 0)
+  ? jsonBlogs
+  : DEFAULT_BLOGS;
+const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
 ---
 
-<div id="admin-editor-modal" class="editor-modal-backdrop" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="editor-modal-title">
+<div id="admin-editor-modal" class="editor-modal-backdrop" data-static-slugs={JSON.stringify(staticBlogSlugs)} aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="editor-modal-title">
   <div class="editor-modal-window">
     <!-- Header with Segmented Tab Control -->
     <div class="editor-header">
@@ -182,6 +191,16 @@
 
           <div class="form-row form-row-3">
             <div class="form-field">
+              <label for="blog-category-select" class="field-label">Category</label>
+              <select id="blog-category-select" class="editor-select">
+                <option value="Flight Software">Flight Software</option>
+                <option value="Orbital Mechanics">Orbital Mechanics</option>
+                <option value="Avionics">Avionics</option>
+                <option value="Deep Space Comms">Deep Space Comms</option>
+              </select>
+            </div>
+
+            <div class="form-field">
               <label for="blog-date-input" class="field-label">Publish Date</label>
               <input type="date" id="blog-date-input" class="editor-input" />
             </div>
@@ -190,11 +209,11 @@
               <label for="blog-readtime-input" class="field-label">Reading Time</label>
               <input type="text" id="blog-readtime-input" class="editor-input" placeholder="e.g. 6 min read" />
             </div>
+          </div>
 
-            <div class="form-field">
-              <label for="blog-tags-input" class="field-label">Category Tags (comma-separated)</label>
-              <input type="text" id="blog-tags-input" class="editor-input" placeholder="e.g. Flight Software, Rust, RTOS" />
-            </div>
+          <div class="form-field">
+            <label for="blog-tags-input" class="field-label">Category Tags (comma-separated)</label>
+            <input type="text" id="blog-tags-input" class="editor-input" placeholder="e.g. Flight Software, Rust, RTOS" />
           </div>
 
           <div class="form-field">
@@ -626,7 +645,8 @@
     transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .editor-modal-backdrop.is-active {
+  .editor-modal-backdrop.is-active,
+  .editor-modal-backdrop.is-open {
     opacity: 1;
     pointer-events: auto;
   }
@@ -653,7 +673,8 @@
     transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
   }
 
-  .editor-modal-backdrop.is-active .editor-modal-window {
+  .editor-modal-backdrop.is-active .editor-modal-window,
+  .editor-modal-backdrop.is-open .editor-modal-window {
     transform: scale(1) translateY(0);
   }
 
@@ -1367,7 +1388,6 @@
     font-size: 0.88rem;
     line-height: 1.7;
     outline: none;
-    white-space: pre-wrap;
   }
 
   .word-doc-canvas:focus {
@@ -1517,22 +1537,89 @@
 </style>
 
 <script>
+  import * as Store from '../scripts/store.js';
+
+  // ponytail: clean HTML escape, safe URL guard, Vietnamese NFD slugifier, and direct Store usage
+  function esc(str: any): string {
+    if (str === null || str === undefined) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function safeUrl(url: any): string {
+    const u = String(url || '').trim();
+    if (!u) return '';
+    if (u.startsWith('https://') || u.startsWith('http://') || u.startsWith('/')) return u;
+    return '';
+  }
+
+  function slugifyText(str: any): string {
+    return String(str || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/[đĐ]/g, 'd')
+      .toLowerCase()
+      .trim()
+      .replace(/[^\w\s-]/g, '')
+      .replace(/[\s_-]+/g, '-')
+      .replace(/^-+|-+$/g, '');
+  }
+
+  function setSelectValue(selectEl: HTMLSelectElement | null, value: string, fallback = '') {
+    if (!selectEl) return;
+    const v = String(value || fallback || '').trim();
+    if (!v) return;
+    const exists = Array.from(selectEl.options).some(opt => opt.value === v);
+    if (!exists) {
+      const opt = document.createElement('option');
+      opt.value = v;
+      opt.textContent = v;
+      selectEl.appendChild(opt);
+    }
+    selectEl.value = v;
+  }
+
   function setupAdminEditorModal() {
     const modal = document.getElementById('admin-editor-modal');
     if (!modal) return;
+    if (modal.dataset.bound === '1') return;
+    modal.dataset.bound = '1';
+
+    let staticBlogSlugs = new Set<string>();
+    try {
+      const rawSlugs = modal.getAttribute('data-static-slugs');
+      if (rawSlugs) staticBlogSlugs = new Set(JSON.parse(rawSlugs));
+    } catch {}
+
+    function getBlogHref(slug: string): string {
+      const s = String(slug || '').trim();
+      if (!s) return '/blog';
+      return staticBlogSlugs.has(s) ? `/blog/${encodeURIComponent(s)}` : `/blog?post=${encodeURIComponent(s)}`;
+    }
 
     const closeBtn = document.getElementById('editor-modal-close');
-    const tabs = document.querySelectorAll('.segment-tab');
-    const panels = document.querySelectorAll('.editor-tab-panel');
+    const tabs = modal.querySelectorAll('.segment-tab');
+    const panels = modal.querySelectorAll('.editor-tab-panel');
 
-    // Helper to get store
     async function getStore() {
+      return Store;
+    }
+
+    function checkSession(): boolean {
+      if (typeof Store.checkAdminAuth === 'function') {
+        return Store.checkAdminAuth();
+      }
       try {
-        const storeModule = await import('../scripts/store.js');
-        return storeModule;
-      } catch (e) {
-        console.warn('Could not import store.js directly:', e);
-        return null;
+        const raw = localStorage.getItem('space_portfolio_admin_session_v2');
+        if (!raw) return false;
+        const s = JSON.parse(raw);
+        return Boolean(s && s.user === 'admin' && s.authenticated === true);
+      } catch {
+        return false;
       }
     }
 
@@ -1555,59 +1642,130 @@
       });
     });
 
-    function openModal(defaultTab?: string) {
-      // ponytail: guard editor modal behind verified admin session
-      let isAuthed = false;
-      try {
-        const raw = localStorage.getItem('space_portfolio_admin_session_v2');
-        if (raw) {
-          const s = JSON.parse(raw);
-          isAuthed = Boolean(s && s.user === 'admin' && s.authenticated === true);
-        }
-      } catch (e) {}
+    function openLoginGate() {
+      const loginModal = document.getElementById('admin-login-modal');
+      if (loginModal) {
+        loginModal.classList.add('is-open', 'is-active');
+        loginModal.setAttribute('aria-hidden', 'false');
+        const userInput = loginModal.querySelector('input[type="text"]') as HTMLInputElement;
+        if (userInput) setTimeout(() => userInput.focus(), 150);
+      } else if (window.location.pathname !== '/admin') {
+        window.location.href = '/admin';
+      }
+    }
 
-      if (!isAuthed) {
-        const loginModal = document.getElementById('admin-login-modal');
-        if (loginModal) {
-          loginModal.classList.add('is-open', 'is-active');
-          loginModal.setAttribute('aria-hidden', 'false');
-          const userInput = loginModal.querySelector('input[type="text"]') as HTMLInputElement;
-          if (userInput) setTimeout(() => userInput.focus(), 150);
-        } else if (window.location.pathname !== '/admin') {
-          window.location.href = '/admin';
-        }
+    let mutatingClass = false;
+
+    function openModal(defaultTab?: string) {
+      if (!checkSession()) {
+        closeModal();
+        openLoginGate();
         return;
       }
 
-      modal?.classList.add('is-active');
-      modal?.setAttribute('aria-hidden', 'false');
+      mutatingClass = true;
+      modal.classList.add('is-active', 'is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      mutatingClass = false;
+
       if (defaultTab) {
-        const tabTarget = defaultTab.startsWith('tab-') ? defaultTab : `tab-${defaultTab}`;
-        switchTab(tabTarget);
+        if (defaultTab === 'profile' || defaultTab === 'tab-profile') {
+          switchTab('tab-cv');
+          setCVMode('form');
+          setTimeout(() => {
+            document.getElementById('cv-avatar-studio')?.scrollIntoView({ behavior: 'smooth' });
+          }, 150);
+        } else {
+          const tabTarget = defaultTab.startsWith('tab-') ? defaultTab : `tab-${defaultTab}`;
+          switchTab(tabTarget);
+        }
       }
       refreshAllData();
     }
 
     function closeModal() {
-      modal?.classList.remove('is-active');
-      modal?.setAttribute('aria-hidden', 'true');
+      mutatingClass = true;
+      modal.classList.remove('is-active', 'is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      mutatingClass = false;
     }
 
     closeBtn?.addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => {
       if (e.target === modal) closeModal();
     });
-    window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape' && modal.classList.contains('is-active')) {
-        closeModal();
+
+    // ponytail: sync when Layout.astro toggles .is-open directly on #admin-editor-modal
+    const observer = new MutationObserver(() => {
+      if (mutatingClass) return;
+      const isOpen = modal.classList.contains('is-open') || modal.classList.contains('is-active');
+      if (isOpen) {
+        if (!checkSession()) {
+          closeModal();
+          openLoginGate();
+          return;
+        }
+        mutatingClass = true;
+        modal.classList.add('is-active', 'is-open');
+        modal.setAttribute('aria-hidden', 'false');
+        mutatingClass = false;
+        refreshAllData();
       }
     });
+    observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
 
-    // Listen for custom open event
-    window.addEventListener('open-admin-editor', (e: any) => {
-      const tab = e.detail?.tab || 'achievement';
-      openModal(tab);
-    });
+    // Expose active modal hooks to a single set of global window listeners
+    (window as any).__adminEditorModalActive = {
+      openModal,
+      closeModal,
+      refreshAllData: () => refreshAllData(),
+      isOpen: () => modal.classList.contains('is-active') || modal.classList.contains('is-open'),
+      editBlog: (target: any) => startEditingBlog(target),
+      openAvatarEditor: () => {
+        openModal('cv');
+        setCVMode('form');
+        setTimeout(() => {
+          document.getElementById('cv-avatar-studio')?.scrollIntoView({ behavior: 'smooth' });
+        }, 200);
+      }
+    };
+
+    if (!(window as any).__adminEditorListenersBound) {
+      (window as any).__adminEditorListenersBound = true;
+      window.addEventListener('keydown', (e) => {
+        const active = (window as any).__adminEditorModalActive;
+        if (e.key === 'Escape' && active && active.isOpen()) {
+          active.closeModal();
+        }
+      });
+      window.addEventListener('open-admin-editor', (e: any) => {
+        const active = (window as any).__adminEditorModalActive;
+        if (active) active.openModal(e.detail?.tab || 'achievement');
+      });
+      window.addEventListener('open-admin-blog-modal', (e: any) => {
+        const active = (window as any).__adminEditorModalActive;
+        if (!active) return;
+        active.openModal('blog');
+        if (e.detail?.slug && typeof Store.getBlogBySlug === 'function') {
+          const found = Store.getBlogBySlug(e.detail.slug);
+          if (found) active.editBlog(found);
+        }
+      });
+      window.addEventListener('open-avatar-editor', () => {
+        const active = (window as any).__adminEditorModalActive;
+        if (active) active.openAvatarEditor();
+      });
+      window.addEventListener('portfolio-data-updated', () => {
+        const active = (window as any).__adminEditorModalActive;
+        if (active && active.isOpen()) active.refreshAllData();
+      });
+      window.addEventListener('portfolio-admin-auth-changed', (e: any) => {
+        const active = (window as any).__adminEditorModalActive;
+        if (active && e.detail && e.detail.authenticated === false) {
+          active.closeModal();
+        }
+      });
+    }
 
     // ----------------------------------------------------
     // TAB 1: ACHIEVEMENTS LOGIC
@@ -1699,20 +1857,20 @@
       achListContainer.innerHTML = list.map((item: any, idx: number) => {
         const id = item.id || `ach-${idx}`;
         return `
-          <div class="inventory-card" data-id="${id}">
+          <div class="inventory-card" data-id="${esc(id)}">
             <div class="inv-card-left">
-              <h5 class="inv-card-title">${item.title || 'Untitled Achievement'}</h5>
+              <h5 class="inv-card-title">${esc(item.title || 'Untitled Achievement')}</h5>
               <div class="inv-card-meta">
-                <span style="color:#E5A96A;">${item.date || item.timeline || 'Date N/A'}</span>
+                <span style="color:#E5A96A;">${esc(item.date || item.timeline || 'Date N/A')}</span>
                 <span>•</span>
-                <span style="color:#00F2FE;">${item.category || 'Milestone'}</span>
-                ${item.organization ? `<span>•</span><span>${item.organization}</span>` : ''}
-                ${item.metrics ? `<span>•</span><span style="color:#34D399;">${item.metrics}</span>` : ''}
+                <span style="color:#00F2FE;">${esc(item.category || 'Milestone')}</span>
+                ${item.organization ? `<span>•</span><span>${esc(item.organization)}</span>` : ''}
+                ${item.metrics ? `<span>•</span><span style="color:#34D399;">${esc(item.metrics)}</span>` : ''}
               </div>
             </div>
             <div class="inv-card-actions">
-              <button type="button" class="btn-inv-edit" data-edit-ach="${id}">Edit</button>
-              <button type="button" class="btn-inv-delete" data-delete-ach="${id}">Delete</button>
+              <button type="button" class="btn-inv-edit" data-edit-ach="${esc(id)}">Edit</button>
+              <button type="button" class="btn-inv-delete" data-delete-ach="${esc(id)}">Delete</button>
             </div>
           </div>
         `;
@@ -1727,7 +1885,7 @@
             achIdInput.value = target.id || id || '';
             achTitleInput.value = target.title || '';
             achDateInput.value = target.date || target.timeline || '';
-            achCatSelect.value = target.category || 'Flight Heritage';
+            setSelectValue(achCatSelect, target.category || 'Flight Heritage', 'Flight Heritage');
             achOrgInput.value = target.organization || '';
             achMetricsInput.value = target.metrics || target.metric || '';
             achDescInput.value = target.description || target.summary || '';
@@ -1739,17 +1897,18 @@
         });
       });
 
-      // Wire delete buttons
+      // Wire delete buttons (single store call to avoid double save/activity)
       achListContainer.querySelectorAll('[data-delete-ach]').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.getAttribute('data-delete-ach');
           if (!confirm('Are you sure you want to delete this timeline milestone / achievement?')) return;
           const store = await getStore();
           if (store) {
-            if (typeof store.deleteTimeline === 'function') store.deleteTimeline(id);
-            if (typeof store.deleteAchievement === 'function') store.deleteAchievement(id);
+            const removed = typeof store.deleteTimeline === 'function' ? store.deleteTimeline(id) : false;
+            if (!removed && typeof store.deleteAchievement === 'function') {
+              store.deleteAchievement(id);
+            }
           }
-          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
           window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Milestone removed from timeline' } }));
           loadAchievements();
         });
@@ -1779,16 +1938,14 @@
 
       const store = await getStore();
       if (achIdInput.value) {
-        // Update
-        if (store && typeof store.updateTimeline === 'function') {
-          store.updateTimeline(achIdInput.value, payload);
-        }
-        if (store && typeof store.updateAchievement === 'function') {
+        let updated = store && typeof store.updateTimeline === 'function'
+          ? store.updateTimeline(achIdInput.value, payload)
+          : null;
+        if (!updated && store && typeof store.updateAchievement === 'function') {
           store.updateAchievement(achIdInput.value, payload);
         }
         window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Milestone updated successfully' } }));
       } else {
-        // Add new
         if (store && typeof store.addTimeline === 'function') {
           store.addTimeline(payload);
         } else if (store && typeof store.addAchievement === 'function') {
@@ -1797,7 +1954,6 @@
         window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'New milestone added to timeline!' } }));
       }
 
-      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       resetAchForm();
       loadAchievements();
     });
@@ -1809,6 +1965,7 @@
     const blogIdInput = document.getElementById('blog-id-input') as HTMLInputElement;
     const blogTitleInput = document.getElementById('blog-title-input') as HTMLInputElement;
     const blogSlugInput = document.getElementById('blog-slug-input') as HTMLInputElement;
+    const blogCategorySelect = document.getElementById('blog-category-select') as HTMLSelectElement;
     const blogDateInput = document.getElementById('blog-date-input') as HTMLInputElement;
     const blogReadtimeInput = document.getElementById('blog-readtime-input') as HTMLInputElement;
     const blogTagsInput = document.getElementById('blog-tags-input') as HTMLInputElement;
@@ -1818,19 +1975,15 @@
     const blogCountBadge = document.getElementById('blog-count-badge');
     const blogNewBtn = document.getElementById('blog-new-btn');
 
-    // Auto-generate slug from title
+    // Auto-generate slug from title (with Vietnamese diacritics stripping)
     blogTitleInput?.addEventListener('input', () => {
       if (!blogIdInput.value) {
-        blogSlugInput.value = blogTitleInput.value
-          .toLowerCase()
-          .replace(/[^\w\s-]/g, '')
-          .replace(/[\s_-]+/g, '-')
-          .replace(/^-+|-+$/g, '');
+        blogSlugInput.value = slugifyText(blogTitleInput.value);
       }
     });
 
     // Markdown quick toolbar helpers
-    document.querySelectorAll('.tool-btn').forEach(btn => {
+    modal.querySelectorAll('.tool-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const tool = btn.getAttribute('data-tool');
         if (!blogContentInput) return;
@@ -1854,6 +2007,7 @@
       blogIdInput.value = '';
       blogTitleInput.value = '';
       blogSlugInput.value = '';
+      setSelectValue(blogCategorySelect, 'Flight Software', 'Flight Software');
       blogDateInput.value = new Date().toISOString().split('T')[0];
       blogReadtimeInput.value = '5 min read';
       blogTagsInput.value = '';
@@ -1863,18 +2017,29 @@
       if (submitBtn) submitBtn.querySelector('span')!.textContent = 'Publish / Update Article';
     }
 
+    resetBlogForm();
     blogNewBtn?.addEventListener('click', resetBlogForm);
+
+    function startEditingBlog(target: any) {
+      if (!target) return;
+      blogIdInput.value = target.id || target.slug || '';
+      blogTitleInput.value = target.title || '';
+      blogSlugInput.value = target.slug || '';
+      setSelectValue(blogCategorySelect, target.category || 'Flight Software', 'Flight Software');
+      blogDateInput.value = target.date || '';
+      blogReadtimeInput.value = target.readTime || '5 min read';
+      blogTagsInput.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
+      blogExcerptInput.value = target.excerpt || target.summary || '';
+      blogContentInput.value = target.content || '';
+      const submitBtn = document.getElementById('blog-save-btn');
+      if (submitBtn) submitBtn.querySelector('span')!.textContent = 'Update Article';
+      blogForm?.scrollIntoView({ behavior: 'smooth' });
+    }
 
     async function loadBlogs() {
       if (!blogListContainer) return;
       const store = await getStore();
-      let list: any[] = [];
-      if (store && typeof store.getBlogs === 'function') {
-        list = store.getBlogs();
-      } else {
-        const raw = localStorage.getItem('portfolio_blogs');
-        list = raw ? JSON.parse(raw) : [];
-      }
+      const list: any[] = store && typeof store.getBlogs === 'function' ? store.getBlogs() : [];
 
       if (blogCountBadge) blogCountBadge.textContent = `${list.length} articles`;
 
@@ -1885,21 +2050,25 @@
 
       blogListContainer.innerHTML = list.map((b: any, idx: number) => {
         const id = b.id || b.slug || `blog-${idx}`;
+        const href = getBlogHref(b.slug || '');
         return `
-          <div class="inventory-card" data-id="${id}">
+          <div class="inventory-card" data-id="${esc(id)}">
             <div class="inv-card-left">
-              <h5 class="inv-card-title">${b.title || 'Untitled Article'}</h5>
+              <h5 class="inv-card-title">${esc(b.title || 'Untitled Article')}</h5>
               <div class="inv-card-meta">
-                <span style="color:#E5A96A;">${b.date || 'Recent'}</span>
+                <span style="color:#E5A96A;">${esc(b.date || 'Recent')}</span>
                 <span>•</span>
-                <span>${b.readTime || '5 min read'}</span>
+                <span style="color:#00F2FE;">${esc(b.category || 'Flight Software')}</span>
                 <span>•</span>
-                <span>/${b.slug || ''}</span>
+                <span>${esc(b.readTime || '5 min read')}</span>
+                <span>•</span>
+                <span>/${esc(b.slug || '')}</span>
               </div>
             </div>
             <div class="inv-card-actions">
-              <button type="button" class="btn-inv-edit" data-edit-blog="${id}">Edit</button>
-              <button type="button" class="btn-inv-delete" data-delete-blog="${id}">Delete</button>
+              <a href="${esc(href)}" target="_blank" class="btn-inv-edit" style="text-decoration:none;">View</a>
+              <button type="button" class="btn-inv-edit" data-edit-blog="${esc(id)}">Edit</button>
+              <button type="button" class="btn-inv-delete" data-delete-blog="${esc(id)}">Delete</button>
             </div>
           </div>
         `;
@@ -1910,19 +2079,7 @@
         btn.addEventListener('click', () => {
           const id = btn.getAttribute('data-edit-blog');
           const target = list.find((item: any) => (item.id || item.slug) === id || `blog-${list.indexOf(item)}` === id);
-          if (target) {
-            blogIdInput.value = target.id || target.slug || id || '';
-            blogTitleInput.value = target.title || '';
-            blogSlugInput.value = target.slug || '';
-            blogDateInput.value = target.date || '';
-            blogReadtimeInput.value = target.readTime || '5 min read';
-            blogTagsInput.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
-            blogExcerptInput.value = target.excerpt || target.summary || '';
-            blogContentInput.value = target.content || '';
-            const submitBtn = document.getElementById('blog-save-btn');
-            if (submitBtn) submitBtn.querySelector('span')!.textContent = 'Update Article';
-            blogForm.scrollIntoView({ behavior: 'smooth' });
-          }
+          if (target) startEditingBlog(target);
         });
       });
 
@@ -1934,10 +2091,6 @@
           const store = await getStore();
           if (store && typeof store.deleteBlog === 'function') {
             store.deleteBlog(id);
-          } else {
-            const filtered = list.filter((item: any, i: number) => (item.id || item.slug || `blog-${i}`) !== id);
-            localStorage.setItem('portfolio_blogs', JSON.stringify(filtered));
-            window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
           }
           window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Blog article removed' } }));
           loadBlogs();
@@ -1947,11 +2100,11 @@
 
     blogForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const id = blogIdInput.value || blogSlugInput.value || `blog-${Date.now()}`;
+      const title = blogTitleInput.value.trim();
       const payload = {
-        id,
-        title: blogTitleInput.value.trim(),
-        slug: blogSlugInput.value.trim(),
+        title,
+        slug: blogSlugInput.value.trim() || slugifyText(title),
+        category: blogCategorySelect?.value || 'Flight Software',
         date: blogDateInput.value || new Date().toISOString().split('T')[0],
         readTime: blogReadtimeInput.value.trim() || '5 min read',
         tags: blogTagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
@@ -1963,23 +2116,12 @@
       const store = await getStore();
       if (blogIdInput.value) {
         if (store && typeof store.updateBlog === 'function') {
-          store.updateBlog(id, payload);
-        } else {
-          let rawList = JSON.parse(localStorage.getItem('portfolio_blogs') || '[]');
-          const idx = rawList.findIndex((item: any) => item.id === id || item.slug === id);
-          if (idx >= 0) rawList[idx] = payload; else rawList.push(payload);
-          localStorage.setItem('portfolio_blogs', JSON.stringify(rawList));
-          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+          store.updateBlog(blogIdInput.value, payload);
         }
         window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Blog article updated successfully' } }));
       } else {
         if (store && typeof store.addBlog === 'function') {
           store.addBlog(payload);
-        } else {
-          let rawList = JSON.parse(localStorage.getItem('portfolio_blogs') || '[]');
-          rawList.unshift(payload);
-          localStorage.setItem('portfolio_blogs', JSON.stringify(rawList));
-          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
         }
         window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'New article published to Mission Log!' } }));
       }
@@ -2165,46 +2307,12 @@
       }
 
       if (!html) {
-        // Generate formatted Harvard CV HTML
         const cv = store && typeof store.getCVData === 'function' ? store.getCVData() : {};
         const p = cv.profile || {};
         const expList = cv.experience || cv.timeline || [];
         const eduList = cv.education || [];
 
-        html = `
-          <div style="text-align:center; border-bottom:1px solid #E5A96A; padding-bottom:1rem; margin-bottom:1.5rem;">
-            <h1 style="color:#FFFFFF; font-size:1.6rem; margin-bottom:0.25rem;">${p.name || 'Võ Quang Nhật Nguyên'}</h1>
-            <p style="color:#E5A96A; font-weight:600; margin:0;">${p.title || 'Space Systems & Flight Software Architect'} [${p.callsign || 'NHAT-NGUYEN'}]</p>
-            <p style="color:#8E95A5; font-size:0.85rem; margin-top:0.35rem;">${p.location || 'Pasadena, CA'} • Clearance: ${p.clearance || 'Public Trust / NASA Heritage'}</p>
-          </div>
-
-          <h2>EXECUTIVE BIO & HARVARD SUMMARY</h2>
-          <hr/>
-          <p>${p.bio || 'Dual-specialist in aerospace engineering and deterministic real-time flight software.'}</p>
-
-          <h2>PROFESSIONAL APPOINTMENTS & EXPERIENCE</h2>
-          <hr/>
-          ${expList.map((e: any) => `
-            <div style="margin-bottom:1rem;">
-              <h3 style="color:#FFFFFF; margin-bottom:0.2rem;">${e.role || 'Flight Engineer'} • <span style="color:#E5A96A;">${e.organization || ''}</span></h3>
-              <p style="color:#8E95A5; font-size:0.82rem; margin:0;">${e.period || ''} | ${e.location || 'LEO Operations'} | <i>${e.badge || ''}</i></p>
-              <p style="margin-top:0.35rem;">${e.summary || ''}</p>
-              <ul>
-                ${(Array.isArray(e.highlights) ? e.highlights : [e.highlights || '']).map((h: string) => `<li>${h}</li>`).join('')}
-              </ul>
-            </div>
-          `).join('')}
-
-          <h2>ACADEMIC BACKGROUND & DEGREES</h2>
-          <hr/>
-          ${eduList.map((ed: any) => `
-            <div style="margin-bottom:0.85rem;">
-              <h3 style="color:#FFFFFF; margin-bottom:0.15rem;">${ed.degree || ''} — <span style="color:#E5A96A;">${ed.institution || ''}</span></h3>
-              <p style="color:#8E95A5; font-size:0.82rem; margin:0;">${ed.period || ''} | Honors: ${ed.honors || 'High Honors'}</p>
-              ${ed.thesis ? `<p style="margin-top:0.25rem; font-style:italic;">Thesis: "${ed.thesis}"</p>` : ''}
-            </div>
-          `).join('')}
-        `;
+        html = `<div style="text-align:center; border-bottom:1px solid #E5A96A; padding-bottom:1rem; margin-bottom:1.5rem;"><h1 style="color:#FFFFFF; font-size:1.6rem; margin-bottom:0.25rem;">${esc(p.name || 'Võ Quang Nhật Nguyên')}</h1><p style="color:#E5A96A; font-weight:600; margin:0;">${esc(p.title || 'Space Systems & Flight Software Architect')} [${esc(p.callsign || 'NHAT-NGUYEN')}]</p><p style="color:#8E95A5; font-size:0.85rem; margin-top:0.35rem;">${esc(p.location || 'Pasadena, CA')} • Clearance: ${esc(p.clearance || 'Public Trust / NASA Heritage')}</p></div><h2>EXECUTIVE BIO & HARVARD SUMMARY</h2><hr/><p>${esc(p.bio || 'Dual-specialist in aerospace engineering and deterministic real-time flight software.')}</p><h2>PROFESSIONAL APPOINTMENTS & EXPERIENCE</h2><hr/>${expList.map((e: any) => `<div style="margin-bottom:1rem;"><h3 style="color:#FFFFFF; margin-bottom:0.2rem;">${esc(e.role || 'Flight Engineer')} • <span style="color:#E5A96A;">${esc(e.organization || '')}</span></h3><p style="color:#8E95A5; font-size:0.82rem; margin:0;">${esc(e.period || '')} | ${esc(e.location || 'LEO Operations')} | <i>${esc(e.badge || '')}</i></p><p style="margin-top:0.35rem;">${esc(e.summary || '')}</p><ul>${(Array.isArray(e.highlights) ? e.highlights : [e.highlights || '']).filter(Boolean).map((h: string) => `<li>${esc(h)}</li>`).join('')}</ul></div>`).join('')}<h2>ACADEMIC BACKGROUND & DEGREES</h2><hr/>${eduList.map((ed: any) => `<div style="margin-bottom:0.85rem;"><h3 style="color:#FFFFFF; margin-bottom:0.15rem;">${esc(ed.degree || '')} — <span style="color:#E5A96A;">${esc(ed.institution || '')}</span></h3><p style="color:#8E95A5; font-size:0.82rem; margin:0;">${esc(ed.period || '')} | Honors: ${esc(ed.honors || 'High Honors')}</p>${ed.thesis ? `<p style="margin-top:0.25rem; font-style:italic;">Thesis: "${esc(ed.thesis)}"</p>` : ''}</div>`).join('')}`;
       }
 
       cvWordDocCanvas.innerHTML = html;
@@ -2272,30 +2380,30 @@
           <div class="form-row form-row-2">
             <div class="form-field">
               <label class="field-label">Role Title</label>
-              <input type="text" class="editor-input exp-role font-mono" value="${exp.role || ''}" placeholder="e.g. Lead Flight Software Engineer" />
+              <input type="text" class="editor-input exp-role font-mono" value="${esc(exp.role || '')}" placeholder="e.g. Lead Flight Software Engineer" />
             </div>
             <div class="form-field">
               <label class="field-label">Organization</label>
-              <input type="text" class="editor-input exp-org font-mono" value="${exp.organization || ''}" placeholder="e.g. Astraea Space Labs" />
+              <input type="text" class="editor-input exp-org font-mono" value="${esc(exp.organization || '')}" placeholder="e.g. Astraea Space Labs" />
             </div>
           </div>
           <div class="form-row form-row-2" style="margin-top:0.5rem;">
             <div class="form-field">
               <label class="field-label">Period / Dates</label>
-              <input type="text" class="editor-input exp-period font-mono" value="${exp.period || ''}" placeholder="e.g. 2023 — Present" />
+              <input type="text" class="editor-input exp-period font-mono" value="${esc(exp.period || '')}" placeholder="e.g. 2023 — Present" />
             </div>
             <div class="form-field">
               <label class="field-label">Location / Badge</label>
-              <input type="text" class="editor-input exp-badge font-mono" value="${exp.badge || exp.location || ''}" placeholder="e.g. Mission Flight Heritage" />
+              <input type="text" class="editor-input exp-badge font-mono" value="${esc(exp.badge || exp.location || '')}" placeholder="e.g. Mission Flight Heritage" />
             </div>
           </div>
           <div class="form-field" style="margin-top:0.5rem;">
             <label class="field-label">Summary</label>
-            <textarea rows="2" class="editor-textarea exp-summary font-mono">${exp.summary || ''}</textarea>
+            <textarea rows="2" class="editor-textarea exp-summary font-mono">${esc(exp.summary || '')}</textarea>
           </div>
           <div class="form-field" style="margin-top:0.5rem;">
             <label class="field-label">Harvard Action Highlights (one bullet per line)</label>
-            <textarea rows="3" class="editor-textarea exp-highlights font-mono">${Array.isArray(exp.highlights) ? exp.highlights.join('\n') : (exp.highlights || '')}</textarea>
+            <textarea rows="3" class="editor-textarea exp-highlights font-mono">${esc(Array.isArray(exp.highlights) ? exp.highlights.join('\n') : (exp.highlights || ''))}</textarea>
           </div>
         </div>
       `).join('');
@@ -2317,26 +2425,26 @@
           <div class="form-row form-row-2">
             <div class="form-field">
               <label class="field-label">Degree Title</label>
-              <input type="text" class="editor-input edu-degree font-mono" value="${edu.degree || edu.role || ''}" placeholder="e.g. Ph.D. in Aerospace Engineering" />
+              <input type="text" class="editor-input edu-degree font-mono" value="${esc(edu.degree || edu.role || '')}" placeholder="e.g. Ph.D. in Aerospace Engineering" />
             </div>
             <div class="form-field">
               <label class="field-label">Institution</label>
-              <input type="text" class="editor-input edu-inst font-mono" value="${edu.institution || edu.organization || ''}" placeholder="e.g. Caltech" />
+              <input type="text" class="editor-input edu-inst font-mono" value="${esc(edu.institution || edu.organization || '')}" placeholder="e.g. Caltech" />
             </div>
           </div>
           <div class="form-row form-row-2" style="margin-top:0.5rem;">
             <div class="form-field">
               <label class="field-label">Period / Year</label>
-              <input type="text" class="editor-input edu-period font-mono" value="${edu.period || ''}" placeholder="e.g. 2019 — 2023" />
+              <input type="text" class="editor-input edu-period font-mono" value="${esc(edu.period || '')}" placeholder="e.g. 2019 — 2023" />
             </div>
             <div class="form-field">
               <label class="field-label">Honors / Distinction</label>
-              <input type="text" class="editor-input edu-honors font-mono" value="${edu.honors || edu.badge || ''}" placeholder="e.g. Summa Cum Laude" />
+              <input type="text" class="editor-input edu-honors font-mono" value="${esc(edu.honors || edu.badge || '')}" placeholder="e.g. Summa Cum Laude" />
             </div>
           </div>
           <div class="form-field" style="margin-top:0.5rem;">
             <label class="field-label">Thesis / Dissertation Title</label>
-            <input type="text" class="editor-input edu-thesis font-mono" value="${edu.thesis || ''}" placeholder="e.g. Autonomous Guidance for Low-Thrust SmallSats" />
+            <input type="text" class="editor-input edu-thesis font-mono" value="${esc(edu.thesis || '')}" placeholder="e.g. Autonomous Guidance for Low-Thrust SmallSats" />
           </div>
         </div>
       `).join('');
@@ -2378,10 +2486,11 @@
     cvForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
 
-      // Collect updated experiences
+      // ponytail: merge existing entry metadata (tags, location, advisor, gpa, courses) on save
       const expItems = cvExpContainer?.querySelectorAll('.repeater-item') || [];
       const updatedExp: any[] = [];
-      expItems.forEach(item => {
+      expItems.forEach((item, idx) => {
+        const base = currentExpList[idx] || {};
         const role = (item.querySelector('.exp-role') as HTMLInputElement)?.value || '';
         const organization = (item.querySelector('.exp-org') as HTMLInputElement)?.value || '';
         const period = (item.querySelector('.exp-period') as HTMLInputElement)?.value || '';
@@ -2390,24 +2499,24 @@
         const highlightsText = (item.querySelector('.exp-highlights') as HTMLTextAreaElement)?.value || '';
         const highlights = highlightsText.split('\n').map(h => h.trim()).filter(Boolean);
 
-        updatedExp.push({ role, organization, period, badge, summary, highlights });
+        updatedExp.push({ ...base, role, organization, period, badge, summary, highlights });
       });
 
-      // Collect updated education
       const eduItems = cvEduContainer?.querySelectorAll('.repeater-item') || [];
       const updatedEdu: any[] = [];
-      eduItems.forEach(item => {
+      eduItems.forEach((item, idx) => {
+        const base = currentEduList[idx] || {};
         const degree = (item.querySelector('.edu-degree') as HTMLInputElement)?.value || '';
         const institution = (item.querySelector('.edu-inst') as HTMLInputElement)?.value || '';
         const period = (item.querySelector('.edu-period') as HTMLInputElement)?.value || '';
         const honors = (item.querySelector('.edu-honors') as HTMLInputElement)?.value || '';
         const thesis = (item.querySelector('.edu-thesis') as HTMLInputElement)?.value || '';
 
-        updatedEdu.push({ degree, institution, period, honors, thesis });
+        updatedEdu.push({ ...base, degree, institution, period, honors, thesis });
       });
 
       const store = await getStore();
-      const currentAvatar = store && typeof store.getProfileAvatar === 'function' ? store.getProfileAvatar() : '';
+      const currentAvatar = (cvAvatarPreviewImg && cvAvatarPreviewImg.style.display !== 'none' ? cvAvatarPreviewImg.src : '') || (store && typeof store.getProfileAvatar === 'function' ? store.getProfileAvatar() : '');
 
       const updatedCV = {
         profile: {
@@ -2427,25 +2536,13 @@
 
       if (store && typeof store.updateCVData === 'function') {
         store.updateCVData(updatedCV);
-      } else {
-        localStorage.setItem('portfolio_cv', JSON.stringify(updatedCV));
-        window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       }
 
+      loadCVData();
       window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'My CV content updated successfully!' } }));
     });
 
-    // Global listener to trigger avatar editing directly
-    window.addEventListener('open-avatar-editor', () => {
-      openModal('cv');
-      setCVMode('form');
-      setTimeout(() => {
-        const el = document.getElementById('cv-avatar-studio');
-        el?.scrollIntoView({ behavior: 'smooth' });
-      }, 200);
-    });
-
-    document.querySelectorAll('[data-avatar-edit-trigger]').forEach(el => {
+    modal.querySelectorAll('[data-avatar-edit-trigger]').forEach(el => {
       el.addEventListener('click', (e) => {
         e.preventDefault();
         window.dispatchEvent(new CustomEvent('open-avatar-editor'));
@@ -2506,22 +2603,23 @@
 
       courseListContainer.innerHTML = list.map((item: any, idx: number) => {
         const id = item.id || `course-${idx}`;
+        const gh = safeUrl(item.githubUrl);
         return `
-          <div class="inventory-card" data-id="${id}">
+          <div class="inventory-card" data-id="${esc(id)}">
             <div class="inv-card-left">
               <div style="display:flex; align-items:center; gap:0.5rem; margin-bottom:0.25rem;">
-                <span style="background:rgba(229,169,106,0.15); color:#E5A96A; border:1px solid rgba(229,169,106,0.3); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700;">${item.code || 'COURSE'}</span>
-                <h5 class="inv-card-title" style="margin:0;">${item.title || 'Untitled Course'}</h5>
+                <span style="background:rgba(229,169,106,0.15); color:#E5A96A; border:1px solid rgba(229,169,106,0.3); padding:0.1rem 0.45rem; border-radius:4px; font-size:0.75rem; font-weight:700;">${esc(item.code || 'COURSE')}</span>
+                <h5 class="inv-card-title" style="margin:0;">${esc(item.title || 'Untitled Course')}</h5>
               </div>
               <div class="inv-card-meta">
-                <span style="color:#E5A96A;">${item.semester || ''}</span>
-                ${item.institution ? `<span>•</span><span>${item.institution}</span>` : ''}
-                ${item.githubUrl ? `<span>•</span><a href="${item.githubUrl}" target="_blank" rel="noopener noreferrer" style="color:#60A5FA; text-decoration:underline;">GitHub ↗</a>` : ''}
+                <span style="color:#E5A96A;">${esc(item.semester || '')}</span>
+                ${item.institution ? `<span>•</span><span>${esc(item.institution)}</span>` : ''}
+                ${gh ? `<span>•</span><a href="${esc(gh)}" target="_blank" rel="noopener noreferrer" style="color:#60A5FA; text-decoration:underline;">GitHub ↗</a>` : ''}
               </div>
             </div>
             <div class="inv-card-actions">
-              <button type="button" class="btn-inv-edit" data-edit-course="${id}">Edit</button>
-              <button type="button" class="btn-inv-delete" data-delete-course="${id}">Delete</button>
+              <button type="button" class="btn-inv-edit" data-edit-course="${esc(id)}">Edit</button>
+              <button type="button" class="btn-inv-delete" data-delete-course="${esc(id)}">Delete</button>
             </div>
           </div>
         `;
@@ -2557,16 +2655,7 @@
           const store = await getStore();
           if (store && typeof store.deleteCourse === 'function') {
             store.deleteCourse(id);
-          } else {
-            const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
-            const courses = (fullData.courses || []).filter((c: any) => c.id !== id);
-            fullData.courses = courses;
-            if (store && typeof store.saveData === 'function') store.saveData(fullData);
           }
-          if (store && typeof store.logActivity === 'function') {
-            store.logActivity('course', 'Course Archive Removed', 'Deleted syllabus & materials');
-          }
-          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
           window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Course archive removed' } }));
           loadCourses();
         });
@@ -2577,7 +2666,7 @@
       e.preventDefault();
       const code = courseCodeInput.value.trim();
       const title = courseTitleInput.value.trim();
-      const id = courseIdInput.value || `course-${code.toLowerCase().replace(/[^a-z0-9]/g, '-') || 'item'}-${Date.now()}`;
+      const id = courseIdInput.value || `course-${slugifyText(code) || 'item'}-${Date.now()}`;
       const payload = {
         id,
         code,
@@ -2595,36 +2684,15 @@
       if (courseIdInput.value) {
         if (store && typeof store.updateCourse === 'function') {
           store.updateCourse(id, payload);
-        } else {
-          const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
-          const courses = fullData.courses || [];
-          const idx = courses.findIndex((c: any) => c.id === id);
-          if (idx >= 0) courses[idx] = { ...courses[idx], ...payload };
-          else courses.push(payload);
-          fullData.courses = courses;
-          if (store && typeof store.saveData === 'function') store.saveData(fullData);
-        }
-        if (store && typeof store.logActivity === 'function') {
-          store.logActivity('course', title, 'Updated syllabus & materials');
         }
         window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Course updated successfully' } }));
       } else {
         if (store && typeof store.addCourse === 'function') {
           store.addCourse(payload);
-        } else {
-          const fullData = store && typeof store.getData === 'function' ? store.getData() : {};
-          const courses = fullData.courses || [];
-          courses.unshift(payload);
-          fullData.courses = courses;
-          if (store && typeof store.saveData === 'function') store.saveData(fullData);
-        }
-        if (store && typeof store.logActivity === 'function') {
-          store.logActivity('course', title, 'Published syllabus & materials');
         }
         window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'New course published to Academic Archive!' } }));
       }
 
-      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       resetCourseForm();
       loadCourses();
     });
@@ -2757,13 +2825,6 @@
       loadCourses();
       loadRawJson();
     }
-
-    // Refresh when external update occurs
-    window.addEventListener('portfolio-data-updated', () => {
-      if (modal.classList.contains('is-active')) {
-        refreshAllData();
-      }
-    });
   }
 
   if (document.readyState === 'loading') {
@@ -2771,5 +2832,8 @@
   } else {
     setupAdminEditorModal();
   }
-  document.addEventListener('astro:page-load', setupAdminEditorModal);
+  if (!(window as any).__adminEditorAstroHooked) {
+    (window as any).__adminEditorAstroHooked = true;
+    document.addEventListener('astro:page-load', setupAdminEditorModal);
+  }
 </script>

@@ -44,7 +44,7 @@ const authorName = typeof post.author === 'object' && post.author !== null
   : (typeof post.author === 'string' ? post.author : 'Võ Quang Nhật Nguyên');
 
 const authorRole = typeof post.author === 'object' && post.author !== null 
-  ? (post.author.title || post.author.callsign || 'Flight Software Lead')
+  ? ((post.author as any).role || post.author.title || post.author.callsign || 'Flight Software Lead')
   : 'Lead Flight Software Engineer';
 ---
 
@@ -140,34 +140,32 @@ const authorRole = typeof post.author === 'object' && post.author !== null
   </div>
 </article>
 
-<style>
+<style is:global>
+  /* ponytail: global scoped under .blog-card so CSR cards in blog.astro retain full styling without backdrop-filter lag */
   .blog-card {
     display: flex;
     flex-direction: column;
-    background: rgba(18, 22, 36, 0.75);
-    backdrop-filter: blur(20px);
-    -webkit-backdrop-filter: blur(20px);
+    background: rgba(18, 22, 36, 0.86);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 16px;
     padding: 1.75rem;
     position: relative;
-    transition: all 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+    transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1), border-color 0.2s cubic-bezier(0.22, 1, 0.36, 1);
     box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.4);
     height: 100%;
   }
 
   .blog-card:hover {
-    transform: translateY(-4px);
+    transform: translateY(-3px);
     border-color: rgba(229, 169, 106, 0.35);
-    box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.6), 0 0 20px rgba(229, 169, 106, 0.1);
   }
 
   .blog-card.featured-card {
     border-color: rgba(229, 169, 106, 0.25);
-    background: linear-gradient(135deg, rgba(28, 34, 56, 0.85) 0%, rgba(18, 22, 36, 0.85) 100%);
+    background: linear-gradient(135deg, rgba(28, 34, 56, 0.9) 0%, rgba(18, 22, 36, 0.9) 100%);
   }
 
-  .card-meta-top {
+  .blog-card .card-meta-top {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -176,13 +174,13 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     margin-bottom: 1.15rem;
   }
 
-  .category-wrapper {
+  .blog-card .category-wrapper {
     display: flex;
     align-items: center;
     gap: 0.5rem;
   }
 
-  .cat-pill {
+  .blog-card .cat-pill {
     display: inline-flex;
     align-items: center;
     gap: 0.45rem;
@@ -195,54 +193,50 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     text-transform: uppercase;
   }
 
-  .pill-dot {
+  .blog-card .pill-dot {
     width: 6px;
     height: 6px;
     border-radius: 50%;
   }
 
   /* Category colors */
-  .badge-cat-fsw {
+  .blog-card .badge-cat-fsw {
     background: rgba(229, 169, 106, 0.12);
     border: 1px solid rgba(229, 169, 106, 0.3);
     color: #f3c28c;
   }
-  .badge-cat-fsw .pill-dot {
+  .blog-card .badge-cat-fsw .pill-dot {
     background: #e5a96a;
-    box-shadow: 0 0 6px #e5a96a;
   }
 
-  .badge-cat-orbit {
+  .blog-card .badge-cat-orbit {
     background: rgba(0, 242, 254, 0.1);
     border: 1px solid rgba(0, 242, 254, 0.28);
     color: #4facfe;
   }
-  .badge-cat-orbit .pill-dot {
+  .blog-card .badge-cat-orbit .pill-dot {
     background: #00f2fe;
-    box-shadow: 0 0 6px #00f2fe;
   }
 
-  .badge-cat-avionics {
+  .blog-card .badge-cat-avionics {
     background: rgba(167, 139, 250, 0.12);
     border: 1px solid rgba(167, 139, 250, 0.28);
     color: #c4b5fd;
   }
-  .badge-cat-avionics .pill-dot {
+  .blog-card .badge-cat-avionics .pill-dot {
     background: #a78bfa;
-    box-shadow: 0 0 6px #a78bfa;
   }
 
-  .badge-cat-comms {
+  .blog-card .badge-cat-comms {
     background: rgba(52, 211, 153, 0.12);
     border: 1px solid rgba(52, 211, 153, 0.28);
     color: #6ee7b7;
   }
-  .badge-cat-comms .pill-dot {
+  .blog-card .badge-cat-comms .pill-dot {
     background: #34d399;
-    box-shadow: 0 0 6px #34d399;
   }
 
-  .featured-badge {
+  .blog-card .featured-badge {
     font-size: 0.6875rem;
     font-weight: 600;
     text-transform: uppercase;
@@ -255,7 +249,7 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     font-family: var(--font-mono, ui-monospace, monospace);
   }
 
-  .time-meta {
+  .blog-card .time-meta {
     display: flex;
     align-items: center;
     gap: 0.45rem;
@@ -264,22 +258,22 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     font-family: var(--font-mono, ui-monospace, monospace);
   }
 
-  .meta-date {
+  .blog-card .meta-date {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
   }
 
-  .meta-divider {
+  .blog-card .meta-divider {
     color: rgba(255, 255, 255, 0.2);
   }
 
-  .meta-readtime {
+  .blog-card .meta-readtime {
     color: #d1d5db;
   }
 
   /* Title */
-  .blog-title {
+  .blog-card .blog-title {
     font-size: 1.3rem;
     font-weight: 700;
     line-height: 1.35;
@@ -288,18 +282,18 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     color: #f3f4f6;
   }
 
-  .title-link {
+  .blog-card .title-link {
     color: inherit;
     text-decoration: none;
     transition: color 0.2s ease;
   }
 
-  .title-link:hover {
+  .blog-card .title-link:hover {
     color: #e5a96a;
   }
 
   /* Summary */
-  .blog-summary {
+  .blog-card .blog-summary {
     font-size: 0.9375rem;
     line-height: 1.6;
     color: #9ca3af;
@@ -312,14 +306,14 @@ const authorRole = typeof post.author === 'object' && post.author !== null
   }
 
   /* Tags */
-  .blog-tags {
+  .blog-card .blog-tags {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem;
     margin-bottom: 1.5rem;
   }
 
-  .mini-tag {
+  .blog-card .mini-tag {
     font-size: 0.75rem;
     font-family: var(--font-mono, ui-monospace, monospace);
     color: #8e95a5;
@@ -327,16 +321,16 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     border: 1px solid rgba(255, 255, 255, 0.08);
     padding: 0.15rem 0.5rem;
     border-radius: 6px;
-    transition: all 0.2s ease;
+    transition: border-color 0.2s ease, color 0.2s ease;
   }
 
-  .mini-tag:hover {
+  .blog-card .mini-tag:hover {
     border-color: rgba(229, 169, 106, 0.3);
     color: #f3c28c;
   }
 
   /* Footer */
-  .card-footer {
+  .blog-card .card-footer {
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -347,13 +341,13 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     flex-wrap: wrap;
   }
 
-  .author-meta {
+  .blog-card .author-meta {
     display: flex;
     align-items: center;
     gap: 0.65rem;
   }
 
-  .author-avatar {
+  .blog-card .author-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -369,7 +363,7 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     color: #e5a96a;
   }
 
-  .avatar-beacon {
+  .blog-card .avatar-beacon {
     position: absolute;
     top: -1px;
     right: -1px;
@@ -380,30 +374,30 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     border: 1px solid #0b0d13;
   }
 
-  .author-info {
+  .blog-card .author-info {
     display: flex;
     flex-direction: column;
     line-height: 1.25;
   }
 
-  .author-name {
+  .blog-card .author-name {
     font-size: 0.8125rem;
     font-weight: 600;
     color: #f3f4f6;
   }
 
-  .author-role {
+  .blog-card .author-role {
     font-size: 0.6875rem;
     color: #8e95a5;
   }
 
-  .action-buttons {
+  .blog-card .action-buttons {
     display: flex;
     align-items: center;
     gap: 0.6rem;
   }
 
-  .quick-read-btn {
+  .blog-card .quick-read-btn {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
@@ -415,16 +409,16 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.09);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: color 0.2s ease, background-color 0.2s ease, border-color 0.2s ease;
   }
 
-  .quick-read-btn:hover {
+  .blog-card .quick-read-btn:hover {
     color: #f3f4f6;
     background: rgba(255, 255, 255, 0.1);
     border-color: rgba(255, 255, 255, 0.2);
   }
 
-  .read-article-link {
+  .blog-card .read-article-link {
     display: inline-flex;
     align-items: center;
     gap: 0.4rem;
@@ -436,21 +430,21 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     border-radius: 8px;
     background: rgba(229, 169, 106, 0.08);
     border: 1px solid rgba(229, 169, 106, 0.22);
-    transition: all 0.2s ease;
+    transition: transform 0.2s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
   }
 
-  .read-article-link:hover {
+  .blog-card .read-article-link:hover {
     background: rgba(229, 169, 106, 0.18);
     border-color: rgba(229, 169, 106, 0.45);
     color: #fce7cf;
     transform: translateX(2px);
   }
 
-  .arrow-icon {
+  .blog-card .arrow-icon {
     transition: transform 0.2s ease;
   }
 
-  .read-article-link:hover .arrow-icon {
+  .blog-card .read-article-link:hover .arrow-icon {
     transform: translateX(3px);
   }
 
@@ -458,12 +452,12 @@ const authorRole = typeof post.author === 'object' && post.author !== null
     .blog-card {
       padding: 1.35rem;
     }
-    .card-footer {
+    .blog-card .card-footer {
       flex-direction: column;
       align-items: flex-start;
       gap: 0.85rem;
     }
-    .action-buttons {
+    .blog-card .action-buttons {
       width: 100%;
       justify-content: space-between;
     }
