@@ -1,6 +1,7 @@
 ---
-// ponytail: pure Astro Timeline component with zero external dependencies, scoped CSS, and semantic HTML5
+// ponytail: pure Astro Timeline component with reactive client hydration, scoped CSS, and semantic HTML5
 export interface TimelineEntry {
+  id?: string;
   period: string;
   role: string;
   organization: string;
@@ -15,7 +16,7 @@ export interface Props {
   timeline: TimelineEntry[];
 }
 
-const { timeline } = Astro.props;
+const { timeline = [] } = Astro.props;
 ---
 
 <section id="timeline" class="timeline-section section" aria-label="Mission Log and Career Trajectory">
@@ -34,11 +35,11 @@ const { timeline } = Astro.props;
     <div class="timeline-container">
       <div class="timeline-spine" aria-hidden="true"></div>
 
-      <div class="timeline-entries">
+      <div class="timeline-entries" id="timeline-entries">
         {timeline.map((entry, idx) => {
-          const isCurrent = entry.period.includes("Present");
+          const isCurrent = (entry.period || '').includes("Present");
           return (
-            <article class={`timeline-item ${isCurrent ? 'is-active' : ''}`}>
+            <article class={`timeline-item ${isCurrent ? 'is-active' : ''}`} data-timeline-id={entry.id || `timeline-${idx}`}>
               <!-- Orbital Node Beacon -->
               <div class="timeline-node" aria-hidden="true">
                 <div class={`node-core ${isCurrent ? 'node-pulse' : ''}`}></div>
@@ -61,33 +62,43 @@ const { timeline } = Astro.props;
                 
                 <div class="org-location">
                   <span class="org-name">{entry.organization}</span>
-                  <span class="meta-dot">•</span>
-                  <span class="location-text telemetry-mono text-muted">{entry.location}</span>
+                  {entry.location && (
+                    <>
+                      <span class="meta-dot">•</span>
+                      <span class="location-text telemetry-mono text-muted">{entry.location}</span>
+                    </>
+                  )}
                 </div>
 
-                <p class="timeline-summary">
-                  {entry.summary}
-                </p>
+                {entry.summary && (
+                  <p class="timeline-summary">
+                    {entry.summary}
+                  </p>
+                )}
 
                 <!-- Technical Highlights Collapsible / Detail List -->
-                <div class="timeline-highlights">
-                  <h4 class="highlights-heading telemetry-mono">// MISSION ACCOMPLISHMENTS</h4>
-                  <ul class="highlights-list">
-                    {entry.highlights.map((item) => (
-                      <li class="highlight-item">
-                        <span class="highlight-bullet">›</span>
-                        <span>{item}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+                {entry.highlights && entry.highlights.length > 0 && (
+                  <div class="timeline-highlights">
+                    <h4 class="highlights-heading telemetry-mono">// MISSION ACCOMPLISHMENTS</h4>
+                    <ul class="highlights-list">
+                      {entry.highlights.map((item) => (
+                        <li class="highlight-item">
+                          <span class="highlight-bullet">›</span>
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
 
                 <!-- Tags -->
-                <div class="timeline-tags" aria-label="Key technologies">
-                  {entry.tags.map((tag) => (
-                    <span class="badge">{tag}</span>
-                  ))}
-                </div>
+                {entry.tags && entry.tags.length > 0 && (
+                  <div class="timeline-tags" aria-label="Key technologies">
+                    {entry.tags.map((tag) => (
+                      <span class="badge">{tag}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             </article>
           );
@@ -97,7 +108,160 @@ const { timeline } = Astro.props;
   </div>
 </section>
 
-<style>
+<script>
+  // ponytail: reactive timeline client hydration from PortfolioStore / localStorage
+  function escapeHtml(str: any): string {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  }
+
+  function renderDynamicTimeline() {
+    const container = document.getElementById('timeline-entries');
+    if (!container) return;
+
+    let entries: any[] = [];
+    // Read from PortfolioStore or localStorage
+    if (typeof window !== 'undefined' && (window as any).PortfolioStore && typeof (window as any).PortfolioStore.getTimeline === 'function') {
+      entries = (window as any).PortfolioStore.getTimeline();
+    } else {
+      try {
+        const raw = localStorage.getItem('space_portfolio_data_v1');
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          if (Array.isArray(parsed.timeline)) {
+            entries = parsed.timeline;
+          } else if (Array.isArray(parsed.experience)) {
+            entries = parsed.experience;
+          }
+        }
+      } catch (e) {
+        console.warn('Failed to parse timeline from localStorage:', e);
+      }
+    }
+
+    // If storage has no record at all yet, keep SSR initial markup
+    if (!localStorage.getItem('space_portfolio_data_v1') && entries.length === 0) {
+      return;
+    }
+
+    if (entries.length === 0) {
+      container.innerHTML = `
+        <div class="timeline-empty-card" style="text-align:center; padding: 4rem 2rem; background: rgba(18, 22, 33, 0.6); border: 1px dashed rgba(229, 169, 106, 0.3); border-radius: 16px; margin-top: 1rem;">
+          <div style="font-family: var(--font-mono, monospace); font-size: 0.85rem; color: #E5A96A; margin-bottom: 0.5rem; letter-spacing: 0.05em;">
+            // NO ACTIVE FLIGHT HERITAGE RECORDS
+          </div>
+          <p style="color: #8E95A5; font-size: 0.9rem; max-width: 440px; margin: 0 auto; line-height: 1.6;">
+            All previous milestones have been cleared. Access the Mission Control Admin panel to upload new flight accomplishments.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    container.innerHTML = entries.map((entry: any, idx: number) => {
+      const period = entry.period || entry.date || entry.timeline || 'Present';
+      const role = entry.role || entry.title || 'Untitled Mission Role';
+      const org = entry.organization || '';
+      const location = entry.location || entry.metrics || '';
+      const badge = entry.badge || entry.category || 'Flight Heritage';
+      const summary = entry.summary || entry.description || '';
+      const isCurrent = period.includes('Present');
+
+      let highlightsList: string[] = [];
+      if (Array.isArray(entry.highlights)) {
+        highlightsList = entry.highlights;
+      } else if (typeof entry.highlights === 'string' && entry.highlights.trim()) {
+        highlightsList = entry.highlights.split('\n').map((s: string) => s.trim()).filter(Boolean);
+      } else if (entry.description && !entry.summary) {
+        highlightsList = [entry.description];
+      }
+
+      let tagsList: string[] = [];
+      if (Array.isArray(entry.tags)) {
+        tagsList = entry.tags;
+      } else if (typeof entry.tags === 'string' && entry.tags.trim()) {
+        tagsList = entry.tags.split(',').map((s: string) => s.trim()).filter(Boolean);
+      }
+
+      const highlightsMarkup = highlightsList.length > 0 ? `
+        <div class="timeline-highlights">
+          <h4 class="highlights-heading telemetry-mono">// MISSION ACCOMPLISHMENTS</h4>
+          <ul class="highlights-list">
+            ${highlightsList.map((item: string) => `
+              <li class="highlight-item">
+                <span class="highlight-bullet">›</span>
+                <span>${escapeHtml(item)}</span>
+              </li>
+            `).join('')}
+          </ul>
+        </div>
+      ` : '';
+
+      const tagsMarkup = tagsList.length > 0 ? `
+        <div class="timeline-tags" aria-label="Key technologies">
+          ${tagsList.map((tag: string) => `
+            <span class="badge">${escapeHtml(tag)}</span>
+          `).join('')}
+        </div>
+      ` : '';
+
+      return `
+        <article class="timeline-item ${isCurrent ? 'is-active' : ''}" data-timeline-id="${entry.id || `timeline-${idx}`}">
+          <div class="timeline-node" aria-hidden="true">
+            <div class="node-core ${isCurrent ? 'node-pulse' : ''}"></div>
+            <div class="node-ring"></div>
+          </div>
+
+          <div class="timeline-card card">
+            <div class="card-meta">
+              <div class="period-pill telemetry-mono">
+                ${isCurrent ? '<span class="active-beacon"></span>' : ''}
+                <span>${escapeHtml(period)}</span>
+              </div>
+              <span class="badge ${isCurrent ? 'badge-amber' : 'badge-cyan'}">
+                ${escapeHtml(badge)}
+              </span>
+            </div>
+
+            <h3 class="role-title">${escapeHtml(role)}</h3>
+
+            <div class="org-location">
+              <span class="org-name">${escapeHtml(org)}</span>
+              ${location ? `<span class="meta-dot">•</span><span class="location-text telemetry-mono text-muted">${escapeHtml(location)}</span>` : ''}
+            </div>
+
+            ${summary ? `<p class="timeline-summary">${escapeHtml(summary)}</p>` : ''}
+            ${highlightsMarkup}
+            ${tagsMarkup}
+          </div>
+        </article>
+      `;
+    }).join('');
+  }
+
+  // Bind reactive lifecycle hooks
+  if (typeof window !== 'undefined') {
+    window.addEventListener('DOMContentLoaded', renderDynamicTimeline);
+    window.addEventListener('astro:page-load', renderDynamicTimeline);
+    window.addEventListener('portfolio-data-updated', renderDynamicTimeline);
+    window.addEventListener('storage', (e) => {
+      if (e.key === 'space_portfolio_data_v1') {
+        renderDynamicTimeline();
+      }
+    });
+
+    if (document.readyState === 'complete' || document.readyState === 'interactive') {
+      renderDynamicTimeline();
+    }
+  }
+</script>
+
+<style is:global>
   /* ============================================================
      TIMELINE COMPONENT SCOPED STYLES
      Ponytail mode: Scoped CSS, orbital mission log aesthetic

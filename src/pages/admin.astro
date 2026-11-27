@@ -2099,13 +2099,57 @@ import Layout from '../layouts/Layout.astro';
     async function loadAchievements() {
       if (!achList) return;
       const store = await getStore();
-      const list = store && typeof store.getAchievements === 'function' ? store.getAchievements() : [];
+      const achs = store && typeof store.getAchievements === 'function' ? store.getAchievements() : [];
+      const tls = store && typeof store.getTimeline === 'function' ? store.getTimeline() : [];
+
+      // ponytail: unified list showing both timeline milestones and awards
+      const seenIds = new Set();
+      const list: any[] = [];
+
+      tls.forEach((t: any) => {
+        const id = t.id || `timeline-${t.role}`;
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          list.push({
+            id,
+            title: t.role || t.title || 'Mission Milestone',
+            date: t.period || t.date || 'Present',
+            timeline: t.period || t.timeline || 'Present',
+            category: t.badge || t.category || 'Flight Heritage',
+            organization: t.organization || '',
+            metrics: t.location || t.metrics || '',
+            description: t.summary || t.description || '',
+            highlights: t.highlights || [],
+            tags: t.tags || [],
+            isTimeline: true
+          });
+        }
+      });
+
+      achs.forEach((a: any) => {
+        const id = a.id || `ach-${a.title}`;
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          list.push({
+            id,
+            title: a.title || 'Untitled Achievement',
+            date: a.date || a.timeline || 'Date N/A',
+            timeline: a.timeline || a.date || 'Date N/A',
+            category: a.category || 'Achievement',
+            organization: a.organization || '',
+            metrics: a.metrics || '',
+            description: a.description || '',
+            tags: a.tags || [],
+            isTimeline: false
+          });
+        }
+      });
 
       if (achBadge) achBadge.textContent = `${list.length} items`;
       if (metricAchCount) metricAchCount.textContent = `${list.length}`;
 
       if (list.length === 0) {
-        achList.innerHTML = `<div style="text-align:center; padding:2rem; color:#8E95A5;">No achievements recorded yet. Add one above!</div>`;
+        achList.innerHTML = `<div style="text-align:center; padding:2rem; color:#8E95A5;">No achievements or timeline milestones recorded yet. Add one above!</div>`;
         return;
       }
 
@@ -2116,7 +2160,7 @@ import Layout from '../layouts/Layout.astro';
             <div class="dash-card-meta">
               <span style="color:#E5A96A; font-weight:600;">${item.date || item.timeline || 'Date N/A'}</span>
               <span>•</span>
-              <span>${item.category || 'Achievement'}</span>
+              <span style="color:#00F2FE;">${item.category || 'Milestone'}</span>
               ${item.organization ? `<span>•</span><span>${item.organization}</span>` : ''}
               ${item.metrics ? `<span>•</span><span style="color:#34D399;">${item.metrics}</span>` : ''}
             </div>
@@ -2143,7 +2187,7 @@ import Layout from '../layouts/Layout.astro';
             achDesc.value = target.description || '';
             achTags.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
             const sBtn = document.getElementById('dash-ach-submit-btn');
-            if (sBtn) sBtn.querySelector('span')!.textContent = 'Update Achievement';
+            if (sBtn) sBtn.querySelector('span')!.textContent = 'Update Milestone / Achievement';
             achForm.scrollIntoView({ behavior: 'smooth' });
           }
         });
@@ -2153,11 +2197,13 @@ import Layout from '../layouts/Layout.astro';
       achList.querySelectorAll('[data-delete-ach]').forEach(b => {
         b.addEventListener('click', async () => {
           const id = b.getAttribute('data-delete-ach');
-          if (!confirm('Are you sure you want to delete this achievement?')) return;
+          if (!confirm('Are you sure you want to delete this timeline milestone / achievement?')) return;
           const store = await getStore();
-          if (store && typeof store.deleteAchievement === 'function') {
-            store.deleteAchievement(id);
+          if (store) {
+            if (typeof store.deleteTimeline === 'function') store.deleteTimeline(id);
+            if (typeof store.deleteAchievement === 'function') store.deleteAchievement(id);
           }
+          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
           loadAchievements();
         });
       });
@@ -2167,34 +2213,42 @@ import Layout from '../layouts/Layout.astro';
       e.preventDefault();
       const store = await getStore();
       const payload = {
+        id: achId.value || undefined,
         title: achTitle.value.trim(),
+        role: achTitle.value.trim(),
         timeline: achTimeline.value.trim(),
         date: achTimeline.value.trim(),
+        period: achTimeline.value.trim(),
         category: achCat.value,
+        badge: achCat.value,
         organization: achOrg.value.trim(),
         metrics: achMetrics.value.trim(),
+        location: achMetrics.value.trim(),
         description: achDesc.value.trim(),
+        summary: achDesc.value.trim(),
         tags: achTags.value.split(',').map(t => t.trim()).filter(Boolean),
+        highlights: achDesc.value.trim() ? achDesc.value.trim().split('\n').map(s => s.trim()).filter(Boolean) : []
       };
 
       if (achId.value) {
+        if (store && typeof store.updateTimeline === 'function') {
+          store.updateTimeline(achId.value, payload);
+        }
         if (store && typeof store.updateAchievement === 'function') {
           store.updateAchievement(achId.value, payload);
         }
       } else {
-        if (store && typeof store.addAchievement === 'function') {
+        if (store && typeof store.addTimeline === 'function') {
+          store.addTimeline(payload);
+        } else if (store && typeof store.addAchievement === 'function') {
           store.addAchievement(payload);
         }
-      }
-
-      if (store && typeof store.logActivity === 'function') {
-        store.logActivity('achievement', payload.title, 'Conferred distinction / technical award');
       }
 
       window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       resetAchForm();
       loadAchievements();
-      alert('Achievement successfully saved to store & timeline!');
+      alert('Timeline milestone & achievement successfully saved to store!');
     });
 
     // ----------------------------------------------------
@@ -2752,6 +2806,7 @@ import Layout from '../layouts/Layout.astro';
           avatar: currentAvatar
         },
         experience: updatedExp,
+        timeline: updatedExp,
         education: updatedEdu
       };
 

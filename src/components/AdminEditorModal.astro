@@ -1643,18 +1643,56 @@
     async function loadAchievements() {
       if (!achListContainer) return;
       const store = await getStore();
-      let list: any[] = [];
-      if (store && typeof store.getAchievements === 'function') {
-        list = store.getAchievements();
-      } else {
-        const raw = localStorage.getItem('portfolio_achievements');
-        list = raw ? JSON.parse(raw) : [];
-      }
+      const achs = store && typeof store.getAchievements === 'function' ? store.getAchievements() : [];
+      const tls = store && typeof store.getTimeline === 'function' ? store.getTimeline() : [];
+
+      // ponytail: unified list showing both timeline milestones and awards
+      const seenIds = new Set();
+      const list: any[] = [];
+
+      tls.forEach((t: any) => {
+        const id = t.id || `timeline-${t.role}`;
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          list.push({
+            id,
+            title: t.role || t.title || 'Mission Milestone',
+            date: t.period || t.date || 'Present',
+            timeline: t.period || t.timeline || 'Present',
+            category: t.badge || t.category || 'Flight Heritage',
+            organization: t.organization || '',
+            metrics: t.location || t.metrics || '',
+            description: t.summary || t.description || '',
+            highlights: t.highlights || [],
+            tags: t.tags || [],
+            isTimeline: true
+          });
+        }
+      });
+
+      achs.forEach((a: any) => {
+        const id = a.id || `ach-${a.title}`;
+        if (!seenIds.has(id)) {
+          seenIds.add(id);
+          list.push({
+            id,
+            title: a.title || 'Untitled Achievement',
+            date: a.date || a.timeline || 'Date N/A',
+            timeline: a.timeline || a.date || 'Date N/A',
+            category: a.category || 'Achievement',
+            organization: a.organization || '',
+            metrics: a.metrics || '',
+            description: a.description || '',
+            tags: a.tags || [],
+            isTimeline: false
+          });
+        }
+      });
 
       if (achCountBadge) achCountBadge.textContent = `${list.length} entries`;
 
       if (list.length === 0) {
-        achListContainer.innerHTML = `<div style="text-align:center; padding:1.5rem; color:#8E95A5; font-size:0.84rem;">No achievements recorded yet. Add your first above!</div>`;
+        achListContainer.innerHTML = `<div style="text-align:center; padding:1.5rem; color:#8E95A5; font-size:0.84rem;">No achievements or timeline milestones recorded yet. Add your first above!</div>`;
         return;
       }
 
@@ -1667,8 +1705,9 @@
               <div class="inv-card-meta">
                 <span style="color:#E5A96A;">${item.date || item.timeline || 'Date N/A'}</span>
                 <span>•</span>
-                <span>${item.category || 'General'}</span>
+                <span style="color:#00F2FE;">${item.category || 'Milestone'}</span>
                 ${item.organization ? `<span>•</span><span>${item.organization}</span>` : ''}
+                ${item.metrics ? `<span>•</span><span style="color:#34D399;">${item.metrics}</span>` : ''}
               </div>
             </div>
             <div class="inv-card-actions">
@@ -1694,7 +1733,7 @@
             achDescInput.value = target.description || target.summary || '';
             achTagsInput.value = Array.isArray(target.tags) ? target.tags.join(', ') : (target.tags || '');
             const submitBtn = document.getElementById('achievement-save-btn');
-            if (submitBtn) submitBtn.querySelector('span')!.textContent = 'Update Achievement';
+            if (submitBtn) submitBtn.querySelector('span')!.textContent = 'Update Milestone';
             achForm.scrollIntoView({ behavior: 'smooth' });
           }
         });
@@ -1704,16 +1743,14 @@
       achListContainer.querySelectorAll('[data-delete-ach]').forEach(btn => {
         btn.addEventListener('click', async () => {
           const id = btn.getAttribute('data-delete-ach');
-          if (!confirm('Are you sure you want to delete this achievement?')) return;
+          if (!confirm('Are you sure you want to delete this timeline milestone / achievement?')) return;
           const store = await getStore();
-          if (store && typeof store.deleteAchievement === 'function') {
-            store.deleteAchievement(id);
-          } else {
-            const filtered = list.filter((it: any, i: number) => (it.id || `ach-${i}`) !== id);
-            localStorage.setItem('portfolio_achievements', JSON.stringify(filtered));
-            window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+          if (store) {
+            if (typeof store.deleteTimeline === 'function') store.deleteTimeline(id);
+            if (typeof store.deleteAchievement === 'function') store.deleteAchievement(id);
           }
-          window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Achievement deleted' } }));
+          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+          window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Milestone removed from timeline' } }));
           loadAchievements();
         });
       });
@@ -1721,46 +1758,46 @@
 
     achForm?.addEventListener('submit', async (e) => {
       e.preventDefault();
-      const id = achIdInput.value || `ach-${Date.now()}`;
+      const id = achIdInput.value || undefined;
       const payload = {
         id,
         title: achTitleInput.value.trim(),
+        role: achTitleInput.value.trim(),
         date: achDateInput.value.trim(),
         timeline: achDateInput.value.trim(),
+        period: achDateInput.value.trim(),
         category: achCatSelect.value,
+        badge: achCatSelect.value,
         organization: achOrgInput.value.trim(),
         metrics: achMetricsInput.value.trim(),
+        location: achMetricsInput.value.trim(),
         description: achDescInput.value.trim(),
+        summary: achDescInput.value.trim(),
         tags: achTagsInput.value.split(',').map(t => t.trim()).filter(Boolean),
+        highlights: achDescInput.value.trim() ? achDescInput.value.trim().split('\n').map(s => s.trim()).filter(Boolean) : []
       };
 
       const store = await getStore();
       if (achIdInput.value) {
         // Update
-        if (store && typeof store.updateAchievement === 'function') {
-          store.updateAchievement(id, payload);
-        } else {
-          // fallback
-          let rawList = JSON.parse(localStorage.getItem('portfolio_achievements') || '[]');
-          const idx = rawList.findIndex((item: any) => item.id === id);
-          if (idx >= 0) rawList[idx] = payload; else rawList.push(payload);
-          localStorage.setItem('portfolio_achievements', JSON.stringify(rawList));
-          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
+        if (store && typeof store.updateTimeline === 'function') {
+          store.updateTimeline(achIdInput.value, payload);
         }
-        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Achievement updated successfully' } }));
+        if (store && typeof store.updateAchievement === 'function') {
+          store.updateAchievement(achIdInput.value, payload);
+        }
+        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Milestone updated successfully' } }));
       } else {
         // Add new
-        if (store && typeof store.addAchievement === 'function') {
+        if (store && typeof store.addTimeline === 'function') {
+          store.addTimeline(payload);
+        } else if (store && typeof store.addAchievement === 'function') {
           store.addAchievement(payload);
-        } else {
-          let rawList = JSON.parse(localStorage.getItem('portfolio_achievements') || '[]');
-          rawList.unshift(payload);
-          localStorage.setItem('portfolio_achievements', JSON.stringify(rawList));
-          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
         }
-        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'New achievement added to timeline!' } }));
+        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'New milestone added to timeline!' } }));
       }
 
+      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       resetAchForm();
       loadAchievements();
     });

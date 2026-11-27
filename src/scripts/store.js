@@ -134,6 +134,25 @@ export function getData() {
       parsed.activities = deepClone(defaultPortfolioData.activities || []);
       needsResave = true;
     }
+    // ponytail: ensure timeline exists and all entries have stable IDs
+    if (!Array.isArray(parsed.timeline)) {
+      parsed.timeline = deepClone(defaultPortfolioData.timeline || []).map((item, idx) => ({
+        id: item.id || `timeline-${slugify(item.role || item.period || String(idx))}`,
+        ...item
+      }));
+      needsResave = true;
+    } else {
+      parsed.timeline.forEach((item, idx) => {
+        if (!item.id) {
+          item.id = `timeline-${slugify(item.role || item.period || String(idx))}`;
+          needsResave = true;
+        }
+      });
+    }
+    if (!Array.isArray(parsed.achievements)) {
+      parsed.achievements = deepClone(defaultPortfolioData.achievements || []);
+      needsResave = true;
+    }
     if (needsResave) {
       try {
         localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
@@ -318,11 +337,23 @@ export function updateCVData(sectionOrFull, maybeData) {
   if (typeof sectionOrFull === 'string' && maybeData !== undefined) {
     // Section-specific update
     current[sectionOrFull] = maybeData;
+    // ponytail: keep experience and timeline synced
+    if (sectionOrFull === 'experience' && Array.isArray(maybeData)) {
+      current.timeline = deepClone(maybeData);
+    } else if (sectionOrFull === 'timeline' && Array.isArray(maybeData)) {
+      current.experience = deepClone(maybeData);
+    }
   } else if (typeof sectionOrFull === 'object' && sectionOrFull !== null) {
     // Multi-section merge
     Object.keys(sectionOrFull).forEach((key) => {
       current[key] = sectionOrFull[key];
     });
+    // ponytail: keep experience and timeline synced
+    if (sectionOrFull.experience && !sectionOrFull.timeline) {
+      current.timeline = deepClone(sectionOrFull.experience);
+    } else if (sectionOrFull.timeline && !sectionOrFull.experience) {
+      current.experience = deepClone(sectionOrFull.timeline);
+    }
   }
 
   saveData(current);
@@ -360,35 +391,43 @@ export function getAchievements() {
  */
 export function addAchievement(achievement) {
   const current = getData();
-  if (!current.achievements) current.achievements = [];
+  if (!Array.isArray(current.achievements)) current.achievements = [];
+  if (!Array.isArray(current.timeline)) current.timeline = [];
 
+  const newId = achievement.id || `ach-${Date.now()}`;
   const newAch = {
-    id: achievement.id || `ach-${Date.now()}`,
-    title: achievement.title || 'Untitled Achievement',
-    date: achievement.date || new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
-    timeline: achievement.timeline || new Date().toISOString().split('T')[0],
+    id: newId,
+    title: achievement.title || achievement.role || 'Untitled Achievement',
+    date: achievement.date || achievement.period || achievement.timeline || new Date().toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+    timeline: achievement.timeline || achievement.period || achievement.date || new Date().toISOString().split('T')[0],
     organization: achievement.organization || 'Astraea Space Labs',
-    category: achievement.category || 'Technical Achievement',
-    metrics: achievement.metrics || '',
-    description: achievement.description || '',
+    category: achievement.category || achievement.badge || 'Technical Achievement',
+    metrics: achievement.metrics || achievement.location || '',
+    description: achievement.description || achievement.summary || '',
+    tags: Array.isArray(achievement.tags)
+      ? achievement.tags
+      : (typeof achievement.tags === 'string' && achievement.tags.trim() ? achievement.tags.split(',').map(s => s.trim()).filter(Boolean) : []),
     ...achievement
   };
+  newAch.id = newId;
 
   current.achievements.unshift(newAch);
 
-  // Keep timeline sync if title and organization provided
-  if (!current.timeline) current.timeline = [];
-  const existingTimelineIdx = current.timeline.findIndex(t => t.summary?.includes(newAch.title));
+  // ponytail: keep timeline synced with new achievement
+  const existingTimelineIdx = current.timeline.findIndex(t => t.id === newId || (t.role && t.role === newAch.title));
   if (existingTimelineIdx === -1) {
     current.timeline.unshift({
-      period: newAch.date,
+      id: newId,
+      period: newAch.date || newAch.timeline || 'Present',
       role: newAch.title,
       organization: newAch.organization,
-      location: 'Flight Operations',
-      badge: newAch.category,
-      summary: newAch.description,
-      highlights: [newAch.metrics || newAch.description],
-      tags: [newAch.category]
+      location: newAch.metrics || 'Flight Operations',
+      badge: newAch.category || 'Flight Heritage',
+      summary: newAch.description || newAch.title,
+      highlights: Array.isArray(newAch.highlights)
+        ? newAch.highlights
+        : (newAch.description ? [newAch.description] : [newAch.metrics || 'Verified milestone on record']),
+      tags: newAch.tags
     });
   }
 
@@ -402,16 +441,39 @@ export function addAchievement(achievement) {
  */
 export function updateAchievement(id, updated) {
   const current = getData();
-  if (!current.achievements) return null;
+  if (!Array.isArray(current.achievements)) return null;
 
   const index = current.achievements.findIndex((a) => a.id === id);
-  if (index === -1) return null;
+  if (index === -1) {
+    // If not found in achievements, try updating timeline
+    return updateTimeline(id, updated);
+  }
 
+  const existing = current.achievements[index];
   current.achievements[index] = {
-    ...current.achievements[index],
+    ...existing,
     ...updated,
     id // Preserve original ID
   };
+
+  // ponytail: also update matching entry in timeline
+  if (Array.isArray(current.timeline)) {
+    const tIdx = current.timeline.findIndex(t => t.id === id || t.role === existing.title);
+    if (tIdx !== -1) {
+      current.timeline[tIdx] = {
+        ...current.timeline[tIdx],
+        role: updated.title || updated.role || current.timeline[tIdx].role,
+        period: updated.date || updated.timeline || updated.period || current.timeline[tIdx].period,
+        organization: updated.organization !== undefined ? updated.organization : current.timeline[tIdx].organization,
+        badge: updated.category || updated.badge || current.timeline[tIdx].badge,
+        location: updated.metrics || updated.location || current.timeline[tIdx].location,
+        summary: updated.description || updated.summary || current.timeline[tIdx].summary,
+        tags: updated.tags !== undefined
+          ? (Array.isArray(updated.tags) ? updated.tags : String(updated.tags).split(',').map(s => s.trim()).filter(Boolean))
+          : current.timeline[tIdx].tags
+      };
+    }
+  }
 
   saveData(current);
   logActivity('achievement', updated.title || current.achievements[index].title || 'Milestone Updated', 'Modified milestone details');
@@ -423,13 +485,193 @@ export function updateAchievement(id, updated) {
  */
 export function deleteAchievement(id) {
   const current = getData();
-  if (!current.achievements) return false;
+  let changed = false;
 
-  const originalLength = current.achievements.length;
-  current.achievements = current.achievements.filter((a) => a.id !== id);
+  if (Array.isArray(current.achievements)) {
+    const target = current.achievements.find(a => a.id === id);
+    const originalLength = current.achievements.length;
+    current.achievements = current.achievements.filter((a) => a.id !== id);
+    if (current.achievements.length !== originalLength) changed = true;
 
-  if (current.achievements.length !== originalLength) {
+    // ponytail: also remove from timeline
+    if (Array.isArray(current.timeline)) {
+      const origTimelineLen = current.timeline.length;
+      current.timeline = current.timeline.filter(t => t.id !== id && (!target || t.role !== target.title));
+      if (current.timeline.length !== origTimelineLen) changed = true;
+    }
+  }
+
+  // Also remove from timeline directly if ID matches timeline entry
+  if (Array.isArray(current.timeline)) {
+    const origTimelineLen = current.timeline.length;
+    current.timeline = current.timeline.filter(t => t.id !== id && `timeline-${slugify(t.role || t.period)}` !== id && slugify(t.role || t.period) !== id);
+    if (current.timeline.length !== origTimelineLen) changed = true;
+  }
+
+  if (changed) {
     saveData(current);
+    logActivity('achievement', 'Milestone Removed', 'Deleted from record');
+    return true;
+  }
+  return false;
+}
+
+// ==========================================
+// 2B. MISSION TIMELINE METHODS (ponytail: native CRUD)
+// ==========================================
+
+/**
+ * Get all timeline flight milestones
+ */
+export function getTimeline() {
+  const current = getData();
+  const timeline = current.timeline || current.experience || [];
+  return timeline.map((entry, idx) => ({
+    id: entry.id || `timeline-${slugify(entry.role || entry.period || String(idx))}`,
+    ...entry
+  }));
+}
+
+/**
+ * Add a new flight heritage / mission milestone
+ */
+export function addTimeline(entry) {
+  const current = getData();
+  if (!Array.isArray(current.timeline)) current.timeline = [];
+  if (!Array.isArray(current.experience)) current.experience = [];
+
+  const newId = entry.id || `timeline-${Date.now()}`;
+  const normalized = {
+    id: newId,
+    period: entry.period || entry.date || entry.timeline || 'Present',
+    role: entry.role || entry.title || 'Mission Specialist',
+    organization: entry.organization || 'Astraea Space Labs',
+    location: entry.location || entry.metrics || 'Flight Operations',
+    badge: entry.badge || entry.category || 'Flight Heritage',
+    summary: entry.summary || entry.description || '',
+    highlights: Array.isArray(entry.highlights)
+      ? entry.highlights
+      : (typeof entry.highlights === 'string' && entry.highlights.trim() ? entry.highlights.split('\n').map(s => s.trim()).filter(Boolean) : (entry.description ? [entry.description] : [])),
+    tags: Array.isArray(entry.tags)
+      ? entry.tags
+      : (typeof entry.tags === 'string' && entry.tags.trim() ? entry.tags.split(',').map(s => s.trim()).filter(Boolean) : [])
+  };
+
+  current.timeline.unshift(normalized);
+  current.experience.unshift(normalized);
+
+  // Sync to achievements if not present
+  if (!Array.isArray(current.achievements)) current.achievements = [];
+  const existingAchIdx = current.achievements.findIndex(a => a.id === newId || a.title === normalized.role);
+  if (existingAchIdx === -1) {
+    current.achievements.unshift({
+      id: newId,
+      title: normalized.role,
+      date: normalized.period,
+      timeline: normalized.period,
+      organization: normalized.organization,
+      category: normalized.badge,
+      metrics: normalized.location,
+      description: normalized.summary,
+      tags: normalized.tags
+    });
+  }
+
+  saveData(current);
+  logActivity('achievement', normalized.role, normalized.organization || 'Timeline record added', normalized.period || null);
+  return normalized;
+}
+
+/**
+ * Update an existing timeline milestone by ID
+ */
+export function updateTimeline(id, patch) {
+  const current = getData();
+  if (!Array.isArray(current.timeline)) current.timeline = [];
+
+  let idx = current.timeline.findIndex(t => t.id === id);
+  if (idx === -1) {
+    idx = current.timeline.findIndex(t => slugify(t.role || t.period) === id || `timeline-${slugify(t.role || t.period)}` === id);
+  }
+
+  if (idx !== -1) {
+    const existing = current.timeline[idx];
+    const updated = {
+      ...existing,
+      ...patch,
+      id: existing.id || id,
+      role: patch.role || patch.title || existing.role,
+      period: patch.period || patch.date || patch.timeline || existing.period,
+      badge: patch.badge || patch.category || existing.badge,
+      location: patch.location || patch.metrics || existing.location,
+      summary: patch.summary || patch.description || existing.summary,
+      highlights: patch.highlights !== undefined
+        ? (Array.isArray(patch.highlights) ? patch.highlights : String(patch.highlights).split('\n').map(s => s.trim()).filter(Boolean))
+        : existing.highlights,
+      tags: patch.tags !== undefined
+        ? (Array.isArray(patch.tags) ? patch.tags : String(patch.tags).split(',').map(s => s.trim()).filter(Boolean))
+        : existing.tags
+    };
+    current.timeline[idx] = updated;
+
+    if (Array.isArray(current.experience)) {
+      const expIdx = current.experience.findIndex(e => e.id === id || e.role === existing.role);
+      if (expIdx !== -1) {
+        current.experience[expIdx] = { ...current.experience[expIdx], ...updated };
+      }
+    }
+
+    if (Array.isArray(current.achievements)) {
+      const achIdx = current.achievements.findIndex(a => a.id === id || a.title === existing.role);
+      if (achIdx !== -1) {
+        current.achievements[achIdx] = {
+          ...current.achievements[achIdx],
+          title: updated.role,
+          date: updated.period,
+          timeline: updated.period,
+          organization: updated.organization,
+          category: updated.badge,
+          metrics: updated.location,
+          description: updated.summary,
+          tags: updated.tags
+        };
+      }
+    }
+
+    saveData(current);
+    logActivity('achievement', updated.role || 'Timeline Milestone Updated', 'Modified timeline milestone details');
+    return updated;
+  }
+
+  return null;
+}
+
+/**
+ * Delete a timeline milestone by ID
+ */
+export function deleteTimeline(id) {
+  const current = getData();
+  let changed = false;
+
+  if (Array.isArray(current.timeline)) {
+    const origLen = current.timeline.length;
+    current.timeline = current.timeline.filter(t => t.id !== id && `timeline-${slugify(t.role || t.period)}` !== id && slugify(t.role || t.period) !== id);
+    if (current.timeline.length !== origLen) changed = true;
+  }
+
+  if (Array.isArray(current.experience)) {
+    current.experience = current.experience.filter(e => e.id !== id && `timeline-${slugify(e.role || e.period)}` !== id && slugify(e.role || e.period) !== id);
+  }
+
+  if (Array.isArray(current.achievements)) {
+    const origAchLen = current.achievements.length;
+    current.achievements = current.achievements.filter(a => a.id !== id);
+    if (current.achievements.length !== origAchLen) changed = true;
+  }
+
+  if (changed) {
+    saveData(current);
+    logActivity('achievement', 'Timeline Milestone Removed', 'Deleted from flight heritage record');
     return true;
   }
   return false;
@@ -1158,6 +1400,10 @@ export default {
   addAchievement,
   updateAchievement,
   deleteAchievement,
+  getTimeline,
+  addTimeline,
+  updateTimeline,
+  deleteTimeline,
   getBlogs,
   getBlogBySlug,
   addBlog,
@@ -1202,6 +1448,10 @@ if (typeof window !== 'undefined') {
     addAchievement,
     updateAchievement,
     deleteAchievement,
+    getTimeline,
+    addTimeline,
+    updateTimeline,
+    deleteTimeline,
     getBlogs,
     getBlogBySlug,
     addBlog,
