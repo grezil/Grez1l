@@ -62,27 +62,13 @@ const isTimeline = pathname.startsWith('/timeline');
     <!-- 60FPS Ambient Starfield & Orbiting Satellite -->
     <CosmicBackground />
 
-    <!-- Sleek Apple Minimalist Header -->
+    <!-- Sleek Apple Minimalist Header (ponytail: simplified single brand header) -->
     <header class="site-header" id="site-header">
       <div class="container header-inner">
-        <!-- Callsign Telemetry Indicator -->
-        <a href="/" class="header-callsign" title="Mission Home">
+        <a href="/" class="header-callsign" title="Website Portfolio Home">
           <span class="callsign-beacon"></span>
-          <span class="callsign-name">NHAT-NGUYEN</span>
-          <span class="callsign-sep">//</span>
-          <span class="callsign-telemetry">LEO 550KM • SYS NOMINAL</span>
+          <span class="callsign-name">WEBSITE PORTFOLIO</span>
         </a>
-
-        <!-- Top Right Actions -->
-        <div class="header-actions">
-          <a href="mailto:nhatnguyen@orbital-flight.dev" class="btn btn-outline-cyan btn-sm header-comms-btn">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <rect width="20" height="16" x="2" y="4" rx="2"></rect>
-              <path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"></path>
-            </svg>
-            <span>Uplink</span>
-          </a>
-        </div>
       </div>
     </header>
 
@@ -541,34 +527,6 @@ const isTimeline = pathname.startsWith('/timeline');
   .callsign-name {
     color: #F3F4F6;
     font-weight: 700;
-  }
-
-  .callsign-sep {
-    color: #8E95A5;
-    opacity: 0.5;
-  }
-
-  .callsign-telemetry {
-    color: #8E95A5;
-    font-size: 0.6875rem;
-  }
-
-  @media (max-width: 640px) {
-    .callsign-telemetry {
-      display: none;
-    }
-  }
-
-  .header-comms-btn {
-    border-radius: var(--radius-pill);
-    padding: 0.35rem 0.95rem;
-  }
-
-  /* Header Actions */
-  .header-actions {
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
   }
 
   /* Engineering Footer */
