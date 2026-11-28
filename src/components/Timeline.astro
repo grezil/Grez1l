@@ -19,15 +19,15 @@ export interface Props {
 const { timeline = [] } = Astro.props;
 ---
 
-<section id="timeline" class="timeline-section section" aria-label="Mission Log and Career Trajectory">
+<section id="timeline" class="timeline-section section" aria-label="Competitions, Events and Achievements Journey">
   <div class="container">
     <header class="section-header">
-      <div class="section-tag">MISSION LOG & CAREER TRAJECTORY</div>
+      <div class="section-tag">COMPETITIONS • EVENTS • ACHIEVEMENTS</div>
       <h2 class="section-title">
-        Aerospace & Software <span class="glow-text">Flight Heritage</span>
+        Journey &amp; <span class="glow-text">Achievements</span>
       </h2>
       <p class="section-subtitle">
-        A progressive track of qualifying spaceflight software, operating orbital constellations, and building deterministic mission ground segments.
+        A personal archive capturing my journey through competitions, hackathons, technical events, and key milestones.
       </p>
     </header>
 
@@ -136,12 +136,12 @@ const { timeline = [] } = Astro.props;
 
     if (entries.length === 0) {
       container.innerHTML = `
-        <div class="timeline-empty-card" style="text-align:center; padding: 4rem 2rem; background: rgba(18, 22, 33, 0.6); border: 1px dashed rgba(229, 169, 106, 0.3); border-radius: 16px; margin-top: 1rem;">
-          <div style="font-family: var(--font-mono, monospace); font-size: 0.85rem; color: #E5A96A; margin-bottom: 0.5rem; letter-spacing: 0.05em;">
-            // NO ACTIVE FLIGHT HERITAGE RECORDS
+        <div class="timeline-empty-card" style="text-align:center; padding: 4rem 2rem; background: rgba(22, 28, 44, 0.85); border: 1px dashed rgba(239, 68, 68, 0.35); border-radius: 16px; margin-top: 1rem;">
+          <div style="font-family: var(--font-mono, monospace); font-size: 0.85rem; color: #F87171; margin-bottom: 0.5rem; letter-spacing: 0.05em;">
+            // NO TIMELINE MILESTONES YET
           </div>
-          <p style="color: #8E95A5; font-size: 0.9rem; max-width: 440px; margin: 0 auto; line-height: 1.6;">
-            All previous milestones have been cleared. Access the Mission Control Admin panel to upload new flight accomplishments.
+          <p style="color: #CBD5E1; font-size: 0.9rem; max-width: 440px; margin: 0 auto; line-height: 1.6;">
+            All previous milestones have been cleared. Open the Admin panel to record new competitions, events, or achievements.
           </p>
         </div>
       `;

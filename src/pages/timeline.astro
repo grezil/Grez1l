@@ -1,6 +1,6 @@
 ---
 /**
- * timeline.astro - Dedicated Aerospace & Software Flight Heritage Page
+ * timeline.astro - Dedicated Journey, Events & Achievements Archive Page
  * Route: /timeline
  */
 import Layout from '../layouts/Layout.astro';
@@ -9,29 +9,29 @@ import portfolioData from '../data/portfolio.json';
 
 const profile = portfolioData.profile || {};
 const timeline = portfolioData.timeline || [];
-const title = `Aerospace Flight Heritage & Timeline | ${profile.name || 'Võ Quang Nhật Nguyên'}`;
-const description = `Mission log, orbital heritage, flight qualification milestones, and aerospace software career trajectory of ${profile.name || 'Võ Quang Nhật Nguyên'}.`;
+const title = `Journey & Achievements Timeline | ${profile.name || 'Võ Quang Nhật Nguyên'}`;
+const description = `A personal archive documenting competitions, events, and key achievements of ${profile.name || 'Võ Quang Nhật Nguyên'}.`;
 ---
 
 <Layout title={title} description={description}>
   <div class="timeline-page-container">
-    <!-- Breadcrumb & Telemetry Navigation Bar -->
+    <!-- Breadcrumb & Navigation Bar -->
     <div class="page-nav-bar container no-print">
       <div class="nav-breadcrumbs">
         <a href="/" class="crumb-link">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <polyline points="15 18 9 12 15 6"></polyline>
           </svg>
-          <span>Return to Telemetry Console</span>
+          <span>Return to Home</span>
         </a>
         <span class="crumb-sep">/</span>
-        <span class="crumb-current">Flight Heritage Timeline</span>
+        <span class="crumb-current">Journey &amp; Achievements</span>
       </div>
 
       <div class="page-status-meta">
-        <span class="meta-tag">TRACK RECORD: 100% SUCCESS</span>
+        <span class="meta-tag">COMPETITIONS &amp; EVENTS</span>
         <span class="meta-dot">•</span>
-        <span class="meta-tag text-amber">VERIFIED FLIGHT LOG</span>
+        <span class="meta-tag text-amber">ACHIEVEMENT ARCHIVE</span>
       </div>
     </div>
 
@@ -76,7 +76,7 @@ const description = `Mission log, orbital heritage, flight qualification milesto
   }
 
   .crumb-link:hover {
-    color: var(--amber, #E5A96A);
+    color: var(--amber, #EF4444);
   }
 
   .crumb-sep {
@@ -84,7 +84,7 @@ const description = `Mission log, orbital heritage, flight qualification milesto
   }
 
   .crumb-current {
-    color: var(--text-ivory, #F3F4F6);
+    color: var(--text-ivory, #FFFFFF);
     font-weight: 500;
   }
 
@@ -97,7 +97,7 @@ const description = `Mission log, orbital heritage, flight qualification milesto
   }
 
   .meta-tag {
-    color: var(--titanium, #8E95A5);
+    color: var(--titanium, #CBD5E1);
   }
 
   .meta-dot {
@@ -105,6 +105,6 @@ const description = `Mission log, orbital heritage, flight qualification milesto
   }
 
   .text-amber {
-    color: #e5a96a;
+    color: var(--amber-light, #F87171);
   }
 </style>
