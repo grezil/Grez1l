@@ -637,9 +637,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
     align-items: center;
     justify-content: center;
     padding: 1.5rem;
-    background-color: rgba(6, 8, 14, 0.82);
-    backdrop-filter: blur(28px) saturate(180%);
-    -webkit-backdrop-filter: blur(28px) saturate(180%);
+    background-color: rgba(7, 9, 14, 0.84);
     opacity: 0;
     pointer-events: none;
     transition: opacity 0.28s cubic-bezier(0.16, 1, 0.3, 1);
@@ -1623,6 +1621,27 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
     }
 
+    function notifyToast(message: string, type: 'info' | 'success' | 'error' = 'info') {
+      if (typeof (window as any).showSpaceToast === 'function' && type === 'error') {
+        (window as any).showSpaceToast('Editor Notice', message, 'error');
+      } else {
+        window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message, type } }));
+      }
+    }
+
+    function getActiveTabId(): string {
+      const activePanel = modal.querySelector('.editor-tab-panel.is-active');
+      return activePanel?.id || 'tab-achievement';
+    }
+
+    function refreshActiveTab(tabId = getActiveTabId()) {
+      if (tabId === 'tab-achievement') loadAchievements();
+      else if (tabId === 'tab-blog') loadBlogs();
+      else if (tabId === 'tab-cv') loadCVData();
+      else if (tabId === 'tab-courses') loadCourses();
+      else if (tabId === 'tab-backup') loadRawJson();
+    }
+
     function switchTab(tabId: string) {
       tabs.forEach(t => {
         const matches = t.getAttribute('data-tab') === tabId;
@@ -1638,7 +1657,10 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
     tabs.forEach(tab => {
       tab.addEventListener('click', () => {
         const target = tab.getAttribute('data-tab');
-        if (target) switchTab(target);
+        if (target) {
+          switchTab(target);
+          refreshActiveTab(target);
+        }
       });
     });
 
@@ -1654,7 +1676,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
     }
 
-    let mutatingClass = false;
+    let isOpen = modal.classList.contains('is-active') || modal.classList.contains('is-open');
 
     function openModal(defaultTab?: string) {
       if (!checkSession()) {
@@ -1662,11 +1684,6 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
         openLoginGate();
         return;
       }
-
-      mutatingClass = true;
-      modal.classList.add('is-active', 'is-open');
-      modal.setAttribute('aria-hidden', 'false');
-      mutatingClass = false;
 
       if (defaultTab) {
         if (defaultTab === 'profile' || defaultTab === 'tab-profile') {
@@ -1680,14 +1697,17 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
           switchTab(tabTarget);
         }
       }
-      refreshAllData();
+
+      isOpen = true;
+      modal.classList.add('is-active', 'is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      refreshActiveTab();
     }
 
     function closeModal() {
-      mutatingClass = true;
+      isOpen = false;
       modal.classList.remove('is-active', 'is-open');
       modal.setAttribute('aria-hidden', 'true');
-      mutatingClass = false;
     }
 
     closeBtn?.addEventListener('click', closeModal);
@@ -1695,31 +1715,24 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       if (e.target === modal) closeModal();
     });
 
-    // ponytail: sync when Layout.astro toggles .is-open directly on #admin-editor-modal
+    // ponytail: sync when external code toggles .is-open directly on #admin-editor-modal
     const observer = new MutationObserver(() => {
-      if (mutatingClass) return;
-      const isOpen = modal.classList.contains('is-open') || modal.classList.contains('is-active');
-      if (isOpen) {
-        if (!checkSession()) {
-          closeModal();
-          openLoginGate();
-          return;
-        }
-        mutatingClass = true;
-        modal.classList.add('is-active', 'is-open');
-        modal.setAttribute('aria-hidden', 'false');
-        mutatingClass = false;
-        refreshAllData();
+      const hasOpenClass = modal.classList.contains('is-open') || modal.classList.contains('is-active');
+      if (hasOpenClass === isOpen) return;
+      if (hasOpenClass) {
+        openModal();
+      } else {
+        closeModal();
       }
     });
     observer.observe(modal, { attributes: true, attributeFilter: ['class'] });
 
-    // Expose active modal hooks to a single set of global window listeners
+    // Expose active modal hooks to AbortController-managed global window listeners
     (window as any).__adminEditorModalActive = {
       openModal,
       closeModal,
-      refreshAllData: () => refreshAllData(),
-      isOpen: () => modal.classList.contains('is-active') || modal.classList.contains('is-open'),
+      refreshActiveTab,
+      isOpen: () => isOpen,
       editBlog: (target: any) => startEditingBlog(target),
       openAvatarEditor: () => {
         openModal('cv');
@@ -1730,42 +1743,44 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
     };
 
-    if (!(window as any).__adminEditorListenersBound) {
-      (window as any).__adminEditorListenersBound = true;
-      window.addEventListener('keydown', (e) => {
-        const active = (window as any).__adminEditorModalActive;
-        if (e.key === 'Escape' && active && active.isOpen()) {
-          active.closeModal();
-        }
-      });
-      window.addEventListener('open-admin-editor', (e: any) => {
-        const active = (window as any).__adminEditorModalActive;
-        if (active) active.openModal(e.detail?.tab || 'achievement');
-      });
-      window.addEventListener('open-admin-blog-modal', (e: any) => {
-        const active = (window as any).__adminEditorModalActive;
-        if (!active) return;
-        active.openModal('blog');
-        if (e.detail?.slug && typeof Store.getBlogBySlug === 'function') {
-          const found = Store.getBlogBySlug(e.detail.slug);
-          if (found) active.editBlog(found);
-        }
-      });
-      window.addEventListener('open-avatar-editor', () => {
-        const active = (window as any).__adminEditorModalActive;
-        if (active) active.openAvatarEditor();
-      });
-      window.addEventListener('portfolio-data-updated', () => {
-        const active = (window as any).__adminEditorModalActive;
-        if (active && active.isOpen()) active.refreshAllData();
-      });
-      window.addEventListener('portfolio-admin-auth-changed', (e: any) => {
-        const active = (window as any).__adminEditorModalActive;
-        if (active && e.detail && e.detail.authenticated === false) {
-          active.closeModal();
-        }
-      });
-    }
+    (window as any).__adminEditorAbort?.abort();
+    const editorAbort = new AbortController();
+    (window as any).__adminEditorAbort = editorAbort;
+    const { signal } = editorAbort;
+
+    window.addEventListener('keydown', (e) => {
+      const active = (window as any).__adminEditorModalActive;
+      if (e.key === 'Escape' && active && active.isOpen()) {
+        active.closeModal();
+      }
+    }, { signal });
+    window.addEventListener('open-admin-editor', (e: any) => {
+      const active = (window as any).__adminEditorModalActive;
+      if (active) active.openModal(e.detail?.tab || 'achievement');
+    }, { signal });
+    window.addEventListener('open-admin-blog-modal', (e: any) => {
+      const active = (window as any).__adminEditorModalActive;
+      if (!active) return;
+      active.openModal('blog');
+      if (e.detail?.slug && typeof Store.getBlogBySlug === 'function') {
+        const found = Store.getBlogBySlug(e.detail.slug);
+        if (found) active.editBlog(found);
+      }
+    }, { signal });
+    window.addEventListener('open-avatar-editor', () => {
+      const active = (window as any).__adminEditorModalActive;
+      if (active) active.openAvatarEditor();
+    }, { signal });
+    window.addEventListener('portfolio-data-updated', () => {
+      const active = (window as any).__adminEditorModalActive;
+      if (active && active.isOpen()) active.refreshActiveTab();
+    }, { signal });
+    window.addEventListener('portfolio-admin-auth-changed', (e: any) => {
+      const active = (window as any).__adminEditorModalActive;
+      if (active && e.detail && e.detail.authenticated === false) {
+        active.closeModal();
+      }
+    }, { signal });
 
     // ----------------------------------------------------
     // TAB 1: ACHIEVEMENTS LOGIC
@@ -1910,7 +1925,6 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
             }
           }
           window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Milestone removed from timeline' } }));
-          loadAchievements();
         });
       });
     }
@@ -1955,7 +1969,6 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
 
       resetAchForm();
-      loadAchievements();
     });
 
     // ----------------------------------------------------
@@ -2093,7 +2106,6 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
             store.deleteBlog(id);
           }
           window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Blog article removed' } }));
-          loadBlogs();
         });
       });
     }
@@ -2127,7 +2139,6 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
 
       resetBlogForm();
-      loadBlogs();
     });
 
     // ----------------------------------------------------
@@ -2222,25 +2233,55 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Profile photo updated successfully!' } }));
     }
 
-    // Avatar File Upload
-    cvAvatarFileInput?.addEventListener('change', () => {
+    function resizeAvatarImage(file: File, maxDim = 256, quality = 0.85): Promise<string> {
+      return new Promise((resolve, reject) => {
+        const objUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(objUrl);
+          const nw = img.naturalWidth || maxDim;
+          const nh = img.naturalHeight || maxDim;
+          const scale = Math.min(1, maxDim / Math.max(nw, nh));
+          const w = Math.max(1, Math.round(nw * scale));
+          const h = Math.max(1, Math.round(nh * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas 2D context unavailable'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objUrl);
+          reject(new Error('Invalid image file'));
+        };
+        img.src = objUrl;
+      });
+    }
+
+    // Avatar File Upload (resized & compressed via offscreen canvas)
+    cvAvatarFileInput?.addEventListener('change', async () => {
       const file = cvAvatarFileInput.files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = e.target?.result as string;
-        if (base64) {
-          await saveAvatar(base64);
-        }
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await resizeAvatarImage(file, 256, 0.85);
+        await saveAvatar(compressed);
+      } catch (err: any) {
+        notifyToast('Failed to process image: ' + (err?.message || 'Invalid format'), 'error');
+      } finally {
+        cvAvatarFileInput.value = '';
+      }
     });
 
     // Avatar URL Input
     cvAvatarLoadUrlBtn?.addEventListener('click', async () => {
       const url = cvAvatarUrlInput?.value?.trim() || '';
       if (!url) {
-        alert('Please enter a valid image URL');
+        notifyToast('Please enter a valid image URL', 'error');
         return;
       }
       await saveAvatar(url);
@@ -2538,7 +2579,6 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
         store.updateCVData(updatedCV);
       }
 
-      loadCVData();
       window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'My CV content updated successfully!' } }));
     });
 
@@ -2657,7 +2697,6 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
             store.deleteCourse(id);
           }
           window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Course archive removed' } }));
-          loadCourses();
         });
       });
     }
@@ -2694,7 +2733,6 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
 
       resetCourseForm();
-      loadCourses();
     });
 
     // ----------------------------------------------------
@@ -2766,13 +2804,12 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
             if (parsed.profile || parsed.education || parsed.experience) {
               localStorage.setItem('portfolio_cv', JSON.stringify(parsed));
             }
+            window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
           }
 
-          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
           window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Data imported successfully!' } }));
-          refreshAllData();
         } catch (err: any) {
-          alert('Failed to parse uploaded JSON file: ' + (err?.message || 'Invalid format'));
+          notifyToast('Failed to parse uploaded JSON file: ' + (err?.message || 'Invalid format'), 'error');
         }
       };
       reader.readAsText(file);
@@ -2793,12 +2830,11 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
           if (parsed.profile || parsed.education || parsed.experience) {
             localStorage.setItem('portfolio_cv', JSON.stringify(parsed));
           }
+          window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
         }
-        window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
         window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Applied raw JSON changes.' } }));
-        refreshAllData();
       } catch (err: any) {
-        alert('Invalid JSON in raw editor: ' + (err?.message || 'Syntax error'));
+        notifyToast('Invalid JSON in raw editor: ' + (err?.message || 'Syntax error'), 'error');
       }
     });
 
@@ -2815,16 +2851,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
         window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       }
       window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message: 'Reset to factory defaults.' } }));
-      refreshAllData();
     });
-
-    function refreshAllData() {
-      loadAchievements();
-      loadBlogs();
-      loadCVData();
-      loadCourses();
-      loadRawJson();
-    }
   }
 
   if (document.readyState === 'loading') {

@@ -15,6 +15,9 @@ const VALID_PASSWORD = 'NhatNguyen141';
 const UPDATES_KEY = 'space_portfolio_update_count';
 const ACTIVITY_LOG_KEY = 'space_portfolio_activity_log';
 const EVENT_NAME = 'portfolio-data-updated';
+const MIN_SANE_YEAR = 2000;
+const MAX_ACTIVITY_ENTRIES = 500;
+const MAX_HEATMAP_DAYS = 2000;
 
 // Helper to test browser environment
 const isBrowser = typeof window !== 'undefined' && typeof localStorage !== 'undefined';
@@ -38,10 +41,77 @@ function formatDate(d) {
   return `${year}-${month}-${day}`;
 }
 
-// In-memory fallback / cache
+/**
+ * Validate YYYY-MM-DD strings within a sane year window [2000, currentYear + 2]
+ * to prevent malformed dates in localStorage from causing multi-millennium sweeps.
+ */
+function normalizeSaneDate(rawDate) {
+  if (!rawDate) return null;
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(String(rawDate).trim());
+  if (!match) return null;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const maxYear = new Date().getFullYear() + 2;
+  if (year < MIN_SANE_YEAR || year > maxYear || month < 1 || month > 12 || day < 1 || day > 31) {
+    return null;
+  }
+  const probe = new Date(year, month - 1, day);
+  if (
+    probe.getFullYear() !== year ||
+    probe.getMonth() !== month - 1 ||
+    probe.getDate() !== day
+  ) {
+    return null;
+  }
+  return `${match[1]}-${match[2]}-${match[3]}`;
+}
+
+function isQuotaError(err) {
+  return Boolean(
+    err &&
+    (err.name === 'QuotaExceededError' ||
+      err.name === 'NS_ERROR_DOM_QUOTA_REACHED' ||
+      err.code === 22 ||
+      err.code === 1014)
+  );
+}
+
+function toastStorageError(err, action = 'save changes') {
+  if (!isBrowser || typeof window.showSpaceToast !== 'function') return;
+  if (isQuotaError(err)) {
+    window.showSpaceToast(
+      'Storage Quota Exceeded',
+      `Unable to ${action}: browser localStorage is full. Export a JSON backup or remove large images.`,
+      'error'
+    );
+  } else {
+    window.showSpaceToast(
+      'Storage Error',
+      err?.message || `Unable to ${action} in localStorage.`,
+      'error'
+    );
+  }
+}
+
+// In-memory fallback / read cache
 // ponytail: align initial revision count with portfolio.json telemetryStats
 let memoryData = deepClone(defaultPortfolioData);
+let isDataCacheValid = false;
+let memoryActivityLog = deepClone(defaultPortfolioData.activities || []);
+let isActivityCacheValid = false;
 let memoryUpdateCount = parseInt(defaultPortfolioData?.profile?.telemetryStats?.[0]?.value, 10) || 64;
+
+if (isBrowser) {
+  window.addEventListener('storage', (e) => {
+    if (!e || e.key === null || e.key === STORAGE_KEY) {
+      isDataCacheValid = false;
+    }
+    if (!e || e.key === null || e.key === ACTIVITY_LOG_KEY) {
+      isActivityCacheValid = false;
+    }
+  });
+}
 
 /**
  * Get current website update / revision count
@@ -101,10 +171,14 @@ export function getDashboardStats() {
 }
 
 /**
- * Get the full portfolio data object
+ * Get the full portfolio data object (served from in-memory read cache when warm)
  */
 export function getData() {
   if (!isBrowser) {
+    return memoryData;
+  }
+
+  if (isDataCacheValid) {
     return memoryData;
   }
 
@@ -112,20 +186,28 @@ export function getData() {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) {
       // First time initialization in browser
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(defaultPortfolioData));
-      memoryData = deepClone(defaultPortfolioData);
+      const seeded = deepClone(defaultPortfolioData);
+      if (Array.isArray(seeded.activities) && seeded.activities.length > MAX_ACTIVITY_ENTRIES) {
+        seeded.activities = seeded.activities.slice(0, MAX_ACTIVITY_ENTRIES);
+      }
+      memoryData = seeded;
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(seeded));
+      } catch (e) {
+        console.warn('Could not initialize localStorage:', e);
+      }
+      isDataCacheValid = true;
       return memoryData;
     }
     const parsed = JSON.parse(raw);
+    let needsResave = false;
+
     if (parsed && parsed.profile && parsed.profile.name === 'Võ Quang Nhật Nguyên') {
       parsed.profile.name = 'VO QUANG NHAT NGUYEN';
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(parsed));
-      } catch (e) {}
+      needsResave = true;
     }
 
     // Ensure core collections exist in parsed data without resurrecting explicitly emptied [] arrays
-    let needsResave = false;
     if (!Array.isArray(parsed.blogs)) {
       parsed.blogs = deepClone(defaultPortfolioData.blogs || []);
       needsResave = true;
@@ -136,6 +218,9 @@ export function getData() {
     }
     if (!Array.isArray(parsed.activities)) {
       parsed.activities = deepClone(defaultPortfolioData.activities || []);
+      needsResave = true;
+    } else if (parsed.activities.length > MAX_ACTIVITY_ENTRIES) {
+      parsed.activities = parsed.activities.slice(0, MAX_ACTIVITY_ENTRIES);
       needsResave = true;
     }
     // ponytail: ensure timeline exists and all entries have stable IDs
@@ -164,6 +249,7 @@ export function getData() {
     }
 
     memoryData = parsed;
+    isDataCacheValid = true;
     return parsed;
   } catch (err) {
     console.warn('Failed to read from localStorage, using fallback:', err);
@@ -174,10 +260,14 @@ export function getData() {
 /**
  * Save data to localStorage and emit change event.
  * Automatically increments website update counter and syncs telemetryStats.
+ * Propagates and toasts QuotaExceededError / storage errors instead of failing silently.
  */
 export function saveData(newData) {
-  // Increment update counter on every mutation
-  const updatedRevision = incrementUpdateCount();
+  if (Array.isArray(newData.activities) && newData.activities.length > MAX_ACTIVITY_ENTRIES) {
+    newData.activities = newData.activities.slice(0, MAX_ACTIVITY_ENTRIES);
+  }
+
+  const nextRevision = getUpdateCount() + 1;
 
   // Synchronize telemetry stats on profile if present
   if (newData.profile && Array.isArray(newData.profile.telemetryStats)) {
@@ -188,7 +278,7 @@ export function saveData(newData) {
       const labelLower = (stat.label || '').toLowerCase();
       const key = stat.key || '';
       if (key === 'updates' || labelLower.includes('update') || labelLower.includes('revision')) {
-        return { ...stat, value: String(updatedRevision) };
+        return { ...stat, value: String(nextRevision) };
       }
       if (key === 'blogs' || labelLower.includes('blog')) {
         return { ...stat, value: String(blogsCount) };
@@ -203,13 +293,28 @@ export function saveData(newData) {
     });
   }
 
-  memoryData = deepClone(newData);
-
   if (isBrowser) {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(newData));
     } catch (err) {
+      isDataCacheValid = false;
       console.error('Failed to save to localStorage:', err);
+      toastStorageError(err, 'save portfolio data');
+      throw err;
+    }
+
+    memoryUpdateCount = nextRevision;
+    try {
+      localStorage.setItem(UPDATES_KEY, String(nextRevision));
+    } catch (err) {
+      console.error('Failed to increment update count:', err);
+    }
+
+    memoryData = deepClone(newData);
+    isDataCacheValid = true;
+    if (Array.isArray(newData.activities)) {
+      memoryActivityLog = deepClone(newData.activities);
+      isActivityCacheValid = true;
     }
 
     try {
@@ -222,6 +327,9 @@ export function saveData(newData) {
     } catch (err) {
       console.error('Failed to dispatch event:', err);
     }
+  } else {
+    memoryUpdateCount = nextRevision;
+    memoryData = deepClone(newData);
   }
 
   return memoryData;
@@ -289,10 +397,7 @@ function uniqueBlogSlug(baseSlug, blogs, excludeIndex = -1) {
 }
 
 function appendActivityToState(current, type, title, detail = '', customDate = null) {
-  const validDate = customDate && /^\d{4}-\d{2}-\d{2}$/.test(String(customDate).trim())
-    ? String(customDate).trim()
-    : null;
-  const dateStr = validDate || formatDate(new Date());
+  const dateStr = normalizeSaneDate(customDate) || formatDate(new Date());
   const newActivity = {
     id: `act-${Date.now()}-${Math.random().toString(36).slice(2, 7)}`,
     date: dateStr,
@@ -301,16 +406,21 @@ function appendActivityToState(current, type, title, detail = '', customDate = n
     detail: detail || ''
   };
   const existing = getActivityLog();
-  const updatedActivities = [newActivity, ...existing];
-  current.activities = updatedActivities;
-  memoryData.activities = updatedActivities;
+  const updatedActivities = [newActivity, ...existing].slice(0, MAX_ACTIVITY_ENTRIES);
   if (isBrowser) {
     try {
       localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(updatedActivities));
     } catch (err) {
+      isActivityCacheValid = false;
       console.error('Failed to persist activity log:', err);
+      toastStorageError(err, 'persist activity log');
+      throw err;
     }
   }
+  current.activities = updatedActivities;
+  memoryData.activities = updatedActivities;
+  memoryActivityLog = updatedActivities;
+  isActivityCacheValid = true;
   return newActivity;
 }
 
@@ -958,12 +1068,20 @@ export function deleteCourse(id) {
  */
 export function getActivityLog() {
   if (isBrowser) {
+    if (isActivityCacheValid) {
+      return memoryActivityLog;
+    }
     try {
       const raw = localStorage.getItem(ACTIVITY_LOG_KEY);
       if (raw !== null) {
         const parsed = JSON.parse(raw);
         if (Array.isArray(parsed)) {
-          return parsed;
+          const capped = parsed.length > MAX_ACTIVITY_ENTRIES
+            ? parsed.slice(0, MAX_ACTIVITY_ENTRIES)
+            : parsed;
+          memoryActivityLog = capped;
+          isActivityCacheValid = true;
+          return capped;
         }
       }
     } catch (e) {
@@ -972,11 +1090,16 @@ export function getActivityLog() {
   }
 
   const current = getData();
-  const fallback = Array.isArray(current.activities)
+  const rawFallback = Array.isArray(current.activities)
     ? current.activities
     : (defaultPortfolioData.activities || []);
+  const fallback = rawFallback.length > MAX_ACTIVITY_ENTRIES
+    ? rawFallback.slice(0, MAX_ACTIVITY_ENTRIES)
+    : rawFallback;
 
+  memoryActivityLog = fallback;
   if (isBrowser) {
+    isActivityCacheValid = true;
     try {
       localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(fallback));
     } catch (e) {}
@@ -995,9 +1118,7 @@ export function getActivityLog() {
  * @param {string} [customDate] - Format YYYY-MM-DD
  */
 export function logActivity(type, title, detail = '', customDate = null) {
-  const validDate = customDate && /^\d{4}-\d{2}-\d{2}$/.test(String(customDate).trim())
-    ? String(customDate).trim()
-    : null;
+  const validDate = normalizeSaneDate(customDate);
   const current = getData();
   const newActivity = appendActivityToState(current, type, title, detail, validDate);
   saveData(current);
@@ -1029,13 +1150,19 @@ export function getActivityHeatmapData(targetYear = null, typeFilter = 'all') {
   const now = new Date();
   const todayStr = formatDate(now);
   const currentYear = now.getFullYear();
+  const maxSaneYear = currentYear + 2;
 
   let startDate, endDate;
+  const parsedYear = targetYear !== null && targetYear !== '' ? Number(targetYear) : NaN;
 
-  if (targetYear && Number(targetYear) !== currentYear && !isNaN(Number(targetYear))) {
-    const y = Number(targetYear);
-    const startYear = new Date(y, 0, 1);
-    const endYear = new Date(y, 11, 31);
+  if (
+    Number.isInteger(parsedYear) &&
+    parsedYear !== currentYear &&
+    parsedYear >= MIN_SANE_YEAR &&
+    parsedYear <= maxSaneYear
+  ) {
+    const startYear = new Date(parsedYear, 0, 1);
+    const endYear = new Date(parsedYear, 11, 31);
 
     // Align start to preceding Sunday
     startDate = new Date(startYear.getFullYear(), startYear.getMonth(), startYear.getDate());
@@ -1054,11 +1181,12 @@ export function getActivityHeatmapData(targetYear = null, typeFilter = 'all') {
     startDate.setDate(endDate.getDate() - (52 * 7 - 1));
   }
 
-  // Group all activities by YYYY-MM-DD
+  // Group valid sane activities by YYYY-MM-DD (rejecting malformed / out-of-window dates)
   const dateToActivities = {};
   allActivities.forEach((act) => {
     if (!act || !act.date) return;
-    const d = String(act.date).trim();
+    const d = normalizeSaneDate(act.date);
+    if (!d) return;
     if (!dateToActivities[d]) {
       dateToActivities[d] = [];
     }
@@ -1076,7 +1204,9 @@ export function getActivityHeatmapData(targetYear = null, typeFilter = 'all') {
   const cursor = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
   const finalDate = new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
 
-  while (cursor <= finalDate) {
+  let daySteps = 0;
+  while (cursor <= finalDate && daySteps < MAX_HEATMAP_DAYS) {
+    daySteps++;
     const dStr = formatDate(cursor);
     const dayOfWeek = cursor.getDay(); // 0 is Sun, 6 is Sat
     const dayActs = dateToActivities[dStr] || [];
@@ -1141,7 +1271,9 @@ export function getActivityHeatmapData(targetYear = null, typeFilter = 'all') {
   }
 
   if (currentStreak > 0) {
-    while (true) {
+    let streakSteps = 0;
+    while (streakSteps < MAX_HEATMAP_DAYS) {
+      streakSteps++;
       const prevDateStr = formatDate(streakCursor);
       if ((dateToActivities[prevDateStr] || []).length > 0) {
         currentStreak++;
@@ -1152,7 +1284,7 @@ export function getActivityHeatmapData(targetYear = null, typeFilter = 'all') {
     }
   }
 
-  // Longest streak across all recorded activities
+  // Longest streak across all recorded valid activities (hard-bounded sweep + multi-year O(N) fallback)
   let longestStreak = 0;
   let runningStreak = 0;
 
@@ -1166,17 +1298,35 @@ export function getActivityHeatmapData(targetYear = null, typeFilter = 'all') {
     const sweep = new Date(pStart[0], pStart[1] - 1, pStart[2]);
     const sweepEnd = new Date(pEnd[0], pEnd[1] - 1, pEnd[2]);
 
-    while (sweep <= sweepEnd) {
-      const s = formatDate(sweep);
-      if ((dateToActivities[s] || []).length > 0) {
-        runningStreak++;
-        if (runningStreak > longestStreak) {
-          longestStreak = runningStreak;
+    if (!isNaN(sweep.getTime()) && !isNaN(sweepEnd.getTime())) {
+      const spanDays = Math.round((sweepEnd.getTime() - sweep.getTime()) / 86400000);
+      if (spanDays >= 0 && spanDays < MAX_HEATMAP_DAYS) {
+        let sweepSteps = 0;
+        while (sweep <= sweepEnd && sweepSteps < MAX_HEATMAP_DAYS) {
+          sweepSteps++;
+          const s = formatDate(sweep);
+          if ((dateToActivities[s] || []).length > 0) {
+            runningStreak++;
+            if (runningStreak > longestStreak) {
+              longestStreak = runningStreak;
+            }
+          } else {
+            runningStreak = 0;
+          }
+          sweep.setDate(sweep.getDate() + 1);
         }
       } else {
-        runningStreak = 0;
+        let prevDayNum = null;
+        for (const d of allActiveDates) {
+          const dParts = d.split('-').map(Number);
+          const dayNum = Math.round(Date.UTC(dParts[0], dParts[1] - 1, dParts[2]) / 86400000);
+          runningStreak = prevDayNum !== null && dayNum === prevDayNum + 1 ? runningStreak + 1 : 1;
+          if (runningStreak > longestStreak) {
+            longestStreak = runningStreak;
+          }
+          prevDayNum = dayNum;
+        }
       }
-      sweep.setDate(sweep.getDate() + 1);
     }
   }
 
@@ -1328,10 +1478,13 @@ export function importDataJSON(jsonString) {
     if (!parsed.profile || typeof parsed !== 'object') {
       throw new Error('Invalid portfolio JSON schema');
     }
+    if (Array.isArray(parsed.activities) && parsed.activities.length > MAX_ACTIVITY_ENTRIES) {
+      parsed.activities = parsed.activities.slice(0, MAX_ACTIVITY_ENTRIES);
+    }
     if (isBrowser && Array.isArray(parsed.activities)) {
-      try {
-        localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(parsed.activities));
-      } catch (e) {}
+      localStorage.setItem(ACTIVITY_LOG_KEY, JSON.stringify(parsed.activities));
+      memoryActivityLog = deepClone(parsed.activities);
+      isActivityCacheValid = true;
     }
     saveData(parsed);
     return { success: true, data: parsed };
@@ -1346,6 +1499,9 @@ export function importDataJSON(jsonString) {
 export function resetToDefaults() {
   const defaultRev = parseInt(defaultPortfolioData?.profile?.telemetryStats?.[0]?.value, 10) || 64;
   memoryData = deepClone(defaultPortfolioData);
+  memoryActivityLog = deepClone(defaultPortfolioData.activities || []);
+  isDataCacheValid = false;
+  isActivityCacheValid = false;
   memoryUpdateCount = defaultRev;
 
   if (isBrowser) {
@@ -1380,15 +1536,24 @@ export function subscribe(callback) {
 
   // Cross-tab synchronization via storage event
   const storageHandler = (e) => {
-    if (e.key === STORAGE_KEY && e.newValue) {
-      try {
-        const parsed = JSON.parse(e.newValue);
-        memoryData = parsed;
-        callback(parsed);
-      } catch (err) {
-        console.error('Storage sync error:', err);
+    if (e.key === STORAGE_KEY) {
+      if (e.newValue) {
+        try {
+          const parsed = JSON.parse(e.newValue);
+          memoryData = parsed;
+          isDataCacheValid = true;
+          callback(parsed);
+        } catch (err) {
+          console.error('Storage sync error:', err);
+        }
+      } else {
+        isDataCacheValid = false;
+        callback(getData());
       }
-    } else if (e.key === AUTH_KEY || e.key === UPDATES_KEY || e.key === ACTIVITY_LOG_KEY) {
+    } else if (e.key === ACTIVITY_LOG_KEY) {
+      isActivityCacheValid = false;
+      callback(getData());
+    } else if (e.key === AUTH_KEY || e.key === UPDATES_KEY) {
       callback(getData());
     }
   };

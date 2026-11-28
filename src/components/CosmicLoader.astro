@@ -94,14 +94,14 @@
     pointer-events: auto;
     user-select: none;
     font-family: 'SF Mono', 'JetBrains Mono', 'Fira Code', Menlo, Monaco, Consolas, monospace !important;
-    transition: opacity 0.55s cubic-bezier(0.16, 1, 0.3, 1), transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.55s;
+    transition: opacity 0.18s cubic-bezier(0.16, 1, 0.3, 1), transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.18s;
     overflow: hidden;
   }
 
   .cosmic-loader-overlay.is-complete {
     opacity: 0;
-    transform: scale(1.03);
-    pointer-events: none;
+    transform: scale(1.02);
+    pointer-events: none !important;
     visibility: hidden;
   }
 
@@ -288,63 +288,58 @@
   }
 </style>
 
-<script>
-  // High-Performance Apple-Grade Preloader Sequence
+<script is:inline>
+  // Fast non-blocking Cosmic Preloader with sessionStorage bypass & 700ms failsafe
   (function initCosmicPreloader() {
-    const preloader = document.getElementById('cosmic-preloader');
+    var preloader = document.getElementById('cosmic-preloader');
     if (!preloader) return;
 
-    const progressFill = document.getElementById('loader-progress-fill');
-    const logText = document.getElementById('loader-log-text');
-    const percentText = document.getElementById('loader-percent-text');
+    var SEEN_KEY = 'space_portfolio_preloader_seen';
+    var alreadySeen = false;
+    try {
+      alreadySeen = sessionStorage.getItem(SEEN_KEY) === '1';
+    } catch (e) {}
 
-    // Telemetry sequence phases
-    const steps = [
-      { progress: 18, log: "INITIALIZING CCSDS TELEMETRY BUS..." },
-      { progress: 42, log: "ACQUIRING ORBITAL TELEMETRY [LEO 550KM]..." },
-      { progress: 68, log: "CALIBRATING ADCS ATTITUDE SENSORS..." },
-      { progress: 88, log: "SYNCING FLIGHT EXECUTIVE ARCHITECTURE..." },
-      { progress: 100, log: "SYSTEMS NOMINAL • GROUND LINK ACTIVE" }
-    ];
-
-    let currentStep = 0;
-    let currentProgress = 0;
-    const isReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const duration = isReducedMotion ? 200 : 1350; // smooth 1.35s cinematic load
-
-    const startTime = performance.now();
-
-    function update() {
-      const now = performance.now();
-      const elapsed = now - startTime;
-      const progressFraction = Math.min(elapsed / duration, 1);
-
-      // Smooth cubic-out easing
-      const eased = 1 - Math.pow(1 - progressFraction, 3);
-      currentProgress = Math.floor(eased * 100);
-
-      if (progressFill) progressFill.style.width = `${currentProgress}%`;
-      if (percentText) percentText.textContent = `${currentProgress < 10 ? '0' + currentProgress : currentProgress}%`;
-
-      // Update log messages based on progress thresholds
-      if (currentStep < steps.length && currentProgress >= steps[currentStep].progress) {
-        if (logText) logText.textContent = steps[currentStep].log;
-        currentStep++;
-      }
-
-      if (progressFraction < 1) {
-        requestAnimationFrame(update);
-      } else {
-        // Complete & silky smooth exit transition
-        setTimeout(() => {
-          preloader.classList.add('is-complete');
-          setTimeout(() => {
-            preloader.style.display = 'none';
-          }, 650);
-        }, 140);
-      }
+    if (alreadySeen) {
+      preloader.style.pointerEvents = 'none';
+      preloader.style.display = 'none';
+      preloader.classList.add('is-complete');
+      return;
     }
 
-    requestAnimationFrame(update);
+    try {
+      sessionStorage.setItem(SEEN_KEY, '1');
+    } catch (e) {}
+
+    var progressFill = document.getElementById('loader-progress-fill');
+    var logText = document.getElementById('loader-log-text');
+    var percentText = document.getElementById('loader-percent-text');
+    var dismissed = false;
+    var failsafeTimer = null;
+
+    function dismissPreloader() {
+      if (dismissed) return;
+      dismissed = true;
+      if (failsafeTimer) clearTimeout(failsafeTimer);
+      if (progressFill) progressFill.style.width = '100%';
+      if (percentText) percentText.textContent = '100%';
+      if (logText) logText.textContent = 'SYSTEMS NOMINAL • GROUND LINK ACTIVE';
+
+      preloader.style.pointerEvents = 'none';
+      preloader.classList.add('is-complete');
+      setTimeout(function() {
+        preloader.style.display = 'none';
+      }, 200);
+    }
+
+    failsafeTimer = setTimeout(dismissPreloader, 700);
+
+    if (document.readyState !== 'loading') {
+      requestAnimationFrame(dismissPreloader);
+    } else {
+      if (progressFill) progressFill.style.width = '45%';
+      if (percentText) percentText.textContent = '45%';
+      document.addEventListener('DOMContentLoaded', dismissPreloader, { once: true });
+    }
   })();
 </script>

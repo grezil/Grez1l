@@ -2003,13 +2003,37 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
     }
 
+    function notifyAdmin(title: string, message: string, type: 'info' | 'success' | 'error' = 'success') {
+      if (typeof (window as any).showSpaceToast === 'function') {
+        (window as any).showSpaceToast(title, message, type);
+        return;
+      }
+      window.dispatchEvent(new CustomEvent('portfolio-admin-toast', { detail: { message, type } }));
+      let banner = document.getElementById('admin-inline-status');
+      if (!banner) {
+        banner = document.createElement('div');
+        banner.id = 'admin-inline-status';
+        banner.style.cssText = 'position:fixed;bottom:1.5rem;right:1.5rem;z-index:9999;padding:0.75rem 1.1rem;border-radius:10px;font-size:0.84rem;font-weight:600;background:rgba(16,20,30,0.95);color:#F8FAFC;border:1px solid rgba(229,169,106,0.45);box-shadow:0 12px 30px rgba(0,0,0,0.45);transition:opacity 0.25s ease;';
+        document.body.appendChild(banner);
+      }
+      banner.textContent = `${title}: ${message}`;
+      banner.style.borderColor = type === 'error' ? 'rgba(239,68,68,0.65)' : 'rgba(16,185,129,0.55)';
+      banner.style.opacity = '1';
+      banner.style.display = 'block';
+      clearTimeout((banner as any)._hideTimer);
+      (banner as any)._hideTimer = setTimeout(() => {
+        if (banner) banner.style.opacity = '0';
+      }, 3200);
+    }
+
     async function syncViews() {
       const isAuthed = await checkAuth();
       if (isAuthed) {
         authScreen.style.display = 'none';
         dashScreen.style.display = 'block';
-        loadDashboardData();
-        applyHashRoute();
+        if (!applyHashRoute()) {
+          refreshActiveDashTab();
+        }
       } else {
         authScreen.style.display = 'flex';
         dashScreen.style.display = 'none';
@@ -2091,12 +2115,24 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
         localStorage.removeItem('space_portfolio_admin_session_v2');
         window.dispatchEvent(new CustomEvent('portfolio-admin-auth-changed', { detail: { authenticated: false } }));
       }
-      window.dispatchEvent(new CustomEvent('portfolio-data-updated'));
       syncViews();
     });
 
     const tabs = document.querySelectorAll('.dash-tab');
     const panels = document.querySelectorAll('.dash-panel');
+
+    function getActiveDashTabId(): string {
+      const activePanel = document.querySelector('.dash-panel.is-active');
+      return activePanel?.id || 'dash-tab-achievements';
+    }
+
+    function refreshActiveDashTab(tabId = getActiveDashTabId()) {
+      if (tabId === 'dash-tab-achievements') loadAchievements();
+      else if (tabId === 'dash-tab-blog') loadBlogs();
+      else if (tabId === 'dash-tab-cv') loadCV();
+      else if (tabId === 'dash-tab-courses') loadCourses();
+      updateDashboardTelemetryStats();
+    }
 
     function switchDashTab(tabId: string) {
       tabs.forEach(t => {
@@ -2106,6 +2142,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       panels.forEach(p => {
         p.classList.toggle('is-active', p.id === tabId);
       });
+      refreshActiveDashTab(tabId);
     }
 
     tabs.forEach(tab => {
@@ -2264,8 +2301,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
               store.deleteAchievement(id);
             }
           }
-          loadAchievements();
-          updateDashboardTelemetryStats();
+          notifyAdmin('Achievement Removed', 'Timeline milestone removed from store.', 'info');
         });
       });
     }
@@ -2307,9 +2343,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
 
       resetAchForm();
-      loadAchievements();
-      updateDashboardTelemetryStats();
-      alert('Timeline milestone & achievement successfully saved to store!');
+      notifyAdmin('Milestone Saved', 'Timeline milestone & achievement successfully saved to store!', 'success');
     });
 
     // ----------------------------------------------------
@@ -2425,8 +2459,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
           if (store && typeof store.deleteBlog === 'function') {
             store.deleteBlog(id);
           }
-          loadBlogs();
-          updateDashboardTelemetryStats();
+          notifyAdmin('Article Removed', 'Blog article deleted from Mission Log.', 'info');
         });
       });
     }
@@ -2457,9 +2490,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
 
       resetBlogForm();
-      loadBlogs();
-      updateDashboardTelemetryStats();
-      alert('Blog article saved and published to Mission Log!');
+      notifyAdmin('Article Published', 'Blog article saved and published to Mission Log!', 'success');
     });
 
     // ----------------------------------------------------
@@ -2548,24 +2579,56 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
         store.updateCVData('profile', p);
       }
       setDashAvatarPreview(avatarUrlOrData);
-      alert('Profile photo updated successfully!');
+      notifyAdmin('Avatar Updated', 'Profile photo updated successfully!', 'success');
     }
 
-    dashAvatarFileInput?.addEventListener('change', () => {
+    function resizeDashAvatarImage(file: File, maxDim = 256, quality = 0.85): Promise<string> {
+      return new Promise((resolve, reject) => {
+        const objUrl = URL.createObjectURL(file);
+        const img = new Image();
+        img.onload = () => {
+          URL.revokeObjectURL(objUrl);
+          const nw = img.naturalWidth || maxDim;
+          const nh = img.naturalHeight || maxDim;
+          const scale = Math.min(1, maxDim / Math.max(nw, nh));
+          const w = Math.max(1, Math.round(nw * scale));
+          const h = Math.max(1, Math.round(nh * scale));
+          const canvas = document.createElement('canvas');
+          canvas.width = w;
+          canvas.height = h;
+          const ctx = canvas.getContext('2d');
+          if (!ctx) {
+            reject(new Error('Canvas 2D context unavailable'));
+            return;
+          }
+          ctx.drawImage(img, 0, 0, w, h);
+          resolve(canvas.toDataURL('image/jpeg', quality));
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(objUrl);
+          reject(new Error('Invalid image file'));
+        };
+        img.src = objUrl;
+      });
+    }
+
+    dashAvatarFileInput?.addEventListener('change', async () => {
       const file = dashAvatarFileInput.files?.[0];
       if (!file) return;
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const base64 = e.target?.result as string;
-        if (base64) await saveDashAvatar(base64);
-      };
-      reader.readAsDataURL(file);
+      try {
+        const compressed = await resizeDashAvatarImage(file, 256, 0.85);
+        await saveDashAvatar(compressed);
+      } catch (err: any) {
+        notifyAdmin('Avatar Upload Error', err?.message || 'Invalid image file', 'error');
+      } finally {
+        dashAvatarFileInput.value = '';
+      }
     });
 
     dashAvatarLoadUrlBtn?.addEventListener('click', async () => {
       const url = dashAvatarUrlInput?.value?.trim() || '';
       if (!url) {
-        alert('Please enter a valid image URL');
+        notifyAdmin('Invalid URL', 'Please enter a valid image URL', 'error');
         return;
       }
       await saveDashAvatar(url);
@@ -2652,8 +2715,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
         store.updateCVData('cvDocumentHtml', html);
       }
 
-      updateDashboardTelemetryStats();
-      alert('Word Document CV saved and synchronized successfully!');
+      notifyAdmin('CV Document Saved', 'Word Document CV saved and synchronized successfully!', 'success');
     });
 
     async function loadCV() {
@@ -2848,9 +2910,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
         store.updateCVData(updatedCV);
       }
 
-      loadCV();
-      updateDashboardTelemetryStats();
-      alert('My CV profile, appointments, and education successfully updated!');
+      notifyAdmin('CV Updated', 'My CV profile, appointments, and education successfully updated!', 'success');
     });
 
     // ----------------------------------------------------
@@ -2960,8 +3020,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
           if (store && typeof store.deleteCourse === 'function') {
             store.deleteCourse(id);
           }
-          loadCourses();
-          updateDashboardTelemetryStats();
+          notifyAdmin('Course Removed', 'Course archive removed.', 'info');
         });
       });
     }
@@ -2996,9 +3055,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
 
       resetCourseForm();
-      loadCourses();
-      updateDashboardTelemetryStats();
-      alert('Course archive successfully saved and published!');
+      notifyAdmin('Course Saved', 'Course archive successfully saved and published!', 'success');
     });
 
     // ----------------------------------------------------
@@ -3034,14 +3091,13 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
           if (store && typeof store.importDataJSON === 'function') {
             const res = store.importDataJSON(jsonStr);
             if (res.success) {
-              alert('Full portfolio dataset imported and updated!');
-              loadDashboardData();
+              notifyAdmin('Import Complete', 'Full portfolio dataset imported and updated!', 'success');
             } else {
-              alert('Import failed: ' + res.error);
+              notifyAdmin('Import Failed', res.error || 'Import error', 'error');
             }
           }
         } catch (err) {
-          alert('Invalid JSON file format.');
+          notifyAdmin('Import Failed', 'Invalid JSON file format.', 'error');
         }
       };
       reader.readAsText(file);
@@ -3053,7 +3109,7 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       if (store && typeof store.resetToDefaults === 'function') {
         store.resetToDefaults();
       }
-      alert('System reset to default flight telemetry data.');
+      notifyAdmin('Factory Reset', 'System reset to default flight telemetry data.', 'info');
       syncViews();
     });
 
@@ -3088,66 +3144,67 @@ const staticBlogSlugs = initialBlogs.map((b: any) => b.slug).filter(Boolean);
       }
     }
 
-    function loadDashboardData() {
-      loadAchievements();
-      loadBlogs();
-      loadCV();
-      loadCourses();
-      updateDashboardTelemetryStats();
-    }
-
-    function applyHashRoute() {
+    function applyHashRoute(): boolean {
       const hash = window.location.hash || '';
-      if (!hash) return;
+      if (!hash) return false;
       if (hash === '#compose') {
         switchDashTab('dash-tab-blog');
         resetBlogForm();
         blogForm?.scrollIntoView({ behavior: 'smooth' });
+        return true;
       } else if (hash.startsWith('#edit-blog-')) {
         const targetSlug = decodeURIComponent(hash.slice('#edit-blog-'.length));
         switchDashTab('dash-tab-blog');
         const list = typeof Store.getBlogs === 'function' ? Store.getBlogs() : [];
         const match = list.find((b: any) => b.slug === targetSlug || b.id === targetSlug);
         if (match) startEditingBlog(match);
+        return true;
       } else if (hash === '#courses') {
         switchDashTab('dash-tab-courses');
+        return true;
       } else if (hash === '#cv' || hash === '#profile') {
         switchDashTab('dash-tab-cv');
+        return true;
       } else if (hash === '#achievements' || hash === '#timeline') {
         switchDashTab('dash-tab-achievements');
+        return true;
       } else if (hash === '#system' || hash === '#backup') {
         switchDashTab('dash-tab-system');
+        return true;
       }
+      return false;
     }
 
     (window as any).__adminPageActive = {
       syncViews,
-      loadDashboardData,
+      refreshActiveDashTab,
       applyHashRoute,
       isDashVisible: () => dashScreen.style.display !== 'none'
     };
 
-    if (!(window as any).__adminWindowBound) {
-      (window as any).__adminWindowBound = true;
-      window.addEventListener('portfolio-data-updated', () => {
-        const active = (window as any).__adminPageActive;
-        if (active && active.isDashVisible()) active.loadDashboardData();
-      });
-      window.addEventListener('portfolio-admin-auth-changed', () => {
-        const active = (window as any).__adminPageActive;
-        if (active) active.syncViews();
-      });
-      window.addEventListener('hashchange', () => {
-        const active = (window as any).__adminPageActive;
-        if (active && active.isDashVisible()) active.applyHashRoute();
-      });
-      window.addEventListener('storage', (e) => {
-        const active = (window as any).__adminPageActive;
-        if (!active) return;
-        if (e.key === 'space_portfolio_admin_session_v2') active.syncViews();
-        else if (e.key === 'space_portfolio_data_v1' && active.isDashVisible()) active.loadDashboardData();
-      });
-    }
+    (window as any).__adminWindowAbort?.abort();
+    const adminAbort = new AbortController();
+    (window as any).__adminWindowAbort = adminAbort;
+    const { signal } = adminAbort;
+
+    window.addEventListener('portfolio-data-updated', () => {
+      const active = (window as any).__adminPageActive;
+      if (active && active.isDashVisible()) active.refreshActiveDashTab();
+    }, { signal });
+    window.addEventListener('portfolio-admin-auth-changed', () => {
+      const active = (window as any).__adminPageActive;
+      if (active) active.syncViews();
+    }, { signal });
+    window.addEventListener('hashchange', () => {
+      const active = (window as any).__adminPageActive;
+      if (active && active.isDashVisible()) active.applyHashRoute();
+    }, { signal });
+    window.addEventListener('storage', (e) => {
+      const active = (window as any).__adminPageActive;
+      if (!active) return;
+      if (e.key === 'space_portfolio_admin_session_v2') active.syncViews();
+      else if (e.key === 'space_portfolio_data_v1' && active.isDashVisible()) active.refreshActiveDashTab();
+    }, { signal });
 
     // Initial load
     syncViews();

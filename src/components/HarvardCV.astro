@@ -142,6 +142,8 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
               class="cv-avatar-photo"
               id="cv-avatar-img"
               loading="eager"
+              decoding="async"
+              onerror="this.style.display='none';"
             />
             {/* Fallback Monogram */}
             <div class="cv-avatar-monogram" id="cv-avatar-monogram" aria-hidden="true">
@@ -541,10 +543,15 @@ const avatarSrc = profile.avatar || "https://images.unsplash.com/photo-157349635
       // Update Profile Avatar with graceful monogram fallback
       const avatarImg = document.getElementById('cv-avatar-img') as HTMLImageElement | null;
       if (avatarImg) {
+        avatarImg.decoding = 'async';
+        avatarImg.onerror = () => { avatarImg.style.display = 'none'; };
+        avatarImg.onload = () => { avatarImg.style.display = 'block'; };
         if (profile.avatar && String(profile.avatar).trim()) {
-          avatarImg.src = profile.avatar;
-          avatarImg.style.display = 'block';
-          avatarImg.onerror = () => { avatarImg.style.display = 'none'; };
+          const nextAvatar = String(profile.avatar).trim();
+          if (avatarImg.getAttribute('src') !== nextAvatar && avatarImg.src !== nextAvatar) {
+            avatarImg.src = nextAvatar;
+          }
+          avatarImg.style.display = avatarImg.complete && avatarImg.naturalWidth === 0 ? 'none' : 'block';
         } else {
           avatarImg.style.display = 'none';
         }

@@ -132,6 +132,8 @@ const { profile } = Astro.props;
                   src={profile.avatar || "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=600&q=80"}
                   alt={profile.avatarAlt || profile.name}
                   class="profile-avatar-img"
+                  decoding="async"
+                  onerror="this.style.display='none';var f=document.getElementById('hero-avatar-fallback');if(f)f.style.display='flex';"
                 />
                 <div class="avatar-monogram" id="hero-avatar-fallback" style="display: none;">
                   <span class="mono-initials">NN</span>
@@ -647,6 +649,23 @@ const { profile } = Astro.props;
     const coursesEl = document.getElementById('hero-stat-courses');
     const archiveEl = document.getElementById('hero-stat-archive');
 
+    function showAvatarFallback() {
+      if (avatarImg) avatarImg.style.display = 'none';
+      if (fallback) fallback.style.display = 'flex';
+    }
+
+    if (avatarImg) {
+      avatarImg.decoding = 'async';
+      avatarImg.onerror = showAvatarFallback;
+      avatarImg.onload = () => {
+        avatarImg.style.display = 'block';
+        if (fallback) fallback.style.display = 'none';
+      };
+      if (avatarImg.complete && avatarImg.naturalWidth === 0) {
+        showAvatarFallback();
+      }
+    }
+
     function syncAvatar() {
       try {
         let avatarUrl = '';
@@ -662,10 +681,18 @@ const { profile } = Astro.props;
           }
         }
 
-        if (avatarUrl && avatarImg) {
-          avatarImg.src = avatarUrl;
-          avatarImg.style.display = 'block';
-          if (fallback) fallback.style.display = 'none';
+        if (avatarImg) {
+          if (avatarUrl) {
+            if (avatarImg.getAttribute('src') !== avatarUrl && avatarImg.src !== avatarUrl) {
+              avatarImg.src = avatarUrl;
+            }
+            if (!(avatarImg.complete && avatarImg.naturalWidth === 0)) {
+              avatarImg.style.display = 'block';
+              if (fallback) fallback.style.display = 'none';
+            }
+          } else {
+            showAvatarFallback();
+          }
         }
       } catch (err) {
         // quiet fallback
